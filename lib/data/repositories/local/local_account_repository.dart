@@ -767,7 +767,7 @@ class LocalAccountRepository implements AccountRepository {
 
     for (final account in accounts) {
       final balance = await getAccountBalance(account.id);
-      final currency = account.currency;
+      final currency = account.currency.toUpperCase();
       final prev = result[currency] ?? (totalAssets: 0.0, totalLiabilities: 0.0, netWorth: 0.0);
 
       if (isAssetType(account.type)) {
@@ -844,6 +844,28 @@ class LocalAccountRepository implements AccountRepository {
   }
 
   @override
+  Future<List<({String type, String currency, double totalBalance})>>
+      getAssetCompositionByTypeAndCurrency() async {
+    final accounts = await getAllAccounts();
+    // (type, currency 大写) -> 余额累加
+    final Map<({String type, String currency}), double> balances = {};
+
+    for (final account in accounts) {
+      final balance = await getAccountBalance(account.id);
+      final key = (type: account.type, currency: account.currency.toUpperCase());
+      balances.update(key, (v) => v + balance, ifAbsent: () => balance);
+    }
+
+    return balances.entries
+        .map((e) => (
+              type: e.key.type,
+              currency: e.key.currency,
+              totalBalance: e.value,
+            ))
+        .toList();
+  }
+
+  @override
   Future<void> updateAccountValuation(int accountId, double newValue) async {
     await (db.update(db.accounts)..where((a) => a.id.equals(accountId))).write(
       AccountsCompanion(
@@ -858,5 +880,15 @@ class LocalAccountRepository implements AccountRepository {
     return (db.select(db.sharedLedgerAccounts)
           ..where((t) => t.syncId.equals(syncId)))
         .getSingleOrNull();
+  }
+
+  @override
+  Future<Set<String>> getUsedCurrencies() async {
+    final rows = await db
+        .customSelect('SELECT DISTINCT currency FROM accounts')
+        .get();
+    return rows
+        .map((r) => (r.read<String>('currency')).toUpperCase())
+        .toSet();
   }
 }

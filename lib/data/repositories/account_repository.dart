@@ -165,6 +165,10 @@ abstract class AccountRepository {
   /// 获取资产构成（按账户类型分组的余额汇总）
   Future<List<({String type, double totalBalance})>> getAssetCompositionByType();
 
+  /// 按 (账户类型, 币种) 聚合的资产构成(多币种折算用)。currency 已大写归一。
+  Future<List<({String type, String currency, double totalBalance})>>
+      getAssetCompositionByTypeAndCurrency();
+
   /// 更新估值账户的当前估值
   Future<void> updateAccountValuation(int accountId, double newValue);
 
@@ -175,4 +179,7 @@ abstract class AccountRepository {
   /// 按 syncId 查 SharedLedgerAccounts 行;Editor 视角下 tx 的
   /// accountSyncIdOverride 走这条反查 → 上层再映射成 synthetic Account。
   Future<SharedLedgerAccount?> getSharedAccountBySyncId(String syncId);
+
+  /// 账户使用中的币种集合(去重、大写)。多币种态判定与汇率页列表用。
+  Future<Set<String>> getUsedCurrencies();
 }

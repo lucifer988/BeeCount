@@ -64,31 +64,39 @@ class _PersonalizePageState extends ConsumerState<PersonalizePage> {
             compact: true,
           ),
           Expanded(
-            child: GridView.builder(
+            child: ListView(
               padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.4,
-              ),
-              itemCount: options.length + 1, // +1 for custom color picker
-              itemBuilder: (_, i) {
-                if (i == options.length) {
-                  // Custom color picker card
-                  return _CustomColorCard(
-                    onTap: () => _showColorPicker(context, ref),
-                  );
-                }
-                final o = options[i];
-                final selected = o.color == primary;
-                return _ThemeCard(
-                  option: o,
-                  selected: selected,
-                  onTap: () =>
-                      ref.read(primaryColorProvider.notifier).state = o.color,
-                );
-              },
+              children: [
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1.4,
+                  ),
+                  itemCount: options.length + 1, // +1 for custom color picker
+                  itemBuilder: (_, i) {
+                    if (i == options.length) {
+                      // Custom color picker card
+                      return _CustomColorCard(
+                        onTap: () => _showColorPicker(context, ref),
+                      );
+                    }
+                    final o = options[i];
+                    final selected = o.color == primary;
+                    return _ThemeCard(
+                      option: o,
+                      selected: selected,
+                      onTap: () => ref
+                          .read(primaryColorProvider.notifier)
+                          .state = o.color,
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         ],
