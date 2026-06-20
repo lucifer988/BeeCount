@@ -23,7 +23,7 @@ jobs:
       RELEASE_WORKFLOW: release.yml
     steps:
       - name: Checkout fork
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -58,20 +58,22 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git remote add upstream "https://github.com/${UPSTREAM_REPO}.git" || git remote set-url upstream "https://github.com/${UPSTREAM_REPO}.git"
+          git remote add upstream "https://github.com/${UPSTREAM_REPO}.git" 2>/dev/null || git remote set-url upstream "https://github.com/${UPSTREAM_REPO}.git"
           git fetch origin --prune --tags
           git fetch upstream --prune --tags
-          UPSTREAM_SHA="$(git rev-parse upstream/${DEFAULT_BRANCH})"
+          git checkout "${DEFAULT_BRANCH}"
+          UPSTREAM_SHA="$(git rev-parse "upstream/${DEFAULT_BRANCH}")"
           CURRENT_SHA="$(git rev-parse HEAD)"
           echo "upstream_sha=${UPSTREAM_SHA}" >> "$GITHUB_OUTPUT"
           echo "current_sha=${CURRENT_SHA}" >> "$GITHUB_OUTPUT"
-          echo "Fork main:    ${CURRENT_SHA}"
-          echo "Upstream main:${UPSTREAM_SHA}"
-          if [[ "${CURRENT_SHA}" == "${UPSTREAM_SHA}" ]]; then
+          echo "Fork main:     ${CURRENT_SHA}"
+          echo "Upstream main: ${UPSTREAM_SHA}"
+          if git merge-base --is-ancestor "${UPSTREAM_SHA}" HEAD; then
             echo 'branch_changed=false' >> "$GITHUB_OUTPUT"
+            echo 'Fork already contains the latest upstream changes.'
           else
-            git checkout -B "${DEFAULT_BRANCH}" "upstream/${DEFAULT_BRANCH}"
-            git push origin "${DEFAULT_BRANCH}" --force
+            git merge --no-edit "upstream/${DEFAULT_BRANCH}"
+            git push origin "${DEFAULT_BRANCH}"
             echo 'branch_changed=true' >> "$GITHUB_OUTPUT"
           fi
 
