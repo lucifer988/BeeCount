@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../db.dart';
 import '../budget_repository.dart';
+import '../../../utils/month_range.dart';
 
 const _uuid = Uuid();
 
@@ -16,6 +17,18 @@ class LocalBudgetRepository implements BudgetRepository {
   final BeeDatabase db;
 
   LocalBudgetRepository(this.db);
+
+  /// 读取账本的自定义每月起始日(1-28);账本缺失或查询异常时按 1(自然月)降级。
+  Future<int> _monthStartDayOf(int ledgerId) async {
+    try {
+      final row = await (db.select(db.ledgers)
+            ..where((l) => l.id.equals(ledgerId)))
+          .getSingleOrNull();
+      return (row?.monthStartDay ?? 1).clamp(1, 28);
+    } catch (_) {
+      return 1;
+    }
+  }
 
   // ============================================
   // 基础 CRUD 操作
@@ -146,19 +159,13 @@ class LocalBudgetRepository implements BudgetRepository {
       return BudgetUsage(used: 0, budget: 0);
     }
 
-    // 计算月份范围（基于startDay）
-    DateTime startDate;
-    DateTime endDate;
-
-    if (budget.startDay <= month.day) {
-      // 起始日在当前日期之前，周期是本月startDay到下月startDay
-      startDate = DateTime(month.year, month.month, budget.startDay);
-      endDate = DateTime(month.year, month.month + 1, budget.startDay);
-    } else {
-      // 起始日在当前日期之后，周期是上月startDay到本月startDay
-      startDate = DateTime(month.year, month.month - 1, budget.startDay);
-      endDate = DateTime(month.year, month.month, budget.startDay);
-    }
+    // 预算周期跟随账本 monthStartDay(设计 D5:budget.startDay 弃用,列保留
+    // 兼容历史同步数据)。month 参数语义 = 「包含该日期的周期」,调用方传 now
+    // (见 budget_providers.dart)。
+    final sd = await _monthStartDayOf(budget.ledgerId);
+    final range = periodContaining(month, sd);
+    final startDate = range.start;
+    final endDate = range.end;
 
     // 查询该周期内的支出
     double used = 0;
@@ -170,6 +177,7 @@ class LocalBudgetRepository implements BudgetRepository {
         FROM transactions
         WHERE ledger_id = ?
           AND type = 'expense'
+          AND exclude_from_budget = 0
           AND happened_at >= ?
           AND happened_at < ?
         ''',
@@ -190,6 +198,7 @@ class LocalBudgetRepository implements BudgetRepository {
         LEFT JOIN categories c ON t.category_id = c.id
         WHERE t.ledger_id = ?
           AND t.type = 'expense'
+          AND t.exclude_from_budget = 0
           AND t.happened_at >= ?
           AND t.happened_at < ?
           AND (t.category_id = ? OR c.parent_id = ?)
@@ -222,15 +231,10 @@ class LocalBudgetRepository implements BudgetRepository {
     // 获取分类预算使用情况
     final categoryUsages = await getCategoryBudgetUsages(ledgerId, month);
 
-    // 计算剩余天数
+    // 计算剩余天数(周期跟随账本 monthStartDay,与 getBudgetUsage 同口径)
     final now = DateTime.now();
-    final startDay = totalBudget?.startDay ?? 1;
-    DateTime endDate;
-    if (startDay <= now.day) {
-      endDate = DateTime(now.year, now.month + 1, startDay);
-    } else {
-      endDate = DateTime(now.year, now.month, startDay);
-    }
+    final sd = await _monthStartDayOf(ledgerId);
+    final endDate = periodContaining(now, sd).end;
     final daysRemaining = endDate.difference(now).inDays;
 
     // 计算日均可用
@@ -271,6 +275,11 @@ class LocalBudgetRepository implements BudgetRepository {
         categoryId: category.id,
         categoryName: category.name,
         categoryIcon: category.icon,
+        // 透传完整 Category 给 UI,让 CategoryBudgetTile 能用 CategoryIconWidget
+        // 渲染 iconType='custom' 的自定义图片图标(只有 categoryIcon 字符串时
+        // 走 CategoryService.getCategoryIcon switch,自定义路径会兜底成
+        // Icons.category 通用占位 — 这是用户报"分类预算图标不正确"的根因)。
+        category: category,
         usage: usage,
       ));
     }

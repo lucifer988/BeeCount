@@ -12,6 +12,10 @@ import '../automation/auto_billing_settings_page.dart';
 import 'shortcuts_guide_page.dart';
 import '../../l10n/app_localizations.dart';
 
+/// Google Play 版本(CI 注入)。截屏自动记账依赖 READ_MEDIA_IMAGES,在 Google
+/// Play 渠道被砍掉,这里用来隐藏入口。详见 release.yml 的临时 manifest 配置。
+const _isGooglePlayBuild = bool.fromEnvironment('GOOGLE_PLAY', defaultValue: false);
+
 /// 智能记账二级页面
 class SmartBillingPage extends ConsumerWidget {
   const SmartBillingPage({super.key});
@@ -22,9 +26,11 @@ class SmartBillingPage extends ConsumerWidget {
     String title,
     String description,
     String aiRequirement,
-    bool requiresAI,
-  ) {
+    bool requiresAI, {
+    String? actionHint,
+  }) {
     final l10n = AppLocalizations.of(context);
+    final hint = actionHint ?? l10n.smartBillingGuideHint;
 
     showDialog(
       context: context,
@@ -49,8 +55,8 @@ class SmartBillingPage extends ConsumerWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: requiresAI
-                    ? Colors.orange.withOpacity(0.1)
-                    : Colors.blue.withOpacity(0.1),
+                    ? Colors.orange.withValues(alpha: 0.1)
+                    : Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: requiresAI ? Colors.orange : Colors.blue,
@@ -81,7 +87,7 @@ class SmartBillingPage extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -94,7 +100,7 @@ class SmartBillingPage extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      l10n.smartBillingGuideHint,
+                      hint,
                       style: TextStyle(
                         fontSize: 13,
                         color: Theme.of(context).colorScheme.primary,
@@ -171,8 +177,8 @@ class SmartBillingPage extends ConsumerWidget {
                             context,
                             l10n.smartBillingImageBilling,
                             l10n.smartBillingImageBillingGuide,
-                            l10n.smartBillingAIOptional,
-                            false,
+                            l10n.smartBillingVisionAIRequired,
+                            true,
                           );
                         },
                       ),
@@ -188,8 +194,8 @@ class SmartBillingPage extends ConsumerWidget {
                             context,
                             l10n.smartBillingCameraBilling,
                             l10n.smartBillingCameraBillingGuide,
-                            l10n.smartBillingAIOptional,
-                            false,
+                            l10n.smartBillingVisionAIRequired,
+                            true,
                           );
                         },
                       ),
@@ -221,19 +227,43 @@ class SmartBillingPage extends ConsumerWidget {
                   margin: EdgeInsets.zero,
                   child: Column(
                     children: [
-                      AppListTile(
-                        leading: Icons.auto_fix_high,
-                        title: l10n.autoScreenshotBilling,
-                        subtitle: Platform.isAndroid
-                            ? l10n.autoScreenshotBillingDesc
-                            : l10n.autoScreenshotBillingIosDesc,
-                        onTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const AutoBillingSettingsPage()),
-                          );
-                        },
-                      ),
-                      BeeTokens.cardDivider(context),
+                      // 分享记账（Android：门槛低、GP 版唯一截图类入口，置顶）
+                      if (Platform.isAndroid) ...[
+                        AppListTile(
+                          leading: Icons.share_outlined,
+                          title: l10n.shareBilling,
+                          subtitle: l10n.shareBillingDesc,
+                          onTap: () {
+                            _showFeatureGuideDialog(
+                              context,
+                              l10n.shareBilling,
+                              l10n.shareBillingGuide,
+                              l10n.smartBillingVisionAIRequired,
+                              true,
+                              actionHint: l10n.shareBillingActionHint,
+                            );
+                          },
+                        ),
+                        BeeTokens.cardDivider(context),
+                      ],
+                      // 截图自动记账
+                      if (!(Platform.isAndroid && _isGooglePlayBuild)) ...[
+                        AppListTile(
+                          leading: Icons.auto_fix_high,
+                          title: Platform.isAndroid
+                              ? l10n.autoScreenshotBilling
+                              : l10n.autoScreenshotBillingIosTitle,
+                          subtitle: Platform.isAndroid
+                              ? l10n.autoScreenshotBillingDesc
+                              : l10n.autoScreenshotBillingIosDesc,
+                          onTap: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const AutoBillingSettingsPage()),
+                            );
+                          },
+                        ),
+                        BeeTokens.cardDivider(context),
+                      ],
                       // 快捷指令
                       AppListTile(
                         leading: Icons.app_shortcut,

@@ -13,6 +13,7 @@ import '../../widgets/ui/capsule_switcher.dart';
 import '../../l10n/app_localizations.dart';
 import '../../services/export/share_poster_service.dart';
 import '../../data/db.dart' as db;
+import '../../utils/month_range.dart';
 
 class AnalyticsPage extends ConsumerStatefulWidget {
   const AnalyticsPage({super.key});
@@ -298,19 +299,23 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
+    final sd = ref.watch(currentMonthStartDayProvider);
     if (_scope == 'month') {
-      start = DateTime(selMonth.year, selMonth.month, 1);
-      final monthEnd = DateTime(selMonth.year, selMonth.month + 1, 1);
-      // 当前月份：只到今天；历史月份：到月末
-      final isCurrentMonth =
-          selMonth.year == now.year && selMonth.month == now.month;
-      end = isCurrentMonth ? today.add(const Duration(days: 1)) : monthEnd;
+      final range = periodForLabel(selMonth.year, selMonth.month, sd);
+      start = range.start;
+      // 「当前周期」判定用周期标签，不能用自然月相等(6月5日属5月周期)
+      final nowLabel = labelForDate(now, sd);
+      final isCurrentPeriod =
+          selMonth.year == nowLabel.year && selMonth.month == nowLabel.month;
+      // 当前周期：只到今天；历史周期：到周期末
+      end = isCurrentPeriod ? today.add(const Duration(days: 1)) : range.end;
     } else if (_scope == 'year') {
-      start = DateTime(selMonth.year, 1, 1);
-      final yearEnd = DateTime(selMonth.year + 1, 1, 1);
-      // 当前年份：只到今天；历史年份：到年末
-      final isCurrentYear = selMonth.year == now.year;
-      end = isCurrentYear ? today.add(const Duration(days: 1)) : yearEnd;
+      final range = yearRangeFor(selMonth.year, sd);
+      start = range.start;
+      // 当前年度周期：只到今天；历史：到年度周期末
+      final isCurrentYear =
+          !now.isBefore(range.start) && now.isBefore(range.end);
+      end = isCurrentYear ? today.add(const Duration(days: 1)) : range.end;
     } else {
       start = DateTime(1970, 1, 1);
       end = today.add(const Duration(days: 1));
@@ -662,10 +667,13 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                   }
                   if (seriesRaw is List<({DateTime month, double total})>) {
                     // 月数据：过滤到当前月份
-                    final isCurrentYear = selMonth.year == now.year;
+                    // 用周期标签判定，避免 sd≠1 时把尚未开始的周期画成零柱
+                    // （如 sd=10、6月5日时 June 桶尚未开始但自然月已是6月）
+                    final nowLabel = labelForDate(now, sd);
+                    final isCurrentYear = selMonth.year == nowLabel.year;
                     if (isCurrentYear) {
                       return seriesRaw
-                          .where((e) => e.month.month <= now.month)
+                          .where((e) => e.month.month <= nowLabel.month)
                           .toList();
                     }
                     return seriesRaw;
@@ -982,6 +990,7 @@ Future<List<dynamic>> _loadCategoryData(
     seriesFuture,
     repo.countByTypeInRange(
         ledgerId: ledgerId, type: type, start: start, end: end),
+    repo.getSharedSyntheticCategoriesForLedger(ledgerId),
   ]);
 
   final hierarchyData = results[0] as List<
@@ -993,7 +1002,9 @@ Future<List<dynamic>> _loadCategoryData(
         int level,
         double total
       })>;
-  final aggregated = await _aggregateTopLevelCategories(hierarchyData, repo);
+  final sharedSynthetic = results[3] as Map<int, db.Category>;
+  final aggregated =
+      await _aggregateTopLevelCategories(hierarchyData, repo, sharedSynthetic);
 
   return [aggregated, results[1], results[2]];
 }
@@ -1018,6 +1029,7 @@ Future<List<dynamic>> _loadBalanceData(
     expenseSeriesFuture,
     repo.countByTypeInRange(
         ledgerId: ledgerId, type: 'income', start: start, end: end),
+    repo.getSharedSyntheticCategoriesForLedger(ledgerId),
   ]);
 
   final hierarchyData = results[0] as List<
@@ -1029,7 +1041,9 @@ Future<List<dynamic>> _loadBalanceData(
         int level,
         double total
       })>;
-  final aggregated = await _aggregateTopLevelCategories(hierarchyData, repo);
+  final sharedSynthetic = results[6] as Map<int, db.Category>;
+  final aggregated =
+      await _aggregateTopLevelCategories(hierarchyData, repo, sharedSynthetic);
 
   return [
     aggregated,
@@ -1054,15 +1068,32 @@ Future<List<({int? id, String name, db.Category? category, double total, List<({
                   double total
                 })>
             hierarchyData,
-        dynamic repo) async {
+        dynamic repo,
+        Map<int, db.Category> sharedSynthetic) async {
   // 1. 先收集所有一级分类的完整信息
+  // §7 共享账本:Editor 的 tx 用 SharedLedger* 表(synthetic 负 id),
+  // 主表 getCategoryById 查不到。topLevelNames/Icons 兜底从 hierarchyData
+  // 直接取,渲染时不再依赖 db.Category 对象。
   final topLevelInfo = <int, db.Category>{};
+  final topLevelNames = <int?, String>{};
+  final topLevelIcons = <int?, String?>{};
   for (final item in hierarchyData) {
-    if (item.level == 1 && item.id != null) {
-      // 查询完整的分类对象
-      final category = await repo.getCategoryById(item.id!);
-      if (category != null) {
-        topLevelInfo[item.id!] = category;
+    if (item.level == 1) {
+      topLevelNames[item.id] = item.name;
+      topLevelIcons[item.id] = item.icon;
+      if (item.id != null && item.id! > 0) {
+        // 主表正 id:查 db.Category
+        final category = await repo.getCategoryById(item.id!);
+        if (category != null) {
+          topLevelInfo[item.id!] = category;
+        }
+      } else if (item.id != null && item.id! < 0) {
+        // SharedLedger* synthetic 负 id:从 sharedSynthetic 取合成 Category
+        // (含 iconType/customIconPath,UI 能正确渲染自定义图标)
+        final synthetic = sharedSynthetic[item.id!];
+        if (synthetic != null) {
+          topLevelInfo[item.id!] = synthetic;
+        }
       }
     }
   }
@@ -1078,7 +1109,18 @@ Future<List<({int? id, String name, db.Category? category, double total, List<({
   }
 
   // 3. 查询缺失的父分类信息
+  // §7 共享账本:负 id 是 SharedLedger* 的 synthetic id,主表 getCategoryById
+  // 查不到 — fallback 到 sharedSynthetic map(已含所有 SharedLedger 分类)。
+  // 顺便补 topLevelNames / topLevelIcons,让结果阶段(line 1146+)能正确
+  // fallback 渲染 L1 分类名字 / 图标。
   for (final parentId in parentIdsToQuery) {
+    if (parentId < 0 && sharedSynthetic.containsKey(parentId)) {
+      final synthetic = sharedSynthetic[parentId]!;
+      topLevelInfo[parentId] = synthetic;
+      topLevelNames[parentId] = synthetic.name;
+      topLevelIcons[parentId] = synthetic.icon;
+      continue;
+    }
     final category = await repo.getCategoryById(parentId);
     if (category != null) {
       topLevelInfo[parentId] = category;
@@ -1098,9 +1140,16 @@ Future<List<({int? id, String name, db.Category? category, double total, List<({
       // 二级分类：累加到父分类
       topLevelMap.update(item.parentId, (v) => v + item.total,
           ifAbsent: () => item.total);
-      // 收集子分类明细
+      // 收集子分类明细 — §7 共享账本:负 id 的 L2 走 sharedSynthetic
+      // fallback,主表 getCategoryById 查不到。这样点击一级分类才能展开
+      // SharedLedger* 的子分类,点击子分类才能进 CategoryDetailPage。
       if (item.id != null) {
-        final subCategory = await repo.getCategoryById(item.id!);
+        db.Category? subCategory;
+        if (item.id! < 0) {
+          subCategory = sharedSynthetic[item.id!];
+        } else {
+          subCategory = await repo.getCategoryById(item.id!);
+        }
         if (subCategory != null) {
           subCategoriesMap.putIfAbsent(item.parentId, () => []);
           subCategoriesMap[item.parentId]!.add((
@@ -1132,6 +1181,15 @@ Future<List<({int? id, String name, db.Category? category, double total, List<({
         id: id,
         name: category.name,
         category: category,
+        total: total,
+        subCategories: subs,
+      );
+    } else if (topLevelNames.containsKey(id)) {
+      // SharedLedger* 兜底:有 name 但 db.Category 为 null,UI 用 name fallback
+      return (
+        id: id,
+        name: topLevelNames[id]!,
+        category: null,
         total: total,
         subCategories: subs,
       );

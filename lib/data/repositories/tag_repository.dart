@@ -7,11 +7,21 @@ abstract class TagRepository {
   // 基础 CRUD 操作
   // ============================================
 
-  /// 创建标签
+  /// 创建标签。撞同名抛 [DuplicateNameException](name 全局唯一)。
+  /// 静默路径(import / 自动记账等)请用 [upsertTag](get-or-create 语义)。
+  /// [syncId] 可选:seed 类路径显式塞确定性 id,UI 不传走 auto v4。
   Future<int> createTag({
     required String name,
     String? color,
     int sortOrder = 0,
+    String? syncId,
+  });
+
+  /// 按 name 取标签;不存在则建一条。给 import / 自动记账等 get-or-create
+  /// 语义的静默路径用 —— 不会抛 [DuplicateNameException]。
+  Future<int> upsertTag({
+    required String name,
+    String? color,
   });
 
   /// 更新标签
@@ -88,7 +98,7 @@ abstract class TagRepository {
   Future<Map<int, int>> getAllTagTransactionCounts();
 
   /// 获取标签统计信息（总笔数、总支出、总收入）
-  Future<({int count, double expense, double income})> getTagStats(int tagId);
+  Future<({int count, double expense, double income})> getTagStats(int tagId, {int? ledgerId});
 
   /// 获取标签下的所有交易
   Future<List<Transaction>> getTransactionsByTag(int tagId);
@@ -117,7 +127,7 @@ abstract class TagRepository {
   Stream<List<Tag>> watchTagsForTransaction(int transactionId);
 
   /// 监听标签下的交易
-  Stream<List<Transaction>> watchTransactionsByTag(int tagId);
+  Stream<List<Transaction>> watchTransactionsByTag(int tagId, {int? ledgerId});
 
   // ============================================
   // 辅助方法

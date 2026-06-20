@@ -24,7 +24,9 @@ abstract class AccountRepository {
   /// 按币种分组获取账户统计
   Future<Map<String, List<Account>>> getAccountsGroupedByCurrency();
 
-  /// 创建账户
+  /// 创建账户。撞同名抛 [DuplicateNameException](name 全局唯一)。
+  /// 静默路径(import / app-link 等)请用 [upsertAccount](get-or-create 语义)。
+  /// [syncId] 可选:seed 类路径显式塞确定性 id,UI 不传走 auto v4。
   Future<int> createAccount({
     required int ledgerId,
     required String name,
@@ -37,6 +39,20 @@ abstract class AccountRepository {
     String? bankName,
     String? cardLastFour,
     String? note,
+    String? syncId,
+  });
+
+  /// 按 name 取账户(name 全局唯一,账户跨账本可用);不存在则建一条。
+  /// 给 import / app-link 等 get-or-create 语义的静默路径用 —— 不会抛
+  /// [DuplicateNameException]。
+  ///
+  /// [ledgerId] 是 legacy 字段(早期 schema 残留),账户实际跨账本可用,默认 0。
+  Future<int> upsertAccount({
+    required String name,
+    int ledgerId = 0,
+    String type = 'cash',
+    String currency = 'CNY',
+    double initialBalance = 0.0,
   });
 
   /// 更新账户
@@ -123,8 +139,13 @@ abstract class AccountRepository {
   Future<void> updateAccountSortOrders(List<({int id, int sortOrder})> updates);
 
   /// 分页获取账户交易
+  ///
+  /// [flow] 按资金流向过滤:
+  /// - 'expense':支出 + 转出(资金流出该账户)
+  /// - 'income':收入 + 转入(资金流入该账户)
+  /// - null:全部交易
   Future<List<Transaction>> getAccountTransactions(
-    int accountId, {int limit = 50, int offset = 0});
+    int accountId, {int limit = 50, int offset = 0, String? flow});
 
   /// 获取账户每日余额快照（用于余额趋势图）
   Future<List<({DateTime date, double balance})>> getAccountDailyBalances(
@@ -146,9 +167,34 @@ abstract class AccountRepository {
     required DateTime endDate,
   });
 
+  /// 净值趋势序列:每日 (资产合计, 负债合计, 净资产),已折算到主币种。
+  /// [ratesToBase]:各币种 → 主币种汇率(主币种自身 1.0);缺汇率的币种整条剔除
+  /// (与净资产卡 convertedNetWorth 同口径)。负债类(credit_card/loan)计入 liabilities。
+  Future<List<({DateTime date, double assets, double liabilities, double net})>>
+      getNetWorthTrendSeries({
+    required DateTime startDate,
+    required DateTime endDate,
+    required Map<String, double> ratesToBase,
+  });
+
   /// 获取资产构成（按账户类型分组的余额汇总）
   Future<List<({String type, double totalBalance})>> getAssetCompositionByType();
 
+  /// 按 (账户类型, 币种) 聚合的资产构成(多币种折算用)。currency 已大写归一。
+  Future<List<({String type, String currency, double totalBalance})>>
+      getAssetCompositionByTypeAndCurrency();
+
   /// 更新估值账户的当前估值
   Future<void> updateAccountValuation(int accountId, double newValue);
+
+  // ============================================
+  // 共享账本(§7 / v25)— 跨设备共享的 SharedLedgerAccounts 表
+  // ============================================
+
+  /// 按 syncId 查 SharedLedgerAccounts 行;Editor 视角下 tx 的
+  /// accountSyncIdOverride 走这条反查 → 上层再映射成 synthetic Account。
+  Future<SharedLedgerAccount?> getSharedAccountBySyncId(String syncId);
+
+  /// 账户使用中的币种集合(去重、大写)。多币种态判定与汇率页列表用。
+  Future<Set<String>> getUsedCurrencies();
 }

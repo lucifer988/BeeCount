@@ -10,9 +10,9 @@ import '../../styles/tokens.dart';
 import '../../utils/ui_scale_extensions.dart';
 import '../../providers/theme_providers.dart';
 import '../../l10n/app_localizations.dart';
-import '../../services/ai/bill_extraction_service.dart';
-import '../../services/ai/ai_constants.dart';
-import '../../services/ai/ai_provider_manager.dart';
+import '../../ai/core/prompt_builder.dart';
+import '../../ai/providers/ai_constants.dart';
+import '../../ai/providers/ai_provider_manager.dart';
 
 /// AI提示词编辑页面
 class AIPromptEditPage extends ConsumerStatefulWidget {
@@ -28,8 +28,8 @@ class _AIPromptEditPageState extends ConsumerState<AIPromptEditPage> {
   bool _hasChanges = false;
   String _savedPrompt = '';
 
-  /// 使用 BillExtractionService 中定义的默认模板
-  static String get defaultPrompt => BillExtractionService.defaultPromptTemplate;
+  /// 使用 PromptBuilder 中定义的默认模板
+  static String get defaultPrompt => PromptBuilder.defaultTemplate;
 
   /// 获取变量说明列表（使用国际化文案）
   List<Map<String, String>> _getVariables(AppLocalizations l10n) => [
@@ -56,7 +56,10 @@ class _AIPromptEditPageState extends ConsumerState<AIPromptEditPage> {
 
   Future<void> _loadPrompt() async {
     final prefs = await SharedPreferences.getInstance();
-    final customPrompt = prefs.getString(AIConstants.keyAiCustomPrompt) ?? defaultPrompt;
+    final saved = prefs.getString(AIConstants.keyAiCustomPrompt);
+    // 空字符串也回退到默认，避免编辑页显示空内容
+    final customPrompt =
+        (saved != null && saved.trim().isNotEmpty) ? saved : defaultPrompt;
 
     setState(() {
       _promptController.text = customPrompt;

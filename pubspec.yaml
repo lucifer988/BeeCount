@@ -18,6 +18,7 @@ dependencies:
   path_provider: ^2.1.4
   path: ^1.9.0
   intl: ^0.19.0
+  decimal: ^3.0.0
   fl_chart: ^0.68.0
   shared_preferences: ^2.3.2
   connectivity_plus: ^6.1.0
@@ -42,7 +43,6 @@ dependencies:
   reorderable_grid_view: ^2.2.8
   excel: ^4.0.6
   home_widget: ^0.7.0
-  google_mlkit_text_recognition: ^0.15.0
   image_picker: ^1.1.2
   flutter_image_compress: ^2.3.0
   image_cropper: 8.0.2
@@ -59,8 +59,6 @@ dependencies:
     path: packages/flutter_ai_kit
   flutter_ai_kit_zhipu:
     path: packages/flutter_ai_kit_zhipu
-  flutter_ai_kit_tflite:
-    path: packages/flutter_ai_kit_tflite
   flutter_ai_kit_openai:
     path: packages/flutter_ai_kit_openai
   flutter_cloud_sync:
@@ -76,6 +74,8 @@ dependencies:
   quick_actions: ^1.1.0
   table_calendar: ^3.1.0
   local_auth: ^2.3.0
+  webview_flutter: ^4.13.0
+  webview_flutter_wkwebview: ^3.23.0
 
 dev_dependencies:
   flutter_test:
@@ -83,7 +83,7 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   build_runner: ^2.4.10
   drift_dev: ^2.20.2
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
   # Testing framework enhancements
   mocktail: ^1.0.4
   integration_test:
@@ -95,10 +95,17 @@ dependency_overrides:
   # Fix image_cropper compatibility with Flutter 3.27.3
   image_cropper_platform_interface: 7.1.0
 
+# adaptive_* 三个素材由 scripts/gen_adaptive_icons.py 生成(几何取自 assets/logo.svg);
+# monochrome 是 Android 13+ themed icon(Pixel 动态图标)的单色镂空层,见 issue #186。
 flutter_launcher_icons:
   android: true
-  ios: true
-  image_path: assets/logo2.png
+  ios: false  # iOS 图标手工维护,0.14.x 会重写 Contents.json 格式,不要让它碰
+  # ⚠️ legacy mipmap ic_launcher.png 已钉死为线上版本(担心影响存量用户),
+  # 重跑本工具后务必恢复:git checkout main -- android/app/src/main/res/mipmap-*/ic_launcher.png
+  image_path: assets/icon/launcher_legacy.png  # 不透明白底!透明 legacy 图标在部分设备表现差
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/icon/adaptive_foreground.png
+  adaptive_icon_monochrome: assets/icon/adaptive_monochrome.png
 
 flutter:
   uses-material-design: true
@@ -109,6 +116,7 @@ flutter:
     - assets/logo2.png
     - assets/icons/
     - assets/images/
+    - assets/header_skins/
   # 字体已移动到可选依赖，使用系统字体以减少应用体积
   # fonts:
   #   - family: Inter

@@ -4,27 +4,38 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_cloud_sync/flutter_cloud_sync.dart' show CloudBackendType;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../providers.dart';
-import '../../providers/cloud_mode_providers.dart';
 import '../../models/ledger_display_item.dart';
 import '../../cloud/transactions_sync_manager.dart';
 import '../../cloud/sync_service.dart';
 import '../../cloud/sync/sync_engine.dart';
 import '../../widgets/ui/ui.dart';
 import '../../widgets/biz/biz.dart';
+import '../cloud/member_list_page.dart';
+import '../cloud/member_stats_page.dart';
+import '../cloud/join_shared_ledger_page.dart';
+import '../budget/budget_page.dart';
+import '../../styles/tokens.dart';
 import '../../utils/currencies.dart';
+import '../../services/attachment_service.dart';
 import '../../services/system/logger_service.dart';
 import '../../utils/ui_scale_extensions.dart';
 import '../../utils/format_utils.dart';
 import '../../services/billing/post_processor.dart';
 import '../../l10n/app_localizations.dart';
-import '../../styles/tokens.dart';
+import '../../providers/budget_providers.dart';
+import '../../widget/widget_manager.dart';
 
 class LedgersPageNew extends ConsumerStatefulWidget {
-  const LedgersPageNew({super.key});
+  /// 进入页面后自动弹出「创建账本」对话框。用于首页账本胶囊在没账本时直接
+  /// 引导用户新建,省一步点击。
+  final bool autoOpenCreateDialog;
+
+  const LedgersPageNew({super.key, this.autoOpenCreateDialog = false});
 
   @override
   ConsumerState<LedgersPageNew> createState() => _LedgersPageNewState();
@@ -32,6 +43,17 @@ class LedgersPageNew extends ConsumerStatefulWidget {
 
 class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
   bool _isRestoring = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoOpenCreateDialog) {
+      // 等首帧渲染完再弹,否则 context 上面没 Navigator 栈无法 showDialog。
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showCreateLedgerDialog(context);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,10 +77,13 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
         children: [
           PrimaryHeader(
             title: AppLocalizations.of(context).ledgersTitle,
-            showBack: false,
+            // 唯一入口是首页 ledger picker 的「管理账本」按钮通过 Navigator.push
+            // 进来,可以 pop。showBack=true 让用户回到首页。
+            showBack: true,
             actions: [
               // 新建账本
               IconButton(
+                tooltip: AppLocalizations.of(context).ledgersCreate,
                 onPressed: () => _showCreateLedgerDialog(context),
                 icon: Icon(Icons.add, color: BeeTokens.textPrimary(context)),
               ),
@@ -114,10 +139,23 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
       );
     }
 
-    // 如果本地和远程都为空
+    // 如果本地和远程都为空 — 用 AppEmpty(蜜蜂图标 + 文案)符合空态规范,
+    // 下面加一个 OutlinedButton 引导新建账本(welcome 未勾默认账本 / 老用户
+    // 导入配置不含账本的场景第一时间能直接动手)
     if (localLedgers.isEmpty && remoteLedgers.isEmpty && !remoteLoading) {
       return Center(
-        child: Text(AppLocalizations.of(context).ledgersEmpty),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppEmpty(text: AppLocalizations.of(context).ledgersEmpty),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => _showCreateLedgerDialog(context),
+              icon: const Icon(Icons.add),
+              label: Text(AppLocalizations.of(context).ledgersNew),
+            ),
+          ],
+        ),
       );
     }
 
@@ -143,11 +181,46 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
     bool remoteLoading = false,
     Object? remoteError,
   }) {
+    // 共享账本是 BeeCount Cloud 独有能力(server 端的成员管理 / WS fan-out
+     // 都在 BeeCount Cloud 后端),非 BeeCount Cloud 用户(local / WebDAV /
+     // S3 / Supabase 等)就算扫码也走不通,按钮藏起来避免误导。
+    final cloudConfigAsync = ref.watch(activeCloudConfigProvider);
+    final isBeeCountCloud =
+        cloudConfigAsync.valueOrNull?.type == CloudBackendType.beecountCloud;
+
     return ListView(
       padding: EdgeInsets.symmetric(
         vertical: 8.0.scaled(context, ref),
       ),
       children: [
+        // §7 共享账本入口 — 跟 web 端 LedgersSection 顶部"加入共享账本"
+        // 按钮一致,放在列表顶部,比 header 角落 icon 显眼。
+        if (isBeeCountCloud)
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              16.0.scaled(context, ref),
+              4.0.scaled(context, ref),
+              16.0.scaled(context, ref),
+              8.0.scaled(context, ref),
+            ),
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.group_add_outlined, size: 18),
+              label: Text(AppLocalizations.of(context).sharedJoinPageTitle),
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const JoinSharedLedgerPage(),
+                  ),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                minimumSize: Size(double.infinity, 40.0.scaled(context, ref)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
         // 本地账本区域
         if (localLedgers.isNotEmpty) ...[
           _SectionHeader(
@@ -159,6 +232,7 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
                 selected: !ledger.isRemoteOnly && ledger.id == currentId,
                 onTap: () => _handleLocalLedgerTap(ledger),
                 onLongPress: () => _showLocalLedgerActions(context, ledger),
+                onMore: () => _showLocalLedgerActions(context, ledger),
               )),
         ],
 
@@ -202,6 +276,7 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
                   ledger: ledger,
                   onTap: () => _handleRemoteLedgerTap(context, ledger),
                   onLongPress: () => _showRemoteLedgerActions(context, ledger),
+                  onMore: () => _showRemoteLedgerActions(context, ledger),
                 )),
         ],
 
@@ -240,6 +315,7 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
                             selected: !ledger.isRemoteOnly && ledger.id == currentId,
                             onTap: () => _handleLocalLedgerTap(ledger),
                             onLongPress: () => _showLocalLedgerActions(context, ledger),
+                            onMore: () => _showLocalLedgerActions(context, ledger),
                           )),
                     ],
 
@@ -259,6 +335,7 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
                             ledger: ledger,
                             onTap: () => _handleRemoteLedgerTap(context, ledger),
                             onLongPress: () => _showRemoteLedgerActions(context, ledger),
+                            onMore: () => _showRemoteLedgerActions(context, ledger),
                           )),
                     ],
 
@@ -356,6 +433,16 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
 
   /// 显示本地账本操作菜单
   Future<void> _showLocalLedgerActions(BuildContext context, LedgerDisplayItem ledger) async {
+    // v24 共享账本权限矩阵(详见 .docs/shared-ledger/01-product-design.md §6):
+    // - Owner / 单人账本:edit / clear / deleteLocal / delete + members 全部可用
+    // - Editor(共享账本 + myRole != owner):仅 members(看成员/退出),
+    //   隐藏 edit / clear / deleteLocal / delete 4 项 owner-only 操作
+    final isOwner = ledger.myRole == 'owner';
+    // 共享账本/成员管理是 BeeCount Cloud 独有能力,非 BeeCount Cloud 模式
+    // (local / WebDAV / S3 / Supabase 等)直接隐藏这些入口。
+    final cloudConfig = ref.read(activeCloudConfigProvider).valueOrNull;
+    final isBeeCountCloud =
+        cloudConfig?.type == CloudBackendType.beecountCloud;
     final action = await showDialog<String>(
       context: context,
       builder: (dctx) {
@@ -364,26 +451,82 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(AppLocalizations.of(context).ledgersActions),
           children: [
+            if (isOwner)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(dctx, 'edit'),
+                child: Row(
+                  children: [
+                    Icon(Icons.edit, color: primary),
+                    const SizedBox(width: 8),
+                    Text(AppLocalizations.of(context).ledgersEdit),
+                  ],
+                ),
+              ),
+            // 预算管理入口 — 每个账本独立预算,Owner/Editor 都能看(Editor 进
+            // BudgetPage 后 isEditorInShared 隐藏 + 按钮和编辑入口,只看不改)。
             SimpleDialogOption(
-              onPressed: () => Navigator.pop(dctx, 'edit'),
+              onPressed: () => Navigator.pop(dctx, 'budget'),
               child: Row(
                 children: [
-                  Icon(Icons.edit, color: primary),
+                  Icon(Icons.pie_chart_outline_rounded, color: primary),
                   const SizedBox(width: 8),
-                  Text(AppLocalizations.of(context).ledgersEdit),
+                  Text(AppLocalizations.of(context).budgetManagement),
                 ],
               ),
             ),
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(dctx, 'clear'),
-              child: Row(
-                children: [
-                  const Icon(Icons.clear_all, color: Colors.orange),
-                  const SizedBox(width: 8),
-                  Text(AppLocalizations.of(context).ledgersClear),
-                ],
+            // v24 共享账本:成员管理入口(任意 member 可看,owner 可邀请 / 踢人,
+            // Editor 可看列表 + 退出账本)。非 BeeCount Cloud 模式没成员概念,
+            // 整个入口隐藏。
+            if (isBeeCountCloud) ...[
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(dctx, 'members'),
+                child: Row(
+                  children: [
+                    Icon(Icons.people, color: primary),
+                    const SizedBox(width: 8),
+                    Text(AppLocalizations.of(context).sharedMembersPageTitle),
+                    if (ledger.isShared) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        '(${ledger.memberCount})',
+                        style: TextStyle(
+                          color: BeeTokens.textSecondary(context),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
+              // 共享账本成员收支统计(简版)— 只对已同步的共享账本展示。
+              if (ledger.isShared)
+                SimpleDialogOption(
+                  onPressed: () => Navigator.pop(dctx, 'memberStats'),
+                  child: Row(
+                    children: [
+                      Icon(Icons.insert_chart_outlined, color: primary),
+                      const SizedBox(width: 8),
+                      Text(AppLocalizations.of(context)
+                          .sharedMembersStatsTitle),
+                    ],
+                  ),
+                ),
+            ],
+            if (isOwner) ...[
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(dctx, 'clear'),
+                child: Row(
+                  children: [
+                    const Icon(Icons.clear_all, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    Text(AppLocalizations.of(context).ledgersClear),
+                  ],
+                ),
+              ),
+            ],
+            // "仅删除本地"对 Owner 和 Editor 都可用 — 这是本地清理动作,
+            // 不影响 server。Editor 用这个清掉 Owner 已删账本残留;Owner
+            // 用来清不想要的本地副本但保留 server 数据。
             SimpleDialogOption(
               onPressed: () => Navigator.pop(dctx, 'deleteLocal'),
               child: Row(
@@ -394,16 +537,18 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
                 ],
               ),
             ),
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(dctx, 'delete'),
-              child: Row(
-                children: [
-                  const Icon(Icons.delete_forever_outlined, color: Colors.redAccent),
-                  const SizedBox(width: 8),
-                  Text(AppLocalizations.of(context).ledgersDelete),
-                ],
+            if (isOwner) ...[
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(dctx, 'delete'),
+                child: Row(
+                  children: [
+                    const Icon(Icons.delete_forever_outlined, color: Colors.redAccent),
+                    const SizedBox(width: 8),
+                    Text(AppLocalizations.of(context).ledgersDelete),
+                  ],
+                ),
               ),
-            ),
+            ],
           ],
         );
       },
@@ -413,6 +558,51 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
 
     if (action == 'edit') {
       await _handleEditLedger(context, ledger);
+    } else if (action == 'budget') {
+      // 切到长按的账本(BudgetPage 内部 watch currentLedger,不接 ledgerId 参
+      // 数),再 push。语义上"从账本列表 → 长按 A → 预算管理"自然就是切到 A。
+      if (ref.read(currentLedgerIdProvider) != ledger.id) {
+        ref.read(currentLedgerIdProvider.notifier).state = ledger.id;
+        ref.invalidate(currentLedgerProvider);
+      }
+      if (mounted) {
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const BudgetPage()),
+        );
+      }
+    } else if (action == 'members') {
+      // 跳转成员管理 — 需要 ledger.syncId(server external_id)。本地仅 ledger
+      // (没 syncId,从未同步过的)无成员概念,提示用户先建云账户。
+      final row = await ref.read(repositoryProvider).getLedgerById(ledger.id);
+      final syncId = row?.syncId;
+      if (syncId == null || syncId.isEmpty) {
+        if (mounted) showToast(context, AppLocalizations.of(context).sharedRequiresCloudSync);
+        return;
+      }
+      if (mounted) {
+        await Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => MemberListPage(
+            ledgerExternalId: syncId,
+            ledgerName: ledger.name,
+          ),
+        ));
+      }
+    } else if (action == 'memberStats') {
+      // 跟成员管理同源:取 ledger.syncId 再跳 MemberStatsPage。
+      final row = await ref.read(repositoryProvider).getLedgerById(ledger.id);
+      final syncId = row?.syncId;
+      if (syncId == null || syncId.isEmpty) {
+        if (mounted) showToast(context, AppLocalizations.of(context).sharedRequiresCloudSync);
+        return;
+      }
+      if (mounted) {
+        await Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => MemberStatsPage(
+            ledgerExternalId: syncId,
+            ledgerName: ledger.name,
+          ),
+        ));
+      }
     } else if (action == 'clear') {
       await _handleClearLedger(context, ledger);
     } else if (action == 'deleteLocal') {
@@ -478,6 +668,7 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
       title: AppLocalizations.of(context).ledgersEdit,
       initialName: ledgerData.name,
       initialCurrency: ledgerData.currency,
+      initialMonthStartDay: ledgerData.monthStartDay,
     );
 
     if (result == null || !mounted) return;
@@ -486,17 +677,45 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
       id: ledger.id,
       name: result.name.trim(),
       currency: result.currency,
+      monthStartDay: result.monthStartDay,
     );
 
-    // 修改账本名称/币种后，需要触发同步以更新云端账本文件
+    // 修改账本元数据后,触发同步以更新云端(本地非 tx 写入不会自动 push)
     await PostProcessor.sync(ref, ledgerId: ledger.id);
 
     ref.read(ledgerListRefreshProvider.notifier).state++;
-    // 同时 invalidate currentLedgerProvider —— 它是 FutureProvider,只看
-    // currentLedgerIdProvider 变不变,名字改了但 id 没变 → 不会自动重跑,
-    // home 页 header 会继续显示旧名字。手动 invalidate 让 FutureProvider
-    // 下次读取时重取 Ledger row。
+    // currentLedgerProvider 已是 StreamProvider(Drift watch 自动推送),
+    // 此 invalidate 仅作防御性重订阅(如流曾进入 error 态),正常路径冗余无害。
     ref.invalidate(currentLedgerProvider);
+    ref.read(statsRefreshProvider.notifier).state++;
+    ref.read(budgetRefreshProvider.notifier).state++;
+
+    // 起始日影响小部件「本月」口径,立即刷新
+    try {
+      final repository = ref.read(repositoryProvider);
+      final redForIncome = ref.read(incomeExpenseColorSchemeProvider);
+      await WidgetManager().updateWidget(
+        repository,
+        ledger.id,
+        ref.read(primaryColorProvider),
+        redForIncome: redForIncome,
+      );
+    } catch (_) {}
+  }
+
+  /// 清空 / 删除账本后,精准清理该账本关联的附件物理文件(best-effort)。
+  /// 清空(clearLedgerTransactions)和删账本(deleteLedger)走批量 SQL 删行,
+  /// 只删 DB 行不删物理文件;调用方在删除前先收集该账本的 fileName 传入。
+  /// 按引用计数删除:其他账本/交易仍引用同一 fileName 的不会被误删。
+  Future<void> _cleanupLedgerAttachmentFiles(List<String> fileNames) async {
+    if (fileNames.isEmpty) return;
+    try {
+      await ref
+          .read(attachmentServiceProvider)
+          .deletePhysicalFilesIfUnreferenced(fileNames);
+    } catch (e) {
+      logger.warning('ledger', '清理账本附件文件失败（忽略）：$e');
+    }
   }
 
   /// 清空账本（删除所有账单，保留账本）
@@ -513,8 +732,13 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
     try {
       final repo = ref.read(repositoryProvider);
 
-      // 删除该账本的所有账单
+      // 删账单前先收集该账本附件 fileName(删行后就查不到了)
+      final attachmentFiles =
+          await repo.getAttachmentFileNamesByLedger(ledger.id);
+      // 删除该账本的所有账单(批量删行不删物理文件)
       await repo.clearLedgerTransactions(ledger.id);
+      // 删行后精准清理这些附件的物理文件(引用计数)
+      await _cleanupLedgerAttachmentFiles(attachmentFiles);
 
       if (!mounted) return;
 
@@ -542,14 +766,8 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
   Future<void> _handleDeleteLocalLedgerOnly(BuildContext context, LedgerDisplayItem ledger) async {
     final l10n = AppLocalizations.of(context);
 
-    // 检查是否只剩一个账本
     final repo = ref.read(repositoryProvider);
     final allLedgers = await repo.getAllLedgers();
-    if (allLedgers.length <= 1) {
-      if (!mounted) return;
-      showToast(context, l10n.ledgersCannotDeleteLastOne);
-      return;
-    }
 
     final confirmed = await AppDialog.confirm<bool>(
       context,
@@ -562,19 +780,30 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
     try {
       final current = ref.read(currentLedgerIdProvider);
 
-      // 如果删除的是当前账本，需要切换到另一个账本
+      // 如果删除的是当前账本,有其他账本就切一下;没有就让 currentLedger 落空
+      // (currentLedgerProvider 查不到 ledger 返 null,首页胶囊回到「+ 新建账本」
+      // 引导用户重新创建,符合"允许删完所有账本"的语义)。
       if (current == ledger.id) {
-        final remainAfterDelete = allLedgers.where((l) => l.id != ledger.id).toList();
-        // 由于已经检查过账本数量 > 1，这里一定有剩余账本
-        final newId = remainAfterDelete.first.id;
-        ref.read(currentLedgerIdProvider.notifier).state = newId;
+        final remainAfterDelete =
+            allLedgers.where((l) => l.id != ledger.id).toList();
+        if (remainAfterDelete.isNotEmpty) {
+          ref.read(currentLedgerIdProvider.notifier).state =
+              remainAfterDelete.first.id;
+        }
       }
 
+      // 删账本前先收集其附件 fileName(删行后查不到)
+      final attachmentFiles =
+          await repo.getAttachmentFileNamesByLedger(ledger.id);
       // 只删除本地账本，不删除云端备份
       await repo.deleteLedger(ledger.id);
+      await _cleanupLedgerAttachmentFiles(attachmentFiles);
 
       if (!mounted) return;
 
+      // currentLedgerProvider 已是 StreamProvider(Drift watch 自动推送),
+      // 此 invalidate 仅作防御性重订阅(如流曾进入 error 态),正常路径冗余无害。
+      ref.invalidate(currentLedgerProvider);
       ref.read(ledgerListRefreshProvider.notifier).state++;
       ref.read(statsRefreshProvider.notifier).state++;
 
@@ -593,14 +822,8 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
   Future<void> _handleDeleteLocalLedger(BuildContext context, LedgerDisplayItem ledger) async {
     final l10n = AppLocalizations.of(context);
 
-    // 检查是否只剩一个账本
     final repo = ref.read(repositoryProvider);
     final allLedgers = await repo.getAllLedgers();
-    if (allLedgers.length <= 1) {
-      if (!mounted) return;
-      showToast(context, l10n.ledgersCannotDeleteLastOne);
-      return;
-    }
 
     final confirmed = await AppDialog.confirm<bool>(
       context,
@@ -613,27 +836,52 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
     try {
       final sync = ref.read(syncServiceProvider);
       final current = ref.read(currentLedgerIdProvider);
+      final deletedLedgerId = ledger.id;
 
-      // 如果删除的是当前账本，需要切换到另一个账本
-      if (current == ledger.id) {
-        final remainAfterDelete = allLedgers.where((l) => l.id != ledger.id).toList();
-        // 由于已经检查过账本数量 > 1，这里一定有剩余账本
-        final newId = remainAfterDelete.first.id;
-        ref.read(currentLedgerIdProvider.notifier).state = newId;
+      // 如果删除的是当前账本,有其他账本就切一下;没有就让 currentLedger 落空
+      // (首页胶囊会回到「+ 新建账本」引导,允许删完所有账本)
+      if (current == deletedLedgerId) {
+        final remainAfterDelete =
+            allLedgers.where((l) => l.id != deletedLedgerId).toList();
+        if (remainAfterDelete.isNotEmpty) {
+          ref.read(currentLedgerIdProvider.notifier).state =
+              remainAfterDelete.first.id;
+        }
       }
 
-      // 删除本地账本
-      await repo.deleteLedger(ledger.id);
-
-      // 删除远程备份（忽略错误）
+      // 先调 deleteRemoteBackup:此刻 ledger 行还在,deleteRemoteBackup 内部能
+      // 查到 syncId 构造正确的 storage path。如果放到 deleteLedger 之后,
+      // ledger 行已被删,fallback 到 ledger.id.toString() 对 UUID 账本会
+      // miss(404),storage 快照清不掉。
       try {
-        await sync.deleteRemoteBackup(ledgerId: ledger.id);
+        await sync.deleteRemoteBackup(ledgerId: deletedLedgerId);
       } catch (e) {
         logger.warning('ledger', '删除云端备份失败（忽略）：$e');
       }
 
+      // 删除本地账本(repo.deleteLedger 内部会捕获 syncId,登记
+      // ledger_snapshot:delete + 级联 transaction:delete + budget:delete change)
+      // 删账本前先收集其附件 fileName(删行后查不到)
+      final attachmentFiles =
+          await repo.getAttachmentFileNamesByLedger(deletedLedgerId);
+      await repo.deleteLedger(deletedLedgerId);
+      await _cleanupLedgerAttachmentFiles(attachmentFiles);
+
+      // 显式触发对被删账本的 sync,把 delete change 推到 server 清掉 canonical
+      // state。SyncCoordinator 的 ledgerIdResolver 拿的是新切换的 currentLedger,
+      // 不会触发被删账本的 sync,不调这里 → delete change 永远 stranded → server
+      // 还保留账本和它的全部记录,remote ledgers 列表里还会显示。
+      // sync_engine.sync() 内部已对 ledgerRow==null 短路:跳过 hasRemote/fullPush/
+      // pull,只走 _push 把 delete change 推上去。
+      // ignore: unawaited_futures
+      PostProcessor.sync(ref, ledgerId: deletedLedgerId);
+
       if (!mounted) return;
 
+      // 同 _handleDeleteLocalLedgerOnly:显式 invalidate currentLedgerProvider,
+      // 哪怕 ledgerId 没切(没其他账本可切),也得让首页胶囊重读 → 查不到行 →
+      // 显示 "+ 新建账本"。
+      ref.invalidate(currentLedgerProvider);
       ref.read(ledgerListRefreshProvider.notifier).state++;
       ref.read(statsRefreshProvider.notifier).state++;
 
@@ -769,12 +1017,38 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
 
     try {
       final repo = ref.read(repositoryProvider);
-      await repo.createLedger(
+      final newLedgerId = await repo.createLedger(
         name: result.name.trim(),
         currency: result.currency,
       );
 
+      // 创建弹窗里也能选起始日:createLedger 不收该参数,创建后补写
+      if (result.monthStartDay != 1) {
+        await repo.updateLedger(
+            id: newLedgerId, monthStartDay: result.monthStartDay);
+      }
+
+      // 空账本场景(welcome 未勾默认账本 / 老用户导入配置不含账本)进入此页
+      // 创建第一个账本时,currentLedgerIdProvider 还指向默认值 1(无效),
+      // 必须切到新账本 id 否则首页 header 胶囊继续显示「新建账本」、列表为
+      // 空。已有账本时不动 currentLedger,保留用户当前所在账本。
+      if (!mounted) return;
+      final currentLedger = await ref.read(currentLedgerProvider.future);
+      if (currentLedger == null) {
+        ref.read(currentLedgerIdProvider.notifier).state = newLedgerId;
+        ref.invalidate(currentLedgerProvider);
+      }
+
       ref.read(ledgerListRefreshProvider.notifier).state++;
+
+      // 显式触发新账本的同步。createLedger 不会切换 currentLedger,所以
+      // SyncCoordinator 的 ledgerIdResolver 拿的还是旧账本,新账本的同步永
+      // 远不会被自动触发。这里直接对 newLedgerId 调一次 sync,让 server 立
+      // 即创建对应账本(走 sync 内的 !hasRemote → fullPush 路径)。
+      // 不调的话,要等到用户切到新账本并加第一笔交易才会被动同步,违反"创
+      // 建后立即可见"预期。
+      // ignore: unawaited_futures
+      PostProcessor.sync(ref, ledgerId: newLedgerId);
 
       if (!mounted) return;
       showToast(context, '账本创建成功');
@@ -785,14 +1059,16 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
   }
 
   /// 账本编辑对话框
-  Future<({String name, String currency})?> _showLedgerEditorDialog(
+  Future<({String name, String currency, int monthStartDay})?> _showLedgerEditorDialog(
     BuildContext context, {
     String? title,
     String? initialName,
     String? initialCurrency,
+    int? initialMonthStartDay,
   }) async {
     String name = initialName ?? '';
     String currency = initialCurrency ?? 'CNY';
+    int monthStartDay = initialMonthStartDay ?? 1;
     final nameCtrl = TextEditingController(text: name);
 
     final ok = await showDialog<bool>(
@@ -833,6 +1109,22 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
                     }
                   },
                 ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(AppLocalizations.of(ctx).ledgersMonthStartDay),
+                  subtitle: Text(monthStartDay <= 1
+                      ? AppLocalizations.of(ctx).ledgersMonthStartDayNatural
+                      : AppLocalizations.of(ctx)
+                          .ledgersMonthStartDayValue(monthStartDay)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () async {
+                    final picked = await _showMonthStartDayPicker(ctx,
+                        initial: monthStartDay);
+                    if (picked != null) {
+                      setState(() => monthStartDay = picked);
+                    }
+                  },
+                ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -865,10 +1157,76 @@ class _LedgersPageNewState extends ConsumerState<LedgersPageNew> {
     );
 
     if (ok == true && nameCtrl.text.trim().isNotEmpty) {
-      return (name: nameCtrl.text.trim(), currency: currency);
+      return (name: nameCtrl.text.trim(), currency: currency, monthStartDay: monthStartDay);
     }
 
     return null;
+  }
+
+  /// 28宫格月起始日选择器
+  Future<int?> _showMonthStartDayPicker(BuildContext context,
+      {required int initial}) {
+    return showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: BeeTokens.surfaceElevated(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        final primary = Theme.of(ctx).colorScheme.primary;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(AppLocalizations.of(ctx).ledgersMonthStartDay,
+                    style: Theme.of(ctx).textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(AppLocalizations.of(ctx).ledgersMonthStartDayHint,
+                    style: Theme.of(ctx)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: BeeTokens.textTertiary(ctx))),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: List.generate(28, (index) {
+                    final day = index + 1;
+                    final isSelected = initial == day;
+                    return InkWell(
+                      onTap: () => Navigator.pop(ctx, day),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: isSelected
+                              ? primary.withValues(alpha: 0.12)
+                              : Colors.transparent,
+                          border: Border.all(
+                              color:
+                                  isSelected ? primary : BeeTokens.divider(ctx)),
+                        ),
+                        child: Text('$day',
+                            style: TextStyle(
+                                color: isSelected
+                                    ? primary
+                                    : BeeTokens.textPrimary(ctx))),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   /// 货币选择器

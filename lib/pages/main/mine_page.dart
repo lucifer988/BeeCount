@@ -18,6 +18,7 @@ import '../cloud/cloud_service_page.dart';
 import '../../services/system/logger_service.dart';
 import '../../services/ui/avatar_service.dart';
 import '../../providers/avatar_providers.dart';
+import '../settings/help_center_page.dart';
 import '../../providers/sync_providers.dart' as sp;
 import '../../services/export/share_poster_service.dart';
 import '../../l10n/app_localizations.dart';
@@ -26,7 +27,6 @@ import '../category/category_migration_page.dart';
 import '../transaction/recurring_transaction_page.dart';
 import '../settings/reminder_settings_page.dart';
 import '../settings/language_settings_page.dart';
-import '../budget/budget_page.dart';
 import '../settings/widget_management_page.dart';
 import '../automation/auto_billing_settings_page.dart';
 import '../ai/ai_settings_page.dart';
@@ -297,7 +297,7 @@ class MinePage extends ConsumerWidget {
                       12.0.scaled(context, ref), 0),
                   child: Column(
                     children: [
-                      // 智能记账
+                      // 智能记账(共享账本入口已移到"账本管理"页 PrimaryHeader)
                       AppListTile(
                         leading: Icons.auto_awesome_outlined,
                         title: AppLocalizations.of(context).smartBilling,
@@ -330,23 +330,8 @@ class MinePage extends ConsumerWidget {
                         },
                       ),
                       BeeTokens.cardDivider(context),
-                      // 预算管理
-                      AppListTile(
-                        leading: Icons.pie_chart_outline_rounded,
-                        title: AppLocalizations.of(context).budgetManagement,
-                        subtitle:
-                            AppLocalizations.of(context).budgetManagementDesc,
-                        trailing: Icon(Icons.chevron_right,
-                            color: BeeTokens.iconTertiary(context),
-                            size: 20), // ⭐ 使用 Token
-                        onTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (_) => const BudgetPage()),
-                          );
-                        },
-                      ),
-                      BeeTokens.cardDivider(context),
+                      // 预算管理 已挪到「账本管理 → 长按某账本 → 预算管理」
+                      // (每个账本独立预算,放在账本菜单内语义更匹配)。
                       // 自动化功能
                       AppListTile(
                         leading: Icons.schedule_outlined,
@@ -403,15 +388,21 @@ class MinePage extends ConsumerWidget {
                         },
                       ),
                       BeeTokens.cardDivider(context),
-                      // 使用帮助
+                      // 使用帮助:默认 App 内嵌 WebView(embed 模式)。
+                      // 审核兜底:kHelpCenterInApp 改 false 重新打包即回退外部浏览器
                       AppListTile(
                         leading: Icons.help_outline,
                         title: AppLocalizations.of(context).mineHelp,
                         subtitle: AppLocalizations.of(context).mineHelpSubtitle,
                         onTap: () async {
-                          final locale = Localizations.localeOf(context);
-                          final url = Uri.parse(WebsiteUrls.docs(locale));
-                          await _tryOpenUrl(url);
+                          if (kHelpCenterInApp) {
+                            await Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => const HelpCenterPage()));
+                          } else {
+                            final locale = Localizations.localeOf(context);
+                            await _tryOpenUrl(
+                                Uri.parse(WebsiteUrls.docs(locale)));
+                          }
                         },
                       ),
                     ],
@@ -739,6 +730,65 @@ Future<void> _rateApp(BuildContext context) async {
   }
 }
 
+/// 昵称编辑弹窗。独立 StatefulWidget 自己持有 controller、在 dispose() 释放,
+/// 把 controller 的生命周期绑到弹窗本身 —— 弹窗(含 TextField)整棵子树卸载后
+/// 才释放,彻底规避调用方在退场动画期间提前 dispose 造成的 "used after disposed"。
+class _EditDisplayNameDialog extends StatefulWidget {
+  const _EditDisplayNameDialog({required this.initial});
+
+  final String initial;
+
+  @override
+  State<_EditDisplayNameDialog> createState() => _EditDisplayNameDialogState();
+}
+
+class _EditDisplayNameDialogState extends State<_EditDisplayNameDialog> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.initial);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.mineDisplayNameEditTitle),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        maxLength: 20,
+        textInputAction: TextInputAction.done,
+        decoration: InputDecoration(hintText: l10n.mineDisplayNameHint),
+        onSubmitted: (v) {
+          if (v.trim().isNotEmpty) Navigator.pop(context, v);
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.commonCancel),
+        ),
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _controller,
+          builder: (context, value, _) {
+            final canSave = value.text.trim().isNotEmpty;
+            return TextButton(
+              onPressed: canSave
+                  ? () => Navigator.pop(context, _controller.text)
+                  : null,
+              child: Text(l10n.commonSave),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
 /// 我的页面头部
 class _MinePageHeader extends ConsumerStatefulWidget {
   const _MinePageHeader();
@@ -771,15 +821,20 @@ class _MinePageHeaderState extends ConsumerState<_MinePageHeader> {
     }
   }
 
-  Future<void> _showAvatarOptions() async {
+  Future<void> _showProfileOptions() async {
     final l10n = AppLocalizations.of(context);
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.mineAvatarTitle),
+        title: Text(l10n.mineProfileEditTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            ListTile(
+              leading: const Icon(Icons.badge_outlined),
+              title: Text(l10n.mineDisplayNameEditTitle),
+              onTap: () => Navigator.pop(context, 'nickname'),
+            ),
             ListTile(
               leading: const Icon(Icons.photo_library),
               title: Text(l10n.mineAvatarFromGallery),
@@ -809,6 +864,11 @@ class _MinePageHeaderState extends ConsumerState<_MinePageHeader> {
     );
 
     if (result == null || !mounted) return;
+
+    if (result == 'nickname') {
+      await _showEditDisplayName();
+      return;
+    }
 
     try {
       if (result == 'gallery') {
@@ -873,6 +933,66 @@ class _MinePageHeaderState extends ConsumerState<_MinePageHeader> {
     }
   }
 
+  /// 按本地时段返回问候语 + 配图(太阳/月亮)+ 图标色:5-11 早 / 11-13 午 /
+  /// 13-18 下午 / 18-23 晚 / 23-5 夜。白天用太阳(暖色 amber→orange),晚上 / 夜里
+  /// 用月亮(violet / indigo);图标色不随主题变。
+  ({String text, IconData icon, Color color}) _greeting(AppLocalizations l10n) {
+    final h = DateTime.now().hour;
+    if (h >= 5 && h < 11) {
+      return (
+        text: l10n.mineGreetingMorning,
+        icon: Icons.wb_twilight,
+        color: const Color(0xFFF59E0B),
+      );
+    }
+    if (h >= 11 && h < 13) {
+      return (
+        text: l10n.mineGreetingNoon,
+        icon: Icons.wb_sunny,
+        color: const Color(0xFFF59E0B),
+      );
+    }
+    if (h >= 13 && h < 18) {
+      return (
+        text: l10n.mineGreetingAfternoon,
+        icon: Icons.wb_sunny,
+        color: const Color(0xFFF97316),
+      );
+    }
+    if (h >= 18 && h < 23) {
+      return (
+        text: l10n.mineGreetingEvening,
+        icon: Icons.nights_stay,
+        color: const Color(0xFF8B5CF6),
+      );
+    }
+    return (
+      text: l10n.mineGreetingNight,
+      icon: Icons.nightlight_round,
+      color: const Color(0xFF818CF8),
+    );
+  }
+
+  /// 编辑用户昵称。保存写入 displayNameProvider —— 本地持久化与(仅 BeeCount
+  /// Cloud 模式)云推送由 provider 的 listener 自动完成。v1 不支持清空已设昵称:
+  /// trim 为空则不改动。
+  ///
+  /// controller 由弹窗 [_EditDisplayNameDialog] 自己持有/释放,不在本异步方法里
+  /// `finally { controller.dispose() }` —— 否则取消时弹窗退场动画未结束、TextField
+  /// 仍挂载就释放 controller,会触发 "used after disposed" 红屏。
+  Future<void> _showEditDisplayName() async {
+    final current = ref.read(displayNameProvider);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => _EditDisplayNameDialog(initial: current),
+    );
+    if (result == null || !mounted) return;
+    final name = result.trim();
+    if (name.isEmpty || name == current) return; // v1 不清空;无变化不写
+    ref.read(displayNameProvider.notifier).state = name;
+    showToast(context, AppLocalizations.of(context).mineDisplayNameSaved);
+  }
+
   @override
   Widget build(BuildContext context) {
     // 头像功能不受云同步限制，任何时候都可以上传
@@ -890,6 +1010,17 @@ class _MinePageHeaderState extends ConsumerState<_MinePageHeader> {
     final balanceAsync = ref.watch(currentBalanceProvider(currentLedgerId));
     final currentLedgerAsync = ref.watch(currentLedgerProvider);
     final hide = ref.watch(hideAmountsProvider);
+    final displayName = ref.watch(displayNameProvider);
+    final l10n = AppLocalizations.of(context);
+    final greeting = _greeting(l10n);
+    final nameStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: BeeTokens.textPrimary(context),
+          fontWeight: FontWeight.w600,
+        );
+    // 已设置=「问候,昵称」(与 web 一致),未设置=Slogan。
+    final headerText = displayName.isNotEmpty
+        ? l10n.mineGreetingNamed(greeting.text, displayName)
+        : l10n.mineSlogan;
 
     final day = countsAsync.asData?.value.dayCount ?? 0;
     final tx = countsAsync.asData?.value.txCount ?? 0;
@@ -917,7 +1048,7 @@ class _MinePageHeaderState extends ConsumerState<_MinePageHeader> {
             children: [
               // 头像/Logo
               GestureDetector(
-                onTap: canEditAvatar ? _showAvatarOptions : null,
+                onTap: canEditAvatar ? _showProfileOptions : null,
                 child: Stack(
                   children: [
                     Container(
@@ -987,7 +1118,7 @@ class _MinePageHeaderState extends ConsumerState<_MinePageHeader> {
                             border: Border.all(color: Colors.white, width: 2),
                           ),
                           child: Icon(
-                            Icons.camera_alt,
+                            Icons.edit,
                             size: 12.0.scaled(context, ref),
                             color: Colors.white,
                           ),
@@ -997,42 +1128,45 @@ class _MinePageHeaderState extends ConsumerState<_MinePageHeader> {
                 ),
               ),
               SizedBox(height: 12.0.scaled(context, ref)),
-              // Slogan with eye icon - 手动偏移让文字视觉居中
-              Padding(
-                padding: EdgeInsets.only(
-                    left: 26.0.scaled(context, ref)), // 偏移量 = 图标(18) + 间距(8)
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center, // 垂直居中对齐
-                  children: [
-                    Text(
-                      AppLocalizations.of(context).mineSlogan,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: BeeTokens.textPrimary(context), // ⭐ 使用 Token
-                            fontWeight: FontWeight.w600,
-                          ),
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(width: 8.0.scaled(context, ref)),
-                    GestureDetector(
-                      onTap: () {
-                        final cur = ref.read(hideAmountsProvider);
-                        ref.read(hideAmountsProvider.notifier).state = !cur;
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 2.0.scaled(context, ref)),
-                        child: Icon(
-                          hide
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          size: 18,
-                          color: BeeTokens.textPrimary(context),
-                        ),
+              // 昵称行:已设置 = 「时段图标 + 问候,昵称」(与 web 一致),未设置 =
+              // Slogan;名字可点直接编辑(发现性主入口在头像:点头像→编辑资料,可改
+              // 昵称/头像)。小眼睛(隐藏金额)紧跟其后,整体居中。
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (displayName.isNotEmpty) ...[
+                    Icon(greeting.icon,
+                        size: 18.0.scaled(context, ref), color: greeting.color),
+                    SizedBox(width: 6.0.scaled(context, ref)),
+                  ],
+                  Flexible(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _showEditDisplayName,
+                      child: Text(
+                        headerText,
+                        style: nameStyle,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  SizedBox(width: 8.0.scaled(context, ref)),
+                  GestureDetector(
+                    onTap: () {
+                      final cur = ref.read(hideAmountsProvider);
+                      ref.read(hideAmountsProvider.notifier).state = !cur;
+                    },
+                    child: Icon(
+                      hide
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      size: 18,
+                      color: BeeTokens.textPrimary(context),
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 16.0.scaled(context, ref)),
               // 统计数据

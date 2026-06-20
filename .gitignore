@@ -16,6 +16,7 @@ migrate_working_dir/
 CLAUDE.md
 PROJECT_IMPROVEMENTS.md
 assets/config.json
+/marketing/
 
 
 # IntelliJ related
@@ -57,3 +58,5 @@ android/app/*.keystore
 .docs
 .tmp
 tmp
+# Playwright MCP capture artifacts
+.playwright-mcp/

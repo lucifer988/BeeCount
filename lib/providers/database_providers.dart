@@ -1,16 +1,14 @@
 import 'package:flutter_cloud_sync/flutter_cloud_sync.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:drift/drift.dart';
 import '../data/db.dart';
 import '../data/repositories/local/local_repository.dart';
-import '../data/repositories/cloud/cloud_repository.dart';
 import '../data/repositories/base_repository.dart';
 import '../cloud/sync/change_tracker.dart';
 import '../services/system/logger_service.dart';
+import '../utils/shared_ledger_picker_filter.dart';
+import 'shared_ledger_providers.dart';
 import 'sync_providers.dart';
-import 'cloud_mode_providers.dart';
-import 'supabase_providers.dart';
 
 // 数据库Provider
 final databaseProvider = Provider<BeeDatabase>((ref) {
@@ -19,76 +17,38 @@ final databaseProvider = Provider<BeeDatabase>((ref) {
   return db;
 });
 
-// 仓储Provider - 根据 AppMode 自动切换实现
-// 返回 BaseRepository 类型，确保类型安全
-// LocalRepository (本地模式) 和 CloudRepository (云端模式) 都继承 BaseRepository
+// 仓储Provider — 一律 LocalRepository(本地优先 + ChangeTracker 推 BeeCount Cloud)。
+// 历史上还有过 CloudRepository(数据全存 Supabase),但 BeeCount Cloud 上线后
+// 整条范式从「云优先」迁到「本地优先 + 推送」,Cloud* 仓库整组随之删掉。
 final repositoryProvider = Provider<BaseRepository>((ref) {
-  final mode = ref.watch(appModeProvider);
   final db = ref.watch(databaseProvider);
 
-  logger.info('RepositoryProvider', '当前模式: ${mode.label}');
-
-  switch (mode) {
-    case AppMode.local:
-      // 本地优先模式：使用 LocalRepository（基于 Drift）
-      // 仅 BeeCount Cloud 模式注入 ChangeTracker（增量同步变更追踪）
-      final config = ref.watch(activeCloudConfigProvider).valueOrNull;
-      final tracker = (config?.type == CloudBackendType.beecountCloud && config!.valid)
-          ? ChangeTracker(db)
-          : null;
-      logger.info('RepositoryProvider', '✅ 使用 LocalRepository (本地模式, changeTracker=${tracker != null})');
-      return LocalRepository(db, changeTracker: tracker);
-
-    case AppMode.cloud:
-      // 仅云端模式：使用 CloudRepository（基于 Supabase）
-      final supabaseAsync = ref.watch(supabaseInstanceProvider);
-
-      logger.info('RepositoryProvider', 'Supabase 状态: hasValue=${supabaseAsync.hasValue}, value=${supabaseAsync.value != null ? "已加载" : "null"}');
-
-      // 如果 Supabase 未加载完成或为 null，回退到本地模式
-      if (!supabaseAsync.hasValue || supabaseAsync.value == null) {
-        logger.warning('RepositoryProvider', '⚠️ Supabase 未就绪，回退到 LocalRepository');
-        return LocalRepository(db);
-      }
-
-      logger.info('RepositoryProvider', '✅ 使用 CloudRepository (仅云端模式)');
-      return CloudRepository(supabaseAsync.value!);
-  }
-});
-
-// 新增：根据 AppMode 返回对应的 Repository 实现
-// 这个 Provider 返回抽象接口类型，可以是本地或云端实现
-final dynamicRepositoryProvider = Provider<Object>((ref) {
-  final mode = ref.watch(appModeProvider);
-  final db = ref.watch(databaseProvider);
-
-  switch (mode) {
-    case AppMode.local:
-      // 本地模式：使用 LocalRepository（基于 Drift）
-      return LocalRepository(db);
-
-    case AppMode.cloud:
-      // 云端模式：使用 CloudRepository（基于 Supabase）
-      final supabaseAsync = ref.watch(supabaseInstanceProvider);
-
-      // 如果 Supabase 未加载完成或为 null，回退到本地模式
-      if (!supabaseAsync.hasValue || supabaseAsync.value == null) {
-        return LocalRepository(db);
-      }
-
-      return CloudRepository(supabaseAsync.value!);
-  }
+  // 仅 BeeCount Cloud 后端激活时注入 ChangeTracker(记录增量变更供同步引擎推送)。
+  // 其它备份后端(iCloud / WebDAV / S3 / Supabase)走快照备份路径,不需要变更追踪。
+  final config = ref.watch(activeCloudConfigProvider).valueOrNull;
+  final tracker = (config?.type == CloudBackendType.beecountCloud && config!.valid)
+      ? ChangeTracker(db)
+      : null;
+  logger.info('RepositoryProvider', '✅ LocalRepository (changeTracker=${tracker != null})');
+  return LocalRepository(db, changeTracker: tracker);
 });
 
 // 记住当前账本：启动时加载，切换时持久化
 final currentLedgerIdProvider = StateProvider<int>((ref) => 1);
 
-// 获取当前账本的详细信息
-final currentLedgerProvider = FutureProvider<Ledger?>((ref) async {
+// 获取当前账本的详细信息。
+// StreamProvider:sync pull / 本地编辑改了 ledger 行(如 monthStartDay)会自动
+// 重建 watcher,B 端改设置 A 端自动刷新,无需手动 invalidate。
+final currentLedgerProvider = StreamProvider<Ledger?>((ref) {
   final ledgerId = ref.watch(currentLedgerIdProvider);
   final repo = ref.watch(repositoryProvider);
+  return repo.watchLedger(ledgerId);
+});
 
-  return await repo.getLedgerById(ledgerId);
+/// 当前账本的每月起始日(1-28);未加载完成时按 1(自然月)兜底。
+final currentMonthStartDayProvider = Provider<int>((ref) {
+  final ledger = ref.watch(currentLedgerProvider).valueOrNull;
+  return (ledger?.monthStartDay ?? 1).clamp(1, 28);
 });
 
 // 获取指定账本的详细信息
@@ -154,6 +114,8 @@ final categoriesProvider = FutureProvider<List<Category>>((ref) async {
 // 使用 autoDispose 在页面关闭时自动取消订阅
 final categoriesWithCountProvider = StreamProvider.autoDispose<List<({Category category, int transactionCount})>>((ref) {
   final repo = ref.watch(repositoryProvider);
+  // §7 决策 v25:Owner 资源不再 mirror 主表,管理页直接读主 Categories
+  // 自然只看到用户自己 user-global 行,无需过滤。
   return repo.watchCategoriesWithCount();
 });
 
@@ -189,6 +151,47 @@ final allAccountsStreamProvider = StreamProvider<List<Account>>((ref) {
   logger.info('AllAccountsStream', '使用的 Repository 类型: ${repo.runtimeType}');
   final stream = repo.watchAllAccounts();
   return stream;
+});
+
+// §7 v25:tx 反查账户 — 综合考虑 accountId int + accountSyncIdOverride。
+// Editor 在共享账本下记的 tx,accountId 是 null,override 是 Owner's syncId,
+// 走 SharedLedgerAccounts 表反查 → 转 synthetic Account 返回。
+final accountForTxProvider =
+    FutureProvider.family<Account?, ({int? accountId, String? syncIdOverride})>(
+        (ref, key) async {
+  ref.watch(syncGenerationProvider);
+  // §7 共享账本:WS shared_resource_change 推送时也强制重算,跟 picker /
+  // 洞察 等其它 widget 监听同一个 tick 一致;否则共享账户改名 tx 列表
+  // 不刷新。
+  ref.watch(sharedResourceRefreshProvider);
+  final repo = ref.watch(repositoryProvider);
+  if (key.accountId != null && key.accountId! >= 0) {
+    return await repo.getAccount(key.accountId!);
+  }
+  final ov = key.syncIdOverride;
+  if (ov == null || ov.isEmpty) return null;
+  final shared = await repo.getSharedAccountBySyncId(ov);
+  if (shared == null) return null;
+  return Account(
+    // 用 syntheticIdForSyncId 而不是 -1 — 跟 picker / 详情页路径统一,
+    // 避免不同 syncId 全部撞到同一个 id。
+    id: syntheticIdForSyncId(shared.syncId),
+    ledgerId: 0,
+    name: shared.name,
+    type: shared.accountType,
+    currency: shared.currency,
+    initialBalance: shared.initialBalance ?? 0.0,
+    createdAt: null,
+    updatedAt: null,
+    sortOrder: 0,
+    creditLimit: shared.creditLimit,
+    billingDay: shared.billingDay,
+    paymentDueDay: shared.paymentDueDay,
+    bankName: shared.bankName,
+    cardLastFour: shared.cardLastFour,
+    note: shared.note,
+    syncId: shared.syncId,
+  );
 });
 
 // 获取单个账户信息

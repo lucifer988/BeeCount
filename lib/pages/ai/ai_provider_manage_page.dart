@@ -7,10 +7,10 @@ import '../../widgets/biz/section_card.dart';
 import '../../styles/tokens.dart';
 import '../../utils/ui_scale_extensions.dart';
 import '../../providers/theme_providers.dart';
-import '../../services/ai/ai_provider_config.dart';
-import '../../services/ai/ai_provider_manager.dart';
-import '../../services/ai/ai_provider_factory.dart';
-import '../../services/ai/ai_constants.dart';
+import '../../ai/providers/ai_provider_config.dart';
+import '../../ai/providers/ai_provider_manager.dart';
+import '../../ai/providers/ai_provider_factory.dart';
+import '../../ai/providers/ai_constants.dart';
 import '../../l10n/app_localizations.dart';
 import '../../utils/website_urls.dart';
 
@@ -469,7 +469,7 @@ class _AIProviderEditPageState extends ConsumerState<AIProviderEditPage> {
                           enabled: !_isBuiltIn,
                           decoration: InputDecoration(
                             labelText: 'Base URL',
-                            hintText: 'https://api.openai.com/v1',
+                            hintText: 'https://api.example.com/v1',
                             helperText: _isBuiltIn ? null : l10n.aiCustomBaseUrlHelper,
                             border: const OutlineInputBorder(),
                             isDense: true,

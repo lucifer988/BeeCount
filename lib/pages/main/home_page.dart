@@ -17,11 +17,15 @@ import '../transaction/search_page.dart';
 import '../ai/ai_chat_page.dart';
 import '../../l10n/app_localizations.dart';
 import '../../services/system/logger_service.dart';
+import '../../utils/format_utils.dart';
+import '../../utils/month_range.dart';
 import '../../services/export/share_poster_service.dart';
 import '../report/annual_report_page.dart';
 import '../calendar/calendar_page.dart';
 import '../../widgets/biz/ledger_picker_sheet.dart';
 import '../../widgets/biz/home_budget_summary.dart';
+import 'ledgers_page_new.dart';
+import '../../providers/shared_ledger_providers.dart';
 
 // 优化版首页 - 使用FlutterListView实现精准定位和丝滑跳转
 class HomePage extends ConsumerStatefulWidget {
@@ -44,6 +48,17 @@ class _HomePageState extends ConsumerState<HomePage> {
   // StreamBuilder 刷新计数器
   int _streamBuilderKey = 0;
   int? _lastLedgerId;
+
+  // home build 缓存的 tx stream。repo.transactionsWithCategoryAll 内部每次调
+  // 都 new StreamController,如果在 build 里直接调,只要 home 因任何 setState
+  // (例如 _showBudgetSetupHint / _showLastMonthReminder 异步加载完成)重 build,
+  // StreamBuilder 看到 stream 引用变了就重新订阅 → snapshot.data 短暂为 null
+  // → fallback 到 cachedFullData(只有前 20 条预加载)→ 等 Drift 推数据 → 切回
+  // 完整列表,视觉上"整页闪一下"。这里把 stream 缓存到 State,只在 ledgerId
+  // 变化时重建,无关 setState 重 build 时复用同一 stream 引用。
+  Stream<List<({Transaction t, Category? category, Account? account, Account? toAccount})>>?
+      _txStream;
+  int? _txStreamLedgerId;
 
   // 月初提醒状态
   bool _showLastMonthReminder = false;
@@ -185,7 +200,10 @@ class _HomePageState extends ConsumerState<HomePage> {
       // 使用TransactionList组件的跳转方法
       final transactionListState = _transactionListKey.currentState;
       if (transactionListState != null && mounted) {
-        transactionListState.jumpToMonth(targetMonth);
+        transactionListState.jumpToMonth(
+          targetMonth,
+          startDay: ref.read(currentMonthStartDayProvider),
+        );
       }
     } finally {
       if (mounted) {
@@ -228,7 +246,10 @@ class _HomePageState extends ConsumerState<HomePage> {
 
       final year = int.parse(dateParts[0]);
       final month = int.parse(dateParts[1]);
-      final detectedMonth = DateTime(year, month, 1);
+      final day = int.parse(dateParts[2]);
+      // 交易日期 → 它所属周期的标签月(startDay>1 时月初几天属上个标签月)
+      final sd = ref.read(currentMonthStartDayProvider);
+      final detectedMonth = labelForDate(DateTime(year, month, day), sd);
 
       // 更新选中月份
       final currentSelected = ref.read(selectedMonthProvider);
@@ -266,7 +287,9 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget _buildLastMonthReminderCard(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final now = DateTime.now();
-    final lastMonth = DateTime(now.year, now.month - 1, 1);
+    final sd = ref.watch(currentMonthStartDayProvider);
+    final currentLabel = labelForDate(now, sd);
+    final lastMonth = DateTime(currentLabel.year, currentLabel.month - 1, 1);
     final monthFormat = DateFormat.MMMM(l10n.localeName);
     final primaryColor = ref.watch(primaryColorProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -632,6 +655,20 @@ class _HomePageState extends ConsumerState<HomePage> {
       }
     });
 
+    // D 方案后:Drift JOIN + SharedLedger* table-watch 已经在 Repository 层
+    // 自动响应共享资源变化(分类 / 账户),tx stream 会重 emit 出带新 name
+    // 的记录。不再需要在 HomePage 强制 _streamBuilderKey++ / invalidate
+    // accountForTxProvider 这种激进刷新 — 那会让 Editor 编辑 tx 的本地
+    // push-pull 循环触发整个 StreamBuilder 子树重建("首页全局刷新"症状)。
+    // 如果有 forceStreamModeImmediate 的语义需要(强制把 preloaded 切到
+    // live stream),可以单独 listen sharedResourceRefreshProvider 处理,
+    // 但 StreamBuilder key 重建保持不动。
+    ref.listen<int>(sharedResourceRefreshProvider, (previous, next) {
+      if (previous != next) {
+        _transactionListKey.currentState?.forceStreamModeImmediate();
+      }
+    });
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor, // ⭐ 自适应背景色
       body: Column(
@@ -650,82 +687,174 @@ class _HomePageState extends ConsumerState<HomePage> {
                     height: 48,
                     child: Row(
                       children: [
-                        // 左侧：BeeIcon + 标题 + 账本切换胶囊
+                        // 左侧：BeeIcon + 标题 + 账本切换胶囊（用 Expanded 包住，
+                        // 标题在空间富余时显示自然宽度，仅在不够时 ellipsis）
                         BeeIcon(
                           color: Theme.of(context).colorScheme.primary,
                           size: 28,
                         ),
-                        Text(
-                          AppLocalizations.of(context).homeAppTitle,
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge
-                                        ?.color,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                        const SizedBox(width: 6),
-                        Consumer(builder: (context, ref, _) {
-                          final currentLedger =
-                              ref.watch(currentLedgerProvider);
-                          return currentLedger.when(
-                            data: (ledger) => GestureDetector(
-                              onTap: () => showLedgerPicker(context),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.white.withValues(alpha: 0.1)
-                                      : Colors.black.withValues(alpha: 0.05),
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Flexible(
-                                      child: ConstrainedBox(
-                                        constraints:
-                                            const BoxConstraints(maxWidth: 120),
-                                        child: Text(
-                                          ledger?.name ?? '',
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                            color: Theme.of(context)
-                                                .textTheme
-                                                .bodyLarge
-                                                ?.color,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Icon(
-                                      Icons.keyboard_arrow_down,
-                                      size: 16,
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              // 标题取自然宽度,溢出时优先压缩账本名而不是 app 名
+                              Text(
+                                AppLocalizations.of(context).homeAppTitle,
+                                maxLines: 1,
+                                softWrap: false,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
                                       color: Theme.of(context)
                                           .textTheme
-                                          .bodyMedium
-                                          ?.color
-                                          ?.withOpacity(0.5),
+                                          .bodyLarge
+                                          ?.color,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                  ],
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Consumer(builder: (context, ref, _) {
+                                    final currentLedger =
+                                        ref.watch(currentLedgerProvider);
+                                    return currentLedger.when(
+                                      // invalidate(远端改名 / 改币种)期间继续
+                                      // 显示旧值,避免账本名胶囊瞬间消失再出现 —
+                                      // 用户感知"首页全量刷新"的主要来源。
+                                      skipLoadingOnReload: true,
+                                      data: (ledger) {
+                                        // ledger == null:还没有账本(welcome 未勾默认账本
+                                        // / 老用户导入配置不含账本),胶囊直接显示「新建账本」
+                                        // + 加号图标,点击 push LedgersPage 并自动弹创建对
+                                        // 话框,省两步点击。
+                                        final isEmpty = ledger == null;
+                                        return GestureDetector(
+                                          onTap: () {
+                                            if (isEmpty) {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      const LedgersPageNew(
+                                                          autoOpenCreateDialog:
+                                                              true),
+                                                ),
+                                              );
+                                            } else {
+                                              showLedgerPicker(context);
+                                            }
+                                          },
+                                          child: Container(
+                                            padding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.white
+                                                      .withValues(alpha: 0.1)
+                                                  : Colors.black
+                                                      .withValues(alpha: 0.05),
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                if (isEmpty) ...[
+                                                  Icon(
+                                                    Icons.add,
+                                                    size: 16,
+                                                    color: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyLarge
+                                                        ?.color,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                ],
+                                                Flexible(
+                                                  child: Text(
+                                                    isEmpty
+                                                        ? AppLocalizations.of(
+                                                                context)
+                                                            .ledgersNew
+                                                        : translateLedgerName(
+                                                            context,
+                                                            ledger.name),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    softWrap: false,
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color: Theme.of(context)
+                                                          .textTheme
+                                                          .bodyLarge
+                                                          ?.color,
+                                                    ),
+                                                  ),
+                                                ),
+                                                // v24 共享账本:header 也显示 🤝 角标 + 成员数
+                                                if (!isEmpty &&
+                                                    ledger.isShared) ...[
+                                                  const SizedBox(width: 4),
+                                                  Icon(
+                                                    Icons.handshake,
+                                                    size: 12,
+                                                    color: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium
+                                                        ?.color
+                                                        ?.withOpacity(0.7),
+                                                  ),
+                                                  const SizedBox(width: 1),
+                                                  Text(
+                                                    '${ledger.memberCount}',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Theme.of(context)
+                                                          .textTheme
+                                                          .bodyMedium
+                                                          ?.color
+                                                          ?.withOpacity(0.7),
+                                                    ),
+                                                  ),
+                                                ],
+                                                // 没账本时不显示下拉箭头(没东西可选)
+                                                if (!isEmpty) ...[
+                                                  const SizedBox(width: 2),
+                                                  Icon(
+                                                    Icons.keyboard_arrow_down,
+                                                    size: 16,
+                                                    color: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium
+                                                        ?.color
+                                                        ?.withOpacity(0.5),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      loading: () => const SizedBox.shrink(),
+                                      error: (_, __) => const SizedBox.shrink(),
+                                    );
+                                  }),
                                 ),
                               ),
-                            ),
-                            loading: () => const SizedBox.shrink(),
-                            error: (_, __) => const SizedBox.shrink(),
-                          );
-                        }),
-                        const Spacer(),
+                            ],
+                          ),
+                        ),
                         // 右侧操作按钮
                         if (aiEnabled)
                           IconButton(
@@ -903,9 +1032,18 @@ class _HomePageState extends ConsumerState<HomePage> {
             return const SizedBox.shrink();
           }),
           Expanded(
-            child: StreamBuilder<List<({Transaction t, Category? category})>>(
+            child: StreamBuilder<List<({Transaction t, Category? category, Account? account, Account? toAccount})>>(
               key: ValueKey('transactions_$_streamBuilderKey'), // 使用递增key强制重建
-              stream: repo.transactionsWithCategoryAll(ledgerId: ledgerId),
+              stream: () {
+                // ledgerId 变了或第一次进来才重建 stream;无关 setState(预算
+                // 提示卡片、月度提醒等)的 home rebuild 复用同一 stream 引用,
+                // StreamBuilder 不会重新订阅,不会闪到 fallback 数据。
+                if (_txStream == null || _txStreamLedgerId != ledgerId) {
+                  _txStream = repo.transactionsWithCategoryAll(ledgerId: ledgerId);
+                  _txStreamLedgerId = ledgerId;
+                }
+                return _txStream;
+              }(),
               builder: (context, snapshot) {
                 // Stream 数据到来前，使用预加载数据；到来后使用 Stream 数据
                 final streamData = snapshot.data;
@@ -916,8 +1054,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                 final transactions = hasStreamData
                     ? streamData
                     : (cachedFullData
-                            ?.map(
-                                (item) => (t: item.t, category: item.category))
+                            ?.map((item) => (
+                                  t: item.t,
+                                  category: item.category,
+                                  account: item.account,
+                                  toAccount: item.toAccount,
+                                ))
                             .toList() ??
                         []);
 

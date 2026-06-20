@@ -2,19 +2,181 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:decimal/decimal.dart';
+import 'package:flutter_cloud_sync/flutter_cloud_sync.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:beecount/widgets/ui/wheel_date_picker.dart';
 import '../../data/db.dart';
+import '../../providers/shared_ledger_providers.dart';
 import '../../styles/tokens.dart';
 import '../../l10n/app_localizations.dart';
 import '../../services/data/note_history_service.dart';
 import '../../services/attachment_service.dart';
 import '../../providers.dart';
+import '../../utils/ui_scale_extensions.dart';
 import '../../pages/tag/widgets/tag_selector.dart';
 import 'note_picker_dialog.dart';
 import 'account_selector.dart';
 import 'tag_chip.dart';
 import '../../pages/attachment/attachment_preview_page.dart';
+
+/// 共享账本 tx 作者信息(创建人 + 最后编辑人)— 编辑器底部 sheet 用。
+/// editingTransactionId=null(新建 tx)或非共享账本 → 返 null,widget 不渲染。
+class _TxAuthorInfo {
+  const _TxAuthorInfo({
+    required this.creatorUserId,
+    required this.lastEditedByUserId,
+    required this.currentUserId,
+    required this.members,
+  });
+
+  final String? creatorUserId;
+  final String? lastEditedByUserId;
+  final String? currentUserId;
+  final List<BeeCountCloudLedgerMember> members;
+
+  BeeCountCloudLedgerMember? memberOf(String? userId) {
+    if (userId == null || userId.isEmpty) return null;
+    for (final m in members) {
+      if (m.userId == userId) return m;
+    }
+    return null;
+  }
+}
+
+final _txAuthorInfoProvider =
+    FutureProvider.autoDispose.family<_TxAuthorInfo?, int>((ref, txId) async {
+  final repo = ref.watch(repositoryProvider);
+  final tx = await repo.getTransactionById(txId);
+  if (tx == null) return null;
+  final ledger = await repo.getLedgerById(tx.ledgerId);
+  if (ledger == null || !ledger.isShared) return null;
+  final ledgerSyncId = ledger.syncId;
+  if (ledgerSyncId == null || ledgerSyncId.isEmpty) return null;
+  if (tx.createdByUserId == null && tx.lastEditedByUserId == null) return null;
+
+  final cloud = await ref.watch(beecountCloudProviderInstance.future);
+  if (cloud == null) return null;
+  ref.watch(sharedResourceRefreshProvider);
+  final me = await cloud.auth.currentUser;
+  final members = await cloud.listMembers(ledgerId: ledgerSyncId);
+  return _TxAuthorInfo(
+    creatorUserId: tx.createdByUserId,
+    lastEditedByUserId: tx.lastEditedByUserId,
+    currentUserId: me?.id,
+    members: members,
+  );
+});
+
+/// 紧凑头像组 — UX 规则(用户指定):
+///   - 创建人 != 编辑人:展示两个头像(long-press tooltip 区分"创建" / "最后编辑")
+///   - 创建人 == 编辑人 == 自己:不展示(自己的 tx 看自己头像无意义)
+///   - 创建人 == 编辑人 != 自己:展示一个头像(long-press tooltip "X 创建并编辑")
+class _TxAuthorAvatars extends ConsumerWidget {
+  const _TxAuthorAvatars({required this.editingTransactionId});
+
+  final int editingTransactionId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final infoAsync = ref.watch(_txAuthorInfoProvider(editingTransactionId));
+    final info = infoAsync.valueOrNull;
+    if (info == null) return const SizedBox.shrink();
+
+    final creatorId = info.creatorUserId;
+    final editorId = info.lastEditedByUserId;
+    final meId = info.currentUserId;
+    final sameUser = creatorId != null && creatorId == editorId;
+
+    // 单人(创建 == 编辑)且就是自己 → 整体不显示
+    if (sameUser && creatorId == meId) return const SizedBox.shrink();
+
+    final cloud = ref.watch(beecountCloudProviderInstance).valueOrNull;
+    final baseUrl = cloud?.baseUrl;
+
+    final widgets = <Widget>[];
+    if (sameUser) {
+      // 同一人(非自己):展示一个头像,tooltip 提示"创建并编辑"
+      widgets.add(_AvatarSlot(
+        member: info.memberOf(creatorId),
+        userIdFallback: creatorId,
+        baseUrl: baseUrl,
+        tooltipBuilder: (name) => l10n.sharedTxCreatedAndEditedBy(name),
+      ));
+    } else {
+      // 创建人 + 编辑人是两个人:两个头像都展示
+      if (creatorId != null) {
+        widgets.add(_AvatarSlot(
+          member: info.memberOf(creatorId),
+          userIdFallback: creatorId,
+          baseUrl: baseUrl,
+          tooltipBuilder: (name) => l10n.sharedTxCreatedBy(name),
+        ));
+      }
+      if (editorId != null && editorId != creatorId) {
+        if (widgets.isNotEmpty) widgets.add(const SizedBox(width: 4));
+        widgets.add(_AvatarSlot(
+          member: info.memberOf(editorId),
+          userIdFallback: editorId,
+          baseUrl: baseUrl,
+          tooltipBuilder: (name) => l10n.sharedTxEditedBy(name),
+        ));
+      }
+    }
+    if (widgets.isEmpty) return const SizedBox.shrink();
+    return Row(mainAxisSize: MainAxisSize.min, children: widgets);
+  }
+}
+
+/// 单个头像槽位 — 不管 member 是否查得到都返回一个 CircleAvatar(带 tooltip)。
+/// long-press 触发 Tooltip,tooltip 文案带角色("X 创建" / "X 最后编辑" / ...)。
+class _AvatarSlot extends StatelessWidget {
+  const _AvatarSlot({
+    required this.member,
+    required this.userIdFallback,
+    required this.baseUrl,
+    required this.tooltipBuilder,
+  });
+
+  final BeeCountCloudLedgerMember? member;
+  final String userIdFallback;
+  final String? baseUrl;
+  final String Function(String name) tooltipBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = member;
+    final name = m != null
+        ? (m.displayName?.isNotEmpty == true
+            ? m.displayName!
+            : m.email.split('@').first)
+        : userIdFallback;
+    final letter = name.isNotEmpty ? name[0].toUpperCase() : '?';
+    final rel = m?.avatarUrl;
+    final base = baseUrl;
+    final absolute = (rel != null && rel.isNotEmpty)
+        ? (rel.startsWith('http') ? rel : (base != null ? '$base$rel' : null))
+        : null;
+    return Tooltip(
+      message: tooltipBuilder(name),
+      triggerMode: TooltipTriggerMode.longPress,
+      child: CircleAvatar(
+        radius: 11,
+        backgroundColor: BeeTokens.surfaceCapsule(context),
+        foregroundImage: absolute != null ? NetworkImage(absolute) : null,
+        child: Text(
+          letter,
+          style: TextStyle(
+            fontSize: 11,
+            color: BeeTokens.textSecondary(context),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 typedef AmountEditorResult = ({
   double amount,
@@ -23,6 +185,8 @@ typedef AmountEditorResult = ({
   int? accountId,
   List<int> tagIds,
   List<File> pendingAttachments,
+  bool excludeFromStats,
+  bool excludeFromBudget,
 });
 
 class AmountEditorSheet extends ConsumerStatefulWidget {
@@ -36,6 +200,9 @@ class AmountEditorSheet extends ConsumerStatefulWidget {
   final ValueChanged<AmountEditorResult> onSubmit;
   final int ledgerId;
   final int? editingTransactionId; // 编辑模式时的交易ID，用于显示已有附件
+  final String transactionKind; // 'expense' / 'income' / 'transfer'，决定标记开关可见性
+  final bool initialExcludeFromStats; // 不计入收支，编辑模式回显
+  final bool initialExcludeFromBudget; // 不计入预算，编辑模式回显
 
   const AmountEditorSheet({
     super.key,
@@ -49,6 +216,9 @@ class AmountEditorSheet extends ConsumerStatefulWidget {
     required this.onSubmit,
     required this.ledgerId,
     this.editingTransactionId,
+    this.transactionKind = 'expense',
+    this.initialExcludeFromStats = false,
+    this.initialExcludeFromBudget = false,
   });
 
   @override
@@ -64,6 +234,9 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
   // 运算缓存：支持简单 + / - 键入累计
   double _acc = 0;
   String? _op; // 最近一次运算符，null 表示尚未进入运算模式
+  // 两个运算符键各自独立的模式(false=加/减,true=乘/除),长按各自切换,互不影响。
+  bool _mulKey1 = false; // 键1:+ ↔ ×
+  bool _mulKey2 = false; // 键2:− ↔ ÷
 
   // 高频备注列表（包含使用次数）
   List<({String note, int count})> _frequentNotes = [];
@@ -81,10 +254,16 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
   // 待上传的附件列表（新建交易时）
   List<File> _pendingAttachments = [];
 
+  // 交易标记（旗标弹窗）
+  bool _excludeFromStats = false;
+  bool _excludeFromBudget = false;
+
   @override
   void initState() {
     super.initState();
     _date = widget.initialDate;
+    _excludeFromStats = widget.initialExcludeFromStats;
+    _excludeFromBudget = widget.initialExcludeFromBudget;
     _selectedAccountId = widget.initialAccountId;
     _selectedTagIds = List.from(widget.initialTagIds ?? []);
     // 保留原始小数（最多两位），避免编辑已有记录时小数被截断为整数
@@ -193,6 +372,47 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
     }
   }
 
+  /// 用 Decimal 精确运算(避免浮点漂移,如 0.1+0.2),左到右无运算符优先级,
+  /// 除零保护;结果四舍五入到最多两位小数(金额精度)。
+  double _compute(double a, String op, double b) {
+    final da = Decimal.parse(a.toStringAsFixed(2));
+    final db = Decimal.parse(b.toStringAsFixed(2));
+    final Decimal r;
+    switch (op) {
+      case '+':
+        r = da + db;
+        break;
+      case '-':
+        r = da - db;
+        break;
+      case '×':
+        r = da * db;
+        break;
+      case '÷':
+        if (db == Decimal.zero) return a; // 除零保护:保持被除数不变
+        r = (da.toRational() / db.toRational())
+            .toDecimal(scaleOnInfinitePrecision: 12);
+        break;
+      default:
+        return b;
+    }
+    return r.round(scale: 2).toDouble();
+  }
+
+  /// 运算符显示字形(减号用真减号 −,而非连字符 -)。
+  String _opGlyph(String op) {
+    switch (op) {
+      case '-':
+        return '−';
+      case '×':
+        return '×';
+      case '÷':
+        return '÷';
+      default:
+        return '+';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
@@ -209,10 +429,9 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
       if (_op == null) {
         // 首次点击运算符，将当前值存入累加器
         _acc = cur;
-      } else if (_op == '+') {
-        _acc += cur;
-      } else if (_op == '-') {
-        _acc -= cur;
+      } else {
+        // 左到右:先把上一个运算符算掉
+        _acc = _compute(_acc, _op!, cur);
       }
       _op = op;
       _amountStr = '0';
@@ -225,12 +444,7 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
     void applyEquals() {
       if (_op == null) return; // 没有运算符，不执行
       final cur = parsed();
-      double total = _acc;
-      if (_op == '+') {
-        total += cur;
-      } else if (_op == '-') {
-        total -= cur;
-      }
+      final total = _compute(_acc, _op!, cur);
       // 格式化结果
       final s = total.abs().toStringAsFixed(2);
       final trimmed = s.contains('.')
@@ -270,6 +484,64 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
       );
     }
 
+    // 运算符键:同时显示「加减」与「乘除」两组运算符;当前激活的一组用主色高亮、
+    // 另一组用次级色弱化(主次区分,也作为"长按可切到乘除"的提示)。单击应用激活
+    // 运算符,长按切换加减 ↔ 乘除。
+    Widget opKey(String addSubOp, String mulDivOp, bool isMul,
+        VoidCallback onToggle) {
+      final activeOp = isMul ? mulDivOp : addSubOp;
+      // 激活的运算符与数字键完全一致(字号 18 / w600),保证视觉粗细相同 —— 字号
+      // 更大即使同 weight 笔画也会更粗。未激活更小(14)+ 灰色以分主次。
+      TextStyle opStyle(bool active) => text.titleMedium!.copyWith(
+            color: active
+                ? BeeTokens.textPrimary(context)
+                : BeeTokens.textTertiary(context),
+            fontSize: active ? 18 : 14,
+            fontWeight: FontWeight.w600,
+          );
+      return Padding(
+        padding: const EdgeInsets.all(6),
+        child: Material(
+          color: BeeTokens.surfaceKeySecondary(context),
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => applyOp(activeOp),
+            // 双击 / 长按都是「切到另一组运算符并直接应用」(一步用上另一个);
+            // applyOp 内部已带触感/声音。
+            onDoubleTap: () {
+              onToggle();
+              applyOp(isMul ? addSubOp : mulDivOp);
+            },
+            onLongPress: () {
+              onToggle();
+              applyOp(isMul ? addSubOp : mulDivOp);
+            },
+            child: SizedBox(
+              height: 60,
+              // 「加减/乘除」中间一个斜杠分隔;单击用激活运算符,长按只切换本键(两键独立)。
+              child: Center(
+                child: Text.rich(
+                  TextSpan(children: [
+                    TextSpan(text: _opGlyph(addSubOp), style: opStyle(!isMul)),
+                    TextSpan(
+                      text: '/',
+                      style: text.titleMedium!.copyWith(
+                        color: BeeTokens.textTertiary(context),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    TextSpan(text: _opGlyph(mulDivOp), style: opStyle(isMul)),
+                  ]),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     String fmtDate(DateTime d) => '${d.year}/${d.month}/${d.day}';
     String fmtTime(DateTime d) => '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}:${d.second.toString().padLeft(2, '0')}';
     final showTime = ref.watch(showTransactionTimeProvider);
@@ -292,10 +564,14 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // 表达式行：显示 "累加值 运算符 当前输入" 或仅显示当前输入
+                // 表达式行:左侧 = 共享账本作者头像(仅编辑模式 + 共享账本时
+                // 显示);右侧 = 金额表达式。新建 tx / 单人账本时左侧为空。
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    if (widget.editingTransactionId != null)
+                      _TxAuthorAvatars(
+                          editingTransactionId: widget.editingTransactionId!),
+                    const Spacer(),
                     if (_op != null) ...[
                       // 显示累加值
                       Text(
@@ -315,7 +591,7 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Text(
-                          _op == '-' ? '−' : '+',
+                          _opGlyph(_op!),
                           style: text.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: primary,
@@ -350,7 +626,7 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
                       Text(
                         (() {
                           final cur = parsed();
-                          final total = _op == '+' ? _acc + cur : _acc - cur;
+                          final total = _compute(_acc, _op!, cur);
                           final s = total.abs().toStringAsFixed(2);
                           final r1 = s.contains('.')
                               ? s.replaceFirst(RegExp(r'0+$'), '')
@@ -520,14 +796,7 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
               Widget doneKey() {
                 // 计算当前总额以判断是否启用完成按钮
                 final cur = parsed();
-                double total;
-                if (_op == '+') {
-                  total = _acc + cur;
-                } else if (_op == '-') {
-                  total = _acc - cur;
-                } else {
-                  total = cur;
-                }
+                final total = _op == null ? cur : _compute(_acc, _op!, cur);
 
                 // 判断是否处于运算模式
                 final isInCalcMode = _op != null;
@@ -564,6 +833,8 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
                                 accountId: _selectedAccountId,
                                 tagIds: _selectedTagIds,
                                 pendingAttachments: _pendingAttachments,
+                                excludeFromStats: _excludeFromStats,
+                                excludeFromBudget: _excludeFromBudget,
                               ));
 
                               // 注意：不需要在这里重置 _isSubmitting
@@ -623,8 +894,8 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
                         child: keyBtn('6', onTap: () => _append('6'))),
                     SizedBox(
                         width: w,
-                        child: keyBtn('+',
-                            bg: BeeTokens.surfaceKeySecondary(context), onTap: () => applyOp('+'))),
+                        child: opKey('+', '×', _mulKey1,
+                            () => setState(() => _mulKey1 = !_mulKey1))),
                   ]),
                   const SizedBox(height: 2),
                   Row(children: [
@@ -639,8 +910,8 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
                         child: keyBtn('3', onTap: () => _append('3'))),
                     SizedBox(
                         width: w,
-                        child: keyBtn('-',
-                            bg: BeeTokens.surfaceKeySecondary(context), onTap: () => applyOp('-'))),
+                        child: opKey('-', '÷', _mulKey2,
+                            () => setState(() => _mulKey2 = !_mulKey2))),
                   ]),
                   const SizedBox(height: 2),
                   Row(children: [
@@ -664,8 +935,10 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
 
   /// 构建标签和附件选择行（一行显示）
   Widget _buildTagAndAttachmentRow() {
-    final allTagsAsync = ref.watch(allTagsProvider);
-    // 使用 valueOrNull 保留上一次数据，避免 loading 时显示空列表导致闪烁
+    // §7 共享账本:用按当前 ledger 过滤后的 tags(Editor 视角下走 SharedLedgerTags,
+    // synthetic id 跟 tag picker 一致),否则编辑模式 tx 已选的 synthetic id 在
+    // 主表里找不到,显示"无标签"。
+    final allTagsAsync = ref.watch(tagsForCurrentLedgerProvider);
     final allTags = allTagsAsync.valueOrNull ?? [];
 
     // 获取已选中的标签详情
@@ -682,6 +955,107 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
       return _buildRowContent(selectedTags, totalCount, attachments);
     }
     return _buildRowContent(selectedTags, _pendingAttachments.length, []);
+  }
+
+  /// 交易标记弹窗：两个标记开关。
+  /// 可见性(01 §三):不计入收支 对 income/expense 显示;不计入预算 仅 expense。
+  /// 转账两个开关都不显示 → 旗标图标本身不渲染,不会触发此弹窗。
+  Future<void> _showFlagsDialog() async {
+    final l10n = AppLocalizations.of(context);
+    final primary = ref.watch(primaryColorProvider);
+    final kind = widget.transactionKind;
+    final showStats = kind != 'transfer';
+    final showBudget = kind == 'expense';
+
+    // 弹窗内用临时变量 + StatefulBuilder 实现实时切换,关闭时写回 sheet 状态。
+    bool stats = _excludeFromStats;
+    bool budget = _excludeFromBudget;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            Widget switchTile({
+              required String title,
+              required String hint,
+              required bool value,
+              required ValueChanged<bool> onChanged,
+            }) {
+              return SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: Text(
+                  title,
+                  style: TextStyle(
+                    color: BeeTokens.textPrimary(context),
+                    fontSize: 15.0.scaled(context, ref),
+                  ),
+                ),
+                subtitle: Text(
+                  hint,
+                  style: TextStyle(
+                    color: BeeTokens.textTertiary(context),
+                    fontSize: 12.0.scaled(context, ref),
+                  ),
+                ),
+                value: value,
+                activeColor: primary,
+                onChanged: onChanged,
+              );
+            }
+
+            return AlertDialog(
+              backgroundColor: BeeTokens.surface(context),
+              title: Text(
+                l10n.txFlagDialogTitle,
+                style: TextStyle(
+                  color: BeeTokens.textPrimary(context),
+                  fontSize: 17.0.scaled(context, ref),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (showStats)
+                    switchTile(
+                      title: l10n.txFlagExcludeFromStats,
+                      hint: l10n.txFlagExcludeFromStatsHint,
+                      value: stats,
+                      onChanged: (v) {
+                        setDialogState(() => stats = v);
+                        // 实时写回 sheet 状态,图标 active 态即时更新
+                        setState(() => _excludeFromStats = v);
+                      },
+                    ),
+                  if (showBudget)
+                    switchTile(
+                      title: l10n.txFlagExcludeFromBudget,
+                      hint: l10n.txFlagExcludeFromBudgetHint,
+                      value: budget,
+                      onChanged: (v) {
+                        setDialogState(() => budget = v);
+                        setState(() => _excludeFromBudget = v);
+                      },
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(
+                    AppLocalizations.of(context).commonConfirm,
+                    style: TextStyle(color: primary),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget _buildRowContent(List<Tag> selectedTags, int attachmentCount, List<TransactionAttachment> savedAttachments) {
@@ -766,9 +1140,38 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
               ],
             ),
           ),
+          // 旗标图标:紧跟附件图标。转账(两个标记都不适用)→ 不渲染。
+          ..._buildFlagIcon(),
         ],
       ),
     );
+  }
+
+  /// 账单标记旗标图标:点击打开标记弹窗。
+  /// 可见性:转账(income/expense 均不适用)时整体不渲染。
+  /// active 态(任一标记为真)用主题色 + 实心旗;否则与附件图标一致的次级灰 + 空心旗。
+  List<Widget> _buildFlagIcon() {
+    final kind = widget.transactionKind;
+    final showStats = kind != 'transfer';
+    final showBudget = kind == 'expense';
+    // 两个开关都不适用(转账)→ 不显示旗标触发器
+    if (!showStats && !showBudget) return const [];
+
+    final active = _excludeFromStats || _excludeFromBudget;
+    return [
+      const SizedBox(width: 16),
+      GestureDetector(
+        onTap: _showFlagsDialog,
+        behavior: HitTestBehavior.opaque,
+        child: Icon(
+          active ? Icons.flag : Icons.outlined_flag,
+          size: 18,
+          color: active
+              ? ref.watch(primaryColorProvider)
+              : BeeTokens.iconSecondary(context),
+        ),
+      ),
+    ];
   }
 
   Future<void> _handleAttachmentTap(List<TransactionAttachment> savedAttachments) async {

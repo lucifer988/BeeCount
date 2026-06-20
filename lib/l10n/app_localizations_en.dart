@@ -13,7 +13,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabHome => 'Home';
 
   @override
-  String get tabInsights => 'Insights';
+  String get tabInsights => 'Stats';
 
   @override
   String get tabAssets => 'Assets';
@@ -153,6 +153,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonOther => 'Other';
+
+  @override
+  String get commonYesterday => 'Yesterday';
 
   @override
   String get commonSearch => 'Search';
@@ -525,6 +528,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ledgersCurrency => 'Currency';
 
   @override
+  String get ledgersMonthStartDay => 'Month start day';
+
+  @override
+  String get ledgersMonthStartDayHint => 'Statistics and budgets use this day (1-28) as the start of each monthly period';
+
+  @override
+  String get ledgersMonthStartDayNatural => '1st (calendar month)';
+
+  @override
+  String ledgersMonthStartDayValue(int day) {
+    return 'Day $day of each month';
+  }
+
+  @override
   String get ledgersSelectCurrency => 'Select Currency';
 
   @override
@@ -844,7 +861,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mineUpdate => 'Check for Updates';
 
   @override
-  String get mineLanguageSettings => 'Language Settings';
+  String get mineLanguageSettings => 'Language';
 
   @override
   String get languageTitle => 'Language Settings';
@@ -866,6 +883,89 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mineSlogan => 'Bee Accounting, Every Penny Counts';
+
+  @override
+  String get mineDisplayNameEditTitle => 'Set nickname';
+
+  @override
+  String get mineDisplayNameHint => 'Enter a nickname';
+
+  @override
+  String get mineDisplayNameSaved => 'Nickname updated';
+
+  @override
+  String get mineGreetingMorning => 'Good morning';
+
+  @override
+  String get mineGreetingNoon => 'Good noon';
+
+  @override
+  String get mineGreetingAfternoon => 'Good afternoon';
+
+  @override
+  String get mineGreetingEvening => 'Good evening';
+
+  @override
+  String get mineGreetingNight => 'Good night';
+
+  @override
+  String mineGreetingNamed(String greeting, String name) {
+    return '$greeting, $name';
+  }
+
+  @override
+  String get mineProfileEditTitle => 'Edit profile';
+
+  @override
+  String get headerSkinTitle => 'Skin';
+
+  @override
+  String get headerSkinSubtitle => 'Follows your theme color, layered over the header';
+
+  @override
+  String get headerSkinNone => 'Solid';
+
+  @override
+  String get headerSkinAurora => 'Aurora';
+
+  @override
+  String get headerSkinMountains => 'Mountains';
+
+  @override
+  String get headerSkinBokeh => 'Bokeh';
+
+  @override
+  String get headerSkinWaves => 'Waves';
+
+  @override
+  String get headerSkinSunset => 'Sunset';
+
+  @override
+  String get headerSkinClouds => 'Clouds';
+
+  @override
+  String get headerSkinExample => 'Example';
+
+  @override
+  String get headerSkinHoneycomb => 'Honeycomb';
+
+  @override
+  String get headerSkinStarry => 'Starry';
+
+  @override
+  String get headerSkinStripes => 'Stripes';
+
+  @override
+  String get headerSkinSkyline => 'Skyline';
+
+  @override
+  String get headerSkinSakura => 'Sakura';
+
+  @override
+  String get headerSkinMeteor => 'Meteor';
+
+  @override
+  String get headerSkinMemphis => 'Memphis';
 
   @override
   String get mineAvatarTitle => 'Avatar Settings';
@@ -1439,6 +1539,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mineHelp => 'Help';
 
   @override
+  String get helpCenterOpenInBrowser => 'Open in browser';
+
+  @override
+  String get helpCenterLoadFailed => 'Failed to load. Please check your network.';
+
+  @override
+  String get helpCenterRetry => 'Retry';
+
+  @override
   String get mineHelpSubtitle => 'View documentation and FAQ';
 
   @override
@@ -1713,13 +1822,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryExpenseList => 'Dining-Transport-Shopping-Entertainment-Home-Family-Communication-Utilities-Housing-Medical-Education-Pets-Sports-Digital-Travel-Alcohol & Tobacco-Baby Care-Beauty-Repair-Social-Learning-Car-Taxi-Subway-Delivery-Property-Parking-Donation-Give Gift-Tax-Beverage-Clothing-Snacks-Send Red Packet-Fruit-Game-Book-Lover-Decoration-Daily Goods-Lottery-Stock-Social Security-Express-Work';
 
   @override
-  String get categoryIncomeList => 'Salary-Investment-Receive Red Packet-Bonus-Reimbursement-Part-time-Receive Gift-Interest-Refund-Investment Income-Second-hand-Social Benefit-Tax Refund-Provident Fund';
+  String get categoryIncomeList => 'Salary-Investment-Receive Red Packet-Bonus-Reimbursement-Part time-Receive Gift-Interest-Refund-Investment Income-Second hand-Social Benefit-Tax Refund-Provident Fund';
 
   @override
   String get categoryExpenseDining => 'Dining-Breakfast-Lunch-Dinner-Meituan Delivery-Ele.me Delivery-JD Delivery-Restaurant-Food';
 
   @override
-  String get categoryExpenseSnacks => 'Cookies-Chips-Candy-Chocolate-Nuts';
+  String get categoryExpenseSnacks => 'Snacks-Cookies-Chips-Candy-Chocolate-Nuts';
 
   @override
   String get categoryExpenseFruit => 'Fruit-Apple-Banana-Orange-Grape-Watermelon-Other Fruits';
@@ -1728,31 +1837,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryExpenseBeverage => 'Beverage-Milk Tea-Coffee-Juice-Soda-Mineral Water';
 
   @override
-  String get categoryExpensePastry => 'Pastry-Cake-Bread-Dessert-Pastry';
+  String get categoryExpensePastry => 'Pastry-Cake-Bread-Dessert-Baked Goods';
 
   @override
   String get categoryExpenseCooking => 'Cooking Ingredients-Vegetables-Meat-Seafood-Seasoning-Grain & Oil';
 
   @override
-  String get categoryExpenseShopping => 'Clothing-Shoes & Hats-Bags-Accessories-Daily Necessities';
+  String get categoryExpenseShopping => 'Shopping-Clothing-Shoes & Hats-Bags-Accessories-Daily Necessities';
 
   @override
   String get categoryExpensePets => 'Pets-Pet Food-Pet Supplies-Pet Medical-Pet Grooming';
 
   @override
-  String get categoryExpenseTransport => 'Transport-Subway-Bus-Taxi-Ride-hailing-Parking Fee-Fuel';
+  String get categoryExpenseTransport => 'Transport-Subway-Bus-Taxi-Ride hailing-Parking Fee-Fuel';
 
   @override
   String get categoryExpenseCar => 'Car-Car Maintenance-Car Repair-Car Insurance-Car Wash-Traffic Fine';
 
   @override
-  String get categoryExpenseClothing => 'Top-Pants-Dress-Shoes-Accessories';
+  String get categoryExpenseClothing => 'Apparel-Top-Pants-Dress-Shoes-Apparel Accessories';
 
   @override
   String get categoryExpenseDailyGoods => 'Daily Goods-Personal Care-Paper Products-Cleaning Supplies-Kitchen Supplies';
 
   @override
-  String get categoryExpenseEducation => 'Tuition-Training Fee-Books-Stationery-Office Supplies';
+  String get categoryExpenseEducation => 'Education-Tuition-Training Fee-Books-Stationery-Office Supplies';
 
   @override
   String get categoryExpenseInvestLoss => 'Investment Loss-Stock Loss-Fund Loss-Other Investment Loss';
@@ -1761,7 +1870,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryExpenseEntertainment => 'Entertainment-Movie-KTV-Amusement Park-Bar-Other Entertainment';
 
   @override
-  String get categoryExpenseGame => 'Game-Game Top-up-Game Equipment-Game Membership';
+  String get categoryExpenseGame => 'Game-Game Top up-Game Equipment-Game Membership';
 
   @override
   String get categoryExpenseHealthProducts => 'Health Products-Vitamins-Health Food-Nutritional Supplements';
@@ -1782,22 +1891,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryExpenseBeauty => 'Beauty-Skincare-Cosmetics-Beauty Salon-Nail Care';
 
   @override
-  String get categoryIncomeSalary => 'Base Salary-Performance Bonus-Year-end Bonus-Overtime Pay';
+  String get categoryIncomeSalary => 'Salary-Base Salary-Performance Bonus-Year end Bonus-Overtime Pay';
 
   @override
-  String get categoryIncomeInvestment => 'Fund Earnings-Stock Dividend-Wealth Management-Other Wealth Management';
+  String get categoryIncomeInvestment => 'Investment-Fund Earnings-Stock Dividend-Wealth Management-Other Wealth Management';
 
   @override
   String get categoryIncomeRedPacket => 'Red Packet-Holiday Red Packet-Birthday Red Packet-Return Gift';
 
   @override
-  String get categoryIncomeBonus => 'Bonus-Year-end Bonus-Quarterly Bonus-Project Bonus-Other Bonus';
+  String get categoryIncomeBonus => 'Bonus-Annual Bonus-Quarterly Bonus-Project Bonus-Other Bonus';
 
   @override
   String get categoryIncomeReimbursement => 'Reimbursement-Travel Reimbursement-Meal Reimbursement-Other Reimbursement';
 
   @override
-  String get categoryIncomePartTime => 'Part-time-Part-time Income-Side Income';
+  String get categoryIncomePartTime => 'Part time-Part time Income-Side Income';
 
   @override
   String get categoryIncomeGift => 'Gift-Wedding Gift-Birthday Gift-Other Gift';
@@ -1809,22 +1918,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryIncomeRefund => 'Refund-Shopping Refund-Service Refund-Other Refund';
 
   @override
-  String get categoryIncomeInvestIncome => 'Investment Income-Stock Earnings-Fund Earnings-Other Investment Income';
+  String get categoryIncomeInvestIncome => 'Investment Income-Stock Earnings-Fund Investment-Other Investment Income';
 
   @override
-  String get categoryIncomeSecondHand => 'Second-hand-Idle Items-Second-hand Goods';
+  String get categoryIncomeSecondHand => 'Second hand-Idle Items-Second hand Goods';
 
   @override
   String get categoryIncomeSocialBenefit => 'Social Benefit-Unemployment Insurance-Maternity Subsidy-Other Subsidy';
 
   @override
-  String get categoryIncomeTaxRefund => 'Tax Refund-Individual Tax Refund-Other Refund';
+  String get categoryIncomeTaxRefund => 'Tax Refund-Individual Tax Refund-Other Tax Refund';
 
   @override
   String get categoryIncomeProvidentFund => 'Provident Fund-Provident Fund Withdrawal-Provident Fund Interest';
 
   @override
-  String get personalizeTitle => 'Personalize';
+  String get personalizeTitle => 'Theme color';
+
+  @override
+  String get personalizeSubtitle => 'Pick or customize the app accent color';
 
   @override
   String get personalizeCustomColor => 'Choose custom color';
@@ -3602,6 +3714,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeCurrencyDescription => 'Choose your preferred currency, you can change it anytime in settings';
 
   @override
+  String get welcomeCreateDefaultLedger => 'Create a default ledger';
+
+  @override
   String get welcomePrivacyTitle => 'Open Source · Community Driven';
 
   @override
@@ -3794,6 +3909,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get iosAutoTutorialDesc => 'Watch detailed setup video tutorial';
 
   @override
+  String get iosAutoImportTitle => 'Get Shortcut in One Tap';
+
+  @override
+  String get iosAutoImportDesc => 'Tap the button below to import the ready-made \"Screenshot → Auto Billing\" shortcut — no need to add the \"Take Screenshot\" action or connect parameters manually. After importing, binding it to \"Back Tap\" is recommended.';
+
+  @override
+  String get iosAutoImportButton => 'Get Shortcut';
+
+  @override
+  String get iosAutoImportFailed => 'Couldn\'t open the shortcut link. Check your connection and try again.';
+
+  @override
+  String get iosAutoManualConfigTitle => 'Manual Setup (Advanced)';
+
+  @override
+  String get iosAutoManualConfigDesc => 'If one-tap import isn\'t available, follow these steps to create the shortcut manually.';
+
+  @override
   String get aiSettingsTitle => 'AI Assistant';
 
   @override
@@ -3803,7 +3936,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiEnableTitle => 'Enable AI Assistant';
 
   @override
-  String get aiEnableSubtitle => 'Use AI to enhance OCR accuracy, extract amount, merchant, time, and support natural language conversation';
+  String get aiEnableSubtitle => 'Use AI vision to recognize bill screenshots, extract amount, merchant, time, and support natural language conversation';
 
   @override
   String get aiEnableToastOn => 'AI Assistant enabled';
@@ -3865,19 +3998,107 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatGoToSettings => 'Go to Settings';
 
   @override
-  String get aiLocalModelTitle => 'Local Model';
-
-  @override
-  String get aiLocalModelTraining => 'Training';
-
-  @override
-  String get aiLocalModelUnavailable => 'Local model in training, not available yet';
-
-  @override
   String get aiOcrRecognizing => 'Recognizing bill...';
 
   @override
   String get aiOcrNoAmount => 'No valid amount recognized, please add manually';
+
+  @override
+  String get aiNotConfiguredHint => 'AI service not configured. Go to \"Me → AI Settings\" to set up.';
+
+  @override
+  String get aiOcrCheckLog => 'Recognition failed. Check logs for details.';
+
+  @override
+  String get aiOcrNoBill => 'No bill recognized. Make sure the image is a bill, then try again.';
+
+  @override
+  String get aiNotConfiguredNotificationTitle => '❌ Cannot recognize screenshot';
+
+  @override
+  String get aiNotConfiguredNotificationBody => 'AI service not configured. Tap to set up.';
+
+  @override
+  String get autoBillingNotifyDetectedTitle => '✅ Screenshot detected';
+
+  @override
+  String get autoBillingNotifyWaitingFileBody => 'Waiting for file to be written...';
+
+  @override
+  String get autoBillingNotifyRecognizingScreenshotTitle => 'Recognizing screenshot...';
+
+  @override
+  String get autoBillingNotifyVisionAnalyzingBody => 'Calling AI vision to analyze payment info, please wait';
+
+  @override
+  String get autoBillingNotifyRecognizingTextTitle => '⏳ Recognizing';
+
+  @override
+  String get autoBillingNotifyTextAnalyzingBody => 'Calling AI to parse payment info...';
+
+  @override
+  String get autoBillingNotifyRecognizeFailedTitle => '❌ Recognition failed';
+
+  @override
+  String get autoBillingNotifyRecognizeFailedBody => 'Could not extract billing info from screenshot. Check AI config or the image.';
+
+  @override
+  String get autoBillingNotifyNoBillTitle => 'No bill found';
+
+  @override
+  String get autoBillingNotifyNoBillBody => 'No billing info found in this screenshot — it may not be a bill.';
+
+  @override
+  String get autoBillingNotifyFileUnavailableTitle => 'Recognition failed';
+
+  @override
+  String get autoBillingNotifyFileUnavailableBody => 'Screenshot file is not available';
+
+  @override
+  String get autoBillingNotifyNoLedgerTitle => '❌ Auto billing failed';
+
+  @override
+  String get autoBillingNotifyNoLedgerBody => 'No ledger available. Please create one first.';
+
+  @override
+  String get autoBillingNotifyNoAmountBody => 'Could not recognize the amount';
+
+  @override
+  String get autoBillingNotifyCreateFailedTitle => '❌ Failed to create';
+
+  @override
+  String get autoBillingNotifyCreateFailedBody => 'Could not create transaction record';
+
+  @override
+  String get autoBillingNotifyProcessFailedTitle => '❌ Processing failed';
+
+  @override
+  String autoBillingNotifyProcessFailedBody(String error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String autoBillingNotifySuccessSingleTitle(String amount) {
+    return '✅ Auto billing succeeded ¥$amount';
+  }
+
+  @override
+  String autoBillingNotifySuccessMultiTitle(int count) {
+    return '✅ Auto billing succeeded ($count entries)';
+  }
+
+  @override
+  String autoBillingNotifySuccessMultiBody(String amount) {
+    return 'Total ¥$amount';
+  }
+
+  @override
+  String autoBillingNotifySuccessSingleBodyNote(String note) {
+    return 'Note: $note';
+  }
+
+  @override
+  String get autoBillingNotifySuccessSingleBodyDefault => 'Record created automatically';
 
   @override
   String get aiOcrNoLedger => 'Ledger not found';
@@ -3956,7 +4177,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cloudTutorialFeature3 => '👥 Multi-user isolation: multiple users on one server, data fully separated';
 
   @override
-  String get cloudTutorialFeature4 => '🔜 Planned: shared ledgers (invite family / team to a common ledger)';
+  String get cloudTutorialFeature4 => '🤝 Shared ledgers: invite family / team into one book with seconds-level sync';
 
   @override
   String get cloudTutorialGotIt => 'Got it';
@@ -4000,7 +4221,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smartBilling => 'Smart Billing';
 
   @override
-  String get smartBillingDesc => 'AI Assistant, OCR scan, auto billing';
+  String get smartBillingDesc => 'AI Assistant, smart recognition, auto billing';
 
   @override
   String get smartBillingPageTitle => 'Smart Billing';
@@ -4018,10 +4239,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smartBillingImageBillingDesc => 'Select payment screenshots from gallery for recognition';
 
   @override
-  String get smartBillingImageBillingGuide => 'Long press the + button at the bottom center of the home page and select \'Gallery\' to use image billing. With AI configured, it can intelligently recognize bill information; without AI, it can still extract text via OCR.';
+  String get smartBillingImageBillingGuide => 'Long press the + button at the bottom center of the home page and select \'Gallery\' to use image billing. Requires AI service configured under \"Me → AI Settings\"; the vision model will extract amount, merchant, time, etc. from the screenshot.';
 
   @override
-  String get smartBillingAIOptional => 'AI recognition is optional, configuration can improve recognition accuracy';
+  String get smartBillingVisionAIRequired => 'Image recognition requires an AI vision service. Set it up in \"Me → AI Settings\" first.';
 
   @override
   String get smartBillingCameraBilling => 'Camera Billing';
@@ -4030,7 +4251,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smartBillingCameraBillingDesc => 'Capture payment screenshots for recognition';
 
   @override
-  String get smartBillingCameraBillingGuide => 'Long press the + button at the bottom center of the home page and select \'Camera\' to use camera billing. With AI configured, it can intelligently recognize bill information; without AI, it can still extract text via OCR.';
+  String get smartBillingCameraBillingGuide => 'Long press the + button at the bottom center of the home page and select \'Camera\' to use camera billing. Requires AI service configured under \"Me → AI Settings\"; the vision model will extract amount, merchant, time, etc. from the photo.';
 
   @override
   String get smartBillingVoiceBilling => 'Voice Billing';
@@ -4042,7 +4263,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smartBillingVoiceBillingGuide => 'Long press the + button at the bottom center of the home page and select \'Voice\' to use voice billing. Voice billing requires AI to convert speech to text and extract bill information.';
 
   @override
-  String get smartBillingAIRequired => 'Voice billing requires AI configuration (Zhipu GLM API), please configure AI settings above first';
+  String get smartBillingAIRequired => 'Voice billing requires an AI speech service. Set it up in \"Me → AI Settings\" first.';
 
   @override
   String get smartBillingAutoTags => 'Auto-associate Tags';
@@ -4057,7 +4278,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smartBillingAutoAttachmentDesc => 'Automatically add original image as attachment for photo billing';
 
   @override
-  String get autoScreenshotBillingIosDesc => 'Auto-recognize payment screenshots via Shortcuts';
+  String get autoScreenshotBillingIosTitle => 'Auto Billing';
+
+  @override
+  String get autoScreenshotBillingIosDesc => 'Auto-recognize payments via Shortcuts';
+
+  @override
+  String get shareBilling => 'Share to Bill';
+
+  @override
+  String get shareBillingDesc => 'Share a payment screenshot from Alipay/WeChat to bill it';
+
+  @override
+  String get shareBillingGuide => 'When you see a payment screenshot in Alipay, WeChat, Photos, etc., tap \"Share\" and choose \"BeeCount\" to auto-recognize the amount, merchant, and time and create a transaction — no need to save the screenshot first.';
+
+  @override
+  String get shareBillingActionHint => 'Recognized automatically in the background after sharing — no need to open BeeCount';
 
   @override
   String get automation => 'Automation';
@@ -4072,16 +4308,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get automationPageSubtitle => 'Recurring transactions and reminder settings';
 
   @override
-  String get appearanceSettings => 'Appearance';
+  String get appearanceSettings => 'Personalization';
 
   @override
-  String get appearanceSettingsDesc => 'Theme, font and language settings';
+  String get appearanceSettingsDesc => 'Theme, font, language, app lock, etc.';
 
   @override
-  String get appearanceSettingsPageTitle => 'Appearance';
+  String get appearanceSettingsPageTitle => 'Personalization';
 
   @override
-  String get appearanceSettingsPageSubtitle => 'Personalize appearance and display';
+  String get appearanceSettingsPageSubtitle => 'Appearance, display, security and other app preferences';
 
   @override
   String get about => 'About';
@@ -4132,10 +4368,62 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutRelatedProducts => 'More Products';
 
   @override
+  String get aboutBeeAssets => 'BeeAssets';
+
+  @override
+  String get aboutBeeAssetsSubtitle => 'Visualize your full asset portfolio';
+
+  @override
+  String get aboutBeeAssetsIntro => 'BeeCount focuses on daily cash flow; BeeAssets is its sibling product, focused on asset portfolio visualization: net worth trends across accounts, property / investment / crypto classification, returns, holding period, and allocation breakdown.';
+
+  @override
   String get aboutBeeDNS => 'BeeDNS';
 
   @override
   String get aboutBeeDNSSubtitle => 'Simple and efficient DNS management tool';
+
+  @override
+  String get aboutBeeDNSIntro => 'Got domains across Cloudflare and Aliyun? BeeDNS unifies them in one place: batch edit records, A/AAAA toggles, resolution migration, subdomain bulk management — no more switching between provider consoles.';
+
+  @override
+  String get productPromoAndroidTitle => 'Request Beta Access';
+
+  @override
+  String get productPromoAndroidMessage => 'This app is still in closed testing on Google Play — invitation only.\n\nHow to apply: email us with your Google account address (required) and a brief use case (optional). We\'ll reply within 1-3 days and add you to the beta whitelist.';
+
+  @override
+  String get productPromoOpenStore => 'Open in App Store';
+
+  @override
+  String get productPromoTestFlight => 'TestFlight beta';
+
+  @override
+  String get productPromoLearnMore => 'Pro';
+
+  @override
+  String get productPromoEmailLabel => 'Application Email (tap to copy)';
+
+  @override
+  String get productPromoCopiedToast => 'Email copied to clipboard';
+
+  @override
+  String get productPromoMailUnavailable => 'No email app detected. The address has been copied — paste it into any mail app to send.';
+
+  @override
+  String get productPromoEmailButton => 'Send Email';
+
+  @override
+  String get productPromoWebsiteButton => 'Visit Website';
+
+  @override
+  String productPromoEmailSubject(String productName) {
+    return 'Beta access request - $productName';
+  }
+
+  @override
+  String productPromoEmailBody(String productName) {
+    return 'Hi,\n\nI\'d like to join the closed beta for $productName on Google Play. My Google account email is:\n\n(please fill in your Gmail / Google account email)\n\nThanks!';
+  }
 
   @override
   String get logCenterTitle => 'Log Center';
@@ -4788,7 +5076,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiPromptVarCurrentDate => 'Current date, e.g. \"2025-01-15\"';
 
   @override
-  String get aiPromptVarOcrText => 'User input or OCR recognized text content';
+  String get aiPromptVarOcrText => 'User input text content';
 
   @override
   String get aiPromptVarCategories => 'Expense and income category list';
@@ -4814,22 +5102,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get aiUsingVisionDesc => 'Image recognition is enabled for higher recognition accuracy';
-
-  @override
-  String get aiUnUsingVisionDesc => 'Image recognition turned off, OCR text only';
-
-  @override
-  String get aiUploadImage => 'Upload images to AI';
-
-  @override
-  String get aiUseVisionDesc => 'Use visual models for more accurate recognition';
-
-  @override
-  String get aiUnUseVisionDesc => 'Analyze OCR results using only text models';
-
-  @override
-  String get aiCustomBaseUrlHelper => 'OpenAI-compatible API URL, e.g. https://api.openai.com/v1';
+  String get aiCustomBaseUrlHelper => 'Standard chat completion API URL, e.g. https://api.example.com/v1';
 
   @override
   String get aiTextModelTitle => 'Text Model';
@@ -5408,6 +5681,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calendarNoTransactions => 'No transactions';
 
   @override
+  String get calendarAddTransaction => 'Add entry on this day';
+
+  @override
+  String get calendarAddTransactionTooltip => 'Add a record on the selected day';
+
+  @override
   String get commonUncategorized => 'Uncategorized';
 
   @override
@@ -5711,6 +5990,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get creditCardSettings => 'Credit Card Settings';
 
   @override
+  String get accountTabValuation => 'Valuation';
+
+  @override
+  String get creditCardDaysRequired => 'Please select billing & due dates';
+
+  @override
   String get creditLimit => 'Credit Limit';
 
   @override
@@ -5996,6 +6281,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncHealthRowAttachment => 'Attachments';
 
   @override
+  String get syncHealthRowCategoryIcon => 'Category icons';
+
+  @override
   String get syncHealthRowBudget => 'Budgets';
 
   @override
@@ -6019,4 +6307,486 @@ class AppLocalizationsEn extends AppLocalizations {
   String syncHealthValueRemoteMissing(int local) {
     return 'Local $local · Cloud —';
   }
+
+  @override
+  String get twofaChallengeTitle => 'Two-factor authentication';
+
+  @override
+  String get twofaMethodTotp => 'Code';
+
+  @override
+  String get twofaMethodRecovery => 'Recovery code';
+
+  @override
+  String get twofaTotpHint => 'Enter the 6-digit code from your authenticator app (Google Authenticator / 1Password / Authy / etc).';
+
+  @override
+  String get twofaRecoveryHint => 'Enter a recovery code saved when you enabled 2FA (e.g. abcd-efgh). Each code works once.';
+
+  @override
+  String get twofaTotpInputPlaceholder => '6-digit code';
+
+  @override
+  String get twofaRecoveryInputPlaceholder => 'Recovery code';
+
+  @override
+  String twofaCountdown(String time) {
+    return 'Time remaining $time';
+  }
+
+  @override
+  String get twofaVerifyButton => 'Verify';
+
+  @override
+  String get twofaStatusTitle => 'Two-factor authentication';
+
+  @override
+  String get twofaStatusEnabled => 'Enabled ✓';
+
+  @override
+  String get twofaStatusDisabled => 'Not enabled';
+
+  @override
+  String twofaStatusEnabledAt(String date) {
+    return 'Enabled on $date';
+  }
+
+  @override
+  String get twofaStatusManageHint => 'Manage from the Web app (enable / disable / regenerate recovery codes)';
+
+  @override
+  String get twofaStatusOpenWeb => 'Enable on the Web app →';
+
+  @override
+  String get sharedRoleOwner => 'Owner';
+
+  @override
+  String get sharedRoleEditor => 'Editor';
+
+  @override
+  String get sharedRoleViewer => 'Viewer';
+
+  @override
+  String get commonCopied => 'Copied';
+
+  @override
+  String get commonRemove => 'Remove';
+
+  @override
+  String get sharedJoinPageTitle => 'Join shared ledger';
+
+  @override
+  String get sharedJoinPageSubtitle => 'Enter an invite code or tap a shared link';
+
+  @override
+  String get sharedJoinEnterCode => 'Enter invite code';
+
+  @override
+  String get sharedJoinEnterCodeHint => '6 uppercase letters / digits. You can also tap a share link to skip this step.';
+
+  @override
+  String get sharedJoinPreviewButton => 'Verify code';
+
+  @override
+  String get sharedJoinAcceptButton => 'Join';
+
+  @override
+  String sharedJoinInvitedBy(String name) {
+    return '$name invited you to join';
+  }
+
+  @override
+  String sharedJoinRoleLine(String role) {
+    return 'Role: $role';
+  }
+
+  @override
+  String sharedJoinExpiresInMinutes(int n) {
+    return 'Expires in $n min';
+  }
+
+  @override
+  String sharedJoinExpiresInHours(int n) {
+    return 'Expires in ${n}h';
+  }
+
+  @override
+  String sharedJoinExpiresInDays(int n) {
+    return 'Expires in ${n}d';
+  }
+
+  @override
+  String sharedJoinSuccess(String name) {
+    return 'Joined \"$name\"';
+  }
+
+  @override
+  String get sharedJoinCodeFormatError => 'Invite code must be 6 letters/digits.';
+
+  @override
+  String get sharedJoinInvalidOrExpired => 'Invite code is invalid or expired. Ask the inviter for a new one.';
+
+  @override
+  String get sharedJoinAlreadyMember => 'You are already a member of this ledger.';
+
+  @override
+  String get sharedJoinMemberLimit => 'This ledger has reached its member limit. Ask the owner.';
+
+  @override
+  String get sharedInvitePageTitle => 'Invite new member';
+
+  @override
+  String get sharedInviteFormRole => 'Role';
+
+  @override
+  String get sharedInviteFormExpiry => 'Valid for';
+
+  @override
+  String sharedInviteExpiryHours(int n) {
+    return '$n h';
+  }
+
+  @override
+  String sharedInviteExpiryDays(int n) {
+    return '$n day';
+  }
+
+  @override
+  String get sharedInviteGenerate => 'Generate invite code';
+
+  @override
+  String get sharedInviteGenerateAnother => 'Generate another code';
+
+  @override
+  String get sharedInviteCopyCode => 'Copy code';
+
+  @override
+  String get sharedInviteCopyLink => 'Copy link';
+
+  @override
+  String get sharedInviteShareLink => 'Share link';
+
+  @override
+  String sharedInviteExpiresAt(String dt) {
+    return 'Expires at $dt';
+  }
+
+  @override
+  String get sharedInviteWarning => '⚠️ Don\'t post invite codes to public groups / social. Anyone with the code can join. Revoke and regenerate from Members if leaked.';
+
+  @override
+  String get sharedInviteInstruction => 'Send the code or short link to the other person. After they install BeeCount, they can tap the link or enter the code from \"Me → Join shared ledger\".';
+
+  @override
+  String sharedInviteShareText(String ledger, String code, String url) {
+    return 'I\'m inviting you to BeeCount shared ledger \"$ledger\".\n\nCode: $code\nLink: $url\n\nTap the link, or open BeeCount → Me → Join shared ledger and enter this code.';
+  }
+
+  @override
+  String get sharedMembersPageTitle => 'Members';
+
+  @override
+  String get sharedMembersYou => 'you';
+
+  @override
+  String get sharedMembersInviteCta => 'Invite new member';
+
+  @override
+  String get sharedMembersLeaveCta => 'Leave ledger';
+
+  @override
+  String get sharedMembersLeaveTitle => 'Leave ledger';
+
+  @override
+  String sharedMembersLeaveConfirm(String name) {
+    return 'After leaving \"$name\" you won\'t be able to access its transactions. Continue?';
+  }
+
+  @override
+  String get sharedMembersLeaveDone => 'Left the ledger';
+
+  @override
+  String get sharedMembersRemoveTitle => 'Remove member';
+
+  @override
+  String get sharedMembersRemoveCta => 'Remove this member';
+
+  @override
+  String sharedMembersRemoveConfirm(String name) {
+    return 'Remove $name? They will immediately lose access to this ledger.';
+  }
+
+  @override
+  String get sharedMembersRemoved => 'Member removed';
+
+  @override
+  String get sharedMembersTransferTitle => 'Transfer ownership';
+
+  @override
+  String get sharedMembersTransferTo => 'Transfer to this member';
+
+  @override
+  String sharedMembersTransferConfirm(String name) {
+    return 'Transfer ownership to $name? You will become an editor and can no longer invite, rename, or delete the ledger.';
+  }
+
+  @override
+  String get sharedMembersTransferConfirmCta => 'Transfer';
+
+  @override
+  String get sharedMembersTransferDone => 'Ownership transferred';
+
+  @override
+  String sharedTxRecordedBy(String name) {
+    return 'recorded by $name';
+  }
+
+  @override
+  String sharedTxCreatedBy(String name) {
+    return 'Created by $name';
+  }
+
+  @override
+  String sharedTxEditedBy(String name) {
+    return 'Last edited by $name';
+  }
+
+  @override
+  String sharedTxCreatedAndEditedBy(String name) {
+    return 'Created and edited by $name';
+  }
+
+  @override
+  String get sharedRequiresCloudSync => 'Please enable cloud sync first';
+
+  @override
+  String get sharedMembersStatsTitle => 'Member balances';
+
+  @override
+  String get sharedMembersStatsEmpty => 'No transactions yet';
+
+  @override
+  String get sharedMembersStatsLoading => 'Loading…';
+
+  @override
+  String get sharedMembersStatsIncome => 'Income';
+
+  @override
+  String get sharedMembersStatsExpense => 'Expense';
+
+  @override
+  String sharedMembersStatsTxCount(int count) {
+    return '$count tx';
+  }
+
+  @override
+  String get maintenanceOrphanCleanupTitle => 'Data Cleanup';
+
+  @override
+  String get maintenanceOrphanCleanupSubtitle => 'Detect and clean local orphan data';
+
+  @override
+  String get maintenanceOrphanRescan => 'Rescan';
+
+  @override
+  String get maintenanceOrphanEmpty => 'Local data is clean, no orphan data found';
+
+  @override
+  String get maintenanceOrphanGroupDb => 'Database orphans';
+
+  @override
+  String get maintenanceOrphanGroupFile => 'File orphans';
+
+  @override
+  String get maintenanceOrphanGroupSync => 'Sync state orphans';
+
+  @override
+  String maintenanceOrphanSummary(int count) {
+    return 'Found $count issue(s)';
+  }
+
+  @override
+  String maintenanceOrphanSummarySize(String size) {
+    return 'Reclaimable space ~ $size';
+  }
+
+  @override
+  String get maintenanceOrphanSelectAll => 'Select all';
+
+  @override
+  String get maintenanceOrphanDeselectAll => 'Deselect all';
+
+  @override
+  String get maintenanceOrphanDeleteOne => 'Delete this';
+
+  @override
+  String maintenanceOrphanSelectedHint(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get maintenanceOrphanCleanSelected => 'Clean selected';
+
+  @override
+  String get maintenanceOrphanConfirmTitle => 'Confirm cleanup';
+
+  @override
+  String maintenanceOrphanConfirmDeleteOne(String title) {
+    return 'Delete \"$title\"? This cannot be undone.';
+  }
+
+  @override
+  String maintenanceOrphanConfirmDeleteBatch(int count) {
+    return 'Delete the $count selected item(s)? This cannot be undone.';
+  }
+
+  @override
+  String maintenanceOrphanCleanSuccess(int count) {
+    return 'Cleaned $count item(s)';
+  }
+
+  @override
+  String maintenanceOrphanCleanPartial(int ok, int fail) {
+    return 'Cleaned $ok item(s), $fail failed';
+  }
+
+  @override
+  String get syncProgressTitle => 'Syncing';
+
+  @override
+  String syncProgressCount(int applied, int total) {
+    return '$applied / $total';
+  }
+
+  @override
+  String get exchangeRatePageTitle => 'Exchange Rates';
+
+  @override
+  String get exchangeRateEntrySubtitle => 'Auto-fetched rates with manual override';
+
+  @override
+  String get baseCurrencyLabel => 'Primary Currency';
+
+  @override
+  String get rateSourceAuto => 'Auto';
+
+  @override
+  String get rateSourceManual => 'Manual';
+
+  @override
+  String rateUpdatedAt(String date) {
+    return 'Updated $date';
+  }
+
+  @override
+  String get rateNotFetched => 'Not fetched';
+
+  @override
+  String get rateTapToSet => 'Tap to set manually';
+
+  @override
+  String get rateEditTitle => 'Edit Rate';
+
+  @override
+  String rateInverseHint(String base, String rate, String quote) {
+    return 'Inverse: 1 $base ≈ $rate $quote';
+  }
+
+  @override
+  String get rateResetToAuto => 'Reset to auto';
+
+  @override
+  String get rateRefreshSuccess => 'Rates updated';
+
+  @override
+  String get rateRefreshFailed => 'Fetch failed, you can set rates manually';
+
+  @override
+  String get ratesEmptyHint => 'Rates appear here once your accounts use different currencies';
+
+  @override
+  String get rateDisclaimer => 'Source: open exchange-rate data, updated daily. Conversion is for reference only and may differ from bank rates.';
+
+  @override
+  String convertedNetWorth(String currency) {
+    return 'Net worth (in $currency)';
+  }
+
+  @override
+  String convertedFootnote(String date) {
+    return 'Converted at $date rates, tap to manage';
+  }
+
+  @override
+  String convertedPartialWarning(String currencies) {
+    return '$currencies not converted, tap to set rates';
+  }
+
+  @override
+  String get unconvertedBadge => 'Not converted';
+
+  @override
+  String get commonDetail => 'Detail';
+
+  @override
+  String get conversionDetailTitle => 'Conversion Details';
+
+  @override
+  String get assetConversionToggle => 'Convert to primary currency';
+
+  @override
+  String rateManualApplied(int count) {
+    return 'Applied $count manual rates';
+  }
+
+  @override
+  String get netWorthTrendTitle => 'Net Worth Trend';
+
+  @override
+  String get netWorthTrend3M => '3M';
+
+  @override
+  String get netWorthTrend6M => '6M';
+
+  @override
+  String get netWorthTrend12M => '12M';
+
+  @override
+  String get netWorthTrendAll => 'All';
+
+  @override
+  String get netWorthTrendLineNet => 'Net Worth';
+
+  @override
+  String get netWorthTrendLineAssets => 'Total Assets';
+
+  @override
+  String get netWorthTrendLineLiabilities => 'Total Liabilities';
+
+  @override
+  String get netWorthTrendMultiCurrencyNote => 'Historical net worth is the raw sum of each currency, not converted';
+
+  @override
+  String get txFlagExcludeFromStats => 'Exclude from income/expense';
+
+  @override
+  String get txFlagExcludeFromBudget => 'Exclude from budget';
+
+  @override
+  String get txFlagMoreOptions => 'More options';
+
+  @override
+  String get txFlagDialogTitle => 'Transaction flags';
+
+  @override
+  String get txFlagExcludeFromStatsHint => 'Excluded from stats, still counts toward balance';
+
+  @override
+  String get txFlagExcludeFromBudgetHint => 'Doesn\'t count against your budget';
+
+  @override
+  String get txFlagExcludedTag => 'Excluded';
+
+  @override
+  String get txFlagBudgetExcludedTag => 'No budget';
 }

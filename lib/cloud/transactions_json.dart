@@ -285,6 +285,7 @@ Future<String> exportTransactionsJson(BeeDatabase db, int ledgerId) async {
     'ledgerId': ledgerId,
     'ledgerName': ledger.name,
     'currency': ledger.currency,
+    'monthStartDay': ledger.monthStartDay,
     'count': items.length,
     'accounts': accountItems,
     'categories': categoryItems,
@@ -396,6 +397,8 @@ ImportData parseJsonToImportData(String jsonStr) {
     }
   }
 
+  // monthStartDay 在导出 payload 里有,但这里刻意不读 —— 恢复路径由
+  // syncLedgersFromServer 收敛(见 .docs/period-start-date/design.md §4)。
   return ImportData(
     accounts: accounts,
     categories: categories,
@@ -420,17 +423,22 @@ Future<({int inserted})> importTransactionsJson(
   int ledgerId,
   String jsonStr, {
   void Function(int done, int total)? onProgress,
+  bool recordChanges = true,
 }) async {
   // 1. 解析 JSON 为统一格式
   final importData = parseJsonToImportData(jsonStr);
 
   // 2. 使用统一导入服务
+  // [recordChanges] 默认 true 兼容 CSV 导入路径(`data_import_service` 会
+  // 通过 LocalRepository 写 local_changes 让本地变更能推到云端)。
+  // SyncEngine.runFullPull 走"从云端拉数据"路径,显式传 false 避免反向回流。
   final result = await dataImportService.importData(
     repo,
     ledgerId,
     importData,
     defaultCurrency: importData.currency ?? 'CNY',
     onProgress: onProgress,
+    recordChanges: recordChanges,
   );
 
   return (inserted: result.inserted,);

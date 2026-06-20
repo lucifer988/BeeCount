@@ -111,7 +111,7 @@ abstract class AppLocalizations {
   /// No description provided for @tabInsights.
   ///
   /// In en, this message translates to:
-  /// **'Insights'**
+  /// **'Stats'**
   String get tabInsights;
 
   /// No description provided for @tabAssets.
@@ -371,6 +371,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Other'**
   String get commonOther;
+
+  /// No description provided for @commonYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get commonYesterday;
 
   /// No description provided for @commonSearch.
   ///
@@ -1044,6 +1050,30 @@ abstract class AppLocalizations {
   /// **'Currency'**
   String get ledgersCurrency;
 
+  /// No description provided for @ledgersMonthStartDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Month start day'**
+  String get ledgersMonthStartDay;
+
+  /// No description provided for @ledgersMonthStartDayHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics and budgets use this day (1-28) as the start of each monthly period'**
+  String get ledgersMonthStartDayHint;
+
+  /// No description provided for @ledgersMonthStartDayNatural.
+  ///
+  /// In en, this message translates to:
+  /// **'1st (calendar month)'**
+  String get ledgersMonthStartDayNatural;
+
+  /// No description provided for @ledgersMonthStartDayValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {day} of each month'**
+  String ledgersMonthStartDayValue(int day);
+
   /// No description provided for @ledgersSelectCurrency.
   ///
   /// In en, this message translates to:
@@ -1617,7 +1647,7 @@ abstract class AppLocalizations {
   /// No description provided for @mineLanguageSettings.
   ///
   /// In en, this message translates to:
-  /// **'Language Settings'**
+  /// **'Language'**
   String get mineLanguageSettings;
 
   /// No description provided for @languageTitle.
@@ -1661,6 +1691,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Bee Accounting, Every Penny Counts'**
   String get mineSlogan;
+
+  /// No description provided for @mineDisplayNameEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set nickname'**
+  String get mineDisplayNameEditTitle;
+
+  /// No description provided for @mineDisplayNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a nickname'**
+  String get mineDisplayNameHint;
+
+  /// No description provided for @mineDisplayNameSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname updated'**
+  String get mineDisplayNameSaved;
+
+  /// No description provided for @mineGreetingMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning'**
+  String get mineGreetingMorning;
+
+  /// No description provided for @mineGreetingNoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good noon'**
+  String get mineGreetingNoon;
+
+  /// No description provided for @mineGreetingAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon'**
+  String get mineGreetingAfternoon;
+
+  /// No description provided for @mineGreetingEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening'**
+  String get mineGreetingEvening;
+
+  /// No description provided for @mineGreetingNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Good night'**
+  String get mineGreetingNight;
+
+  /// No description provided for @mineGreetingNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'{greeting}, {name}'**
+  String mineGreetingNamed(String greeting, String name);
+
+  /// No description provided for @mineProfileEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get mineProfileEditTitle;
+
+  /// No description provided for @headerSkinTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Skin'**
+  String get headerSkinTitle;
+
+  /// No description provided for @headerSkinSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Follows your theme color, layered over the header'**
+  String get headerSkinSubtitle;
+
+  /// No description provided for @headerSkinNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Solid'**
+  String get headerSkinNone;
+
+  /// No description provided for @headerSkinAurora.
+  ///
+  /// In en, this message translates to:
+  /// **'Aurora'**
+  String get headerSkinAurora;
+
+  /// No description provided for @headerSkinMountains.
+  ///
+  /// In en, this message translates to:
+  /// **'Mountains'**
+  String get headerSkinMountains;
+
+  /// No description provided for @headerSkinBokeh.
+  ///
+  /// In en, this message translates to:
+  /// **'Bokeh'**
+  String get headerSkinBokeh;
+
+  /// No description provided for @headerSkinWaves.
+  ///
+  /// In en, this message translates to:
+  /// **'Waves'**
+  String get headerSkinWaves;
+
+  /// No description provided for @headerSkinSunset.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunset'**
+  String get headerSkinSunset;
+
+  /// No description provided for @headerSkinClouds.
+  ///
+  /// In en, this message translates to:
+  /// **'Clouds'**
+  String get headerSkinClouds;
+
+  /// No description provided for @headerSkinExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Example'**
+  String get headerSkinExample;
+
+  /// No description provided for @headerSkinHoneycomb.
+  ///
+  /// In en, this message translates to:
+  /// **'Honeycomb'**
+  String get headerSkinHoneycomb;
+
+  /// No description provided for @headerSkinStarry.
+  ///
+  /// In en, this message translates to:
+  /// **'Starry'**
+  String get headerSkinStarry;
+
+  /// No description provided for @headerSkinStripes.
+  ///
+  /// In en, this message translates to:
+  /// **'Stripes'**
+  String get headerSkinStripes;
+
+  /// No description provided for @headerSkinSkyline.
+  ///
+  /// In en, this message translates to:
+  /// **'Skyline'**
+  String get headerSkinSkyline;
+
+  /// No description provided for @headerSkinSakura.
+  ///
+  /// In en, this message translates to:
+  /// **'Sakura'**
+  String get headerSkinSakura;
+
+  /// No description provided for @headerSkinMeteor.
+  ///
+  /// In en, this message translates to:
+  /// **'Meteor'**
+  String get headerSkinMeteor;
+
+  /// No description provided for @headerSkinMemphis.
+  ///
+  /// In en, this message translates to:
+  /// **'Memphis'**
+  String get headerSkinMemphis;
 
   /// No description provided for @mineAvatarTitle.
   ///
@@ -2736,6 +2928,24 @@ abstract class AppLocalizations {
   /// **'Help'**
   String get mineHelp;
 
+  /// No description provided for @helpCenterOpenInBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in browser'**
+  String get helpCenterOpenInBrowser;
+
+  /// No description provided for @helpCenterLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load. Please check your network.'**
+  String get helpCenterLoadFailed;
+
+  /// No description provided for @helpCenterRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get helpCenterRetry;
+
   /// No description provided for @mineHelpSubtitle.
   ///
   /// In en, this message translates to:
@@ -3243,7 +3453,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryIncomeList.
   ///
   /// In en, this message translates to:
-  /// **'Salary-Investment-Receive Red Packet-Bonus-Reimbursement-Part-time-Receive Gift-Interest-Refund-Investment Income-Second-hand-Social Benefit-Tax Refund-Provident Fund'**
+  /// **'Salary-Investment-Receive Red Packet-Bonus-Reimbursement-Part time-Receive Gift-Interest-Refund-Investment Income-Second hand-Social Benefit-Tax Refund-Provident Fund'**
   String get categoryIncomeList;
 
   /// No description provided for @categoryExpenseDining.
@@ -3255,7 +3465,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryExpenseSnacks.
   ///
   /// In en, this message translates to:
-  /// **'Cookies-Chips-Candy-Chocolate-Nuts'**
+  /// **'Snacks-Cookies-Chips-Candy-Chocolate-Nuts'**
   String get categoryExpenseSnacks;
 
   /// No description provided for @categoryExpenseFruit.
@@ -3273,7 +3483,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryExpensePastry.
   ///
   /// In en, this message translates to:
-  /// **'Pastry-Cake-Bread-Dessert-Pastry'**
+  /// **'Pastry-Cake-Bread-Dessert-Baked Goods'**
   String get categoryExpensePastry;
 
   /// No description provided for @categoryExpenseCooking.
@@ -3285,7 +3495,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryExpenseShopping.
   ///
   /// In en, this message translates to:
-  /// **'Clothing-Shoes & Hats-Bags-Accessories-Daily Necessities'**
+  /// **'Shopping-Clothing-Shoes & Hats-Bags-Accessories-Daily Necessities'**
   String get categoryExpenseShopping;
 
   /// No description provided for @categoryExpensePets.
@@ -3297,7 +3507,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryExpenseTransport.
   ///
   /// In en, this message translates to:
-  /// **'Transport-Subway-Bus-Taxi-Ride-hailing-Parking Fee-Fuel'**
+  /// **'Transport-Subway-Bus-Taxi-Ride hailing-Parking Fee-Fuel'**
   String get categoryExpenseTransport;
 
   /// No description provided for @categoryExpenseCar.
@@ -3309,7 +3519,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryExpenseClothing.
   ///
   /// In en, this message translates to:
-  /// **'Top-Pants-Dress-Shoes-Accessories'**
+  /// **'Apparel-Top-Pants-Dress-Shoes-Apparel Accessories'**
   String get categoryExpenseClothing;
 
   /// No description provided for @categoryExpenseDailyGoods.
@@ -3321,7 +3531,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryExpenseEducation.
   ///
   /// In en, this message translates to:
-  /// **'Tuition-Training Fee-Books-Stationery-Office Supplies'**
+  /// **'Education-Tuition-Training Fee-Books-Stationery-Office Supplies'**
   String get categoryExpenseEducation;
 
   /// No description provided for @categoryExpenseInvestLoss.
@@ -3339,7 +3549,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryExpenseGame.
   ///
   /// In en, this message translates to:
-  /// **'Game-Game Top-up-Game Equipment-Game Membership'**
+  /// **'Game-Game Top up-Game Equipment-Game Membership'**
   String get categoryExpenseGame;
 
   /// No description provided for @categoryExpenseHealthProducts.
@@ -3381,13 +3591,13 @@ abstract class AppLocalizations {
   /// No description provided for @categoryIncomeSalary.
   ///
   /// In en, this message translates to:
-  /// **'Base Salary-Performance Bonus-Year-end Bonus-Overtime Pay'**
+  /// **'Salary-Base Salary-Performance Bonus-Year end Bonus-Overtime Pay'**
   String get categoryIncomeSalary;
 
   /// No description provided for @categoryIncomeInvestment.
   ///
   /// In en, this message translates to:
-  /// **'Fund Earnings-Stock Dividend-Wealth Management-Other Wealth Management'**
+  /// **'Investment-Fund Earnings-Stock Dividend-Wealth Management-Other Wealth Management'**
   String get categoryIncomeInvestment;
 
   /// No description provided for @categoryIncomeRedPacket.
@@ -3399,7 +3609,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryIncomeBonus.
   ///
   /// In en, this message translates to:
-  /// **'Bonus-Year-end Bonus-Quarterly Bonus-Project Bonus-Other Bonus'**
+  /// **'Bonus-Annual Bonus-Quarterly Bonus-Project Bonus-Other Bonus'**
   String get categoryIncomeBonus;
 
   /// No description provided for @categoryIncomeReimbursement.
@@ -3411,7 +3621,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryIncomePartTime.
   ///
   /// In en, this message translates to:
-  /// **'Part-time-Part-time Income-Side Income'**
+  /// **'Part time-Part time Income-Side Income'**
   String get categoryIncomePartTime;
 
   /// No description provided for @categoryIncomeGift.
@@ -3435,13 +3645,13 @@ abstract class AppLocalizations {
   /// No description provided for @categoryIncomeInvestIncome.
   ///
   /// In en, this message translates to:
-  /// **'Investment Income-Stock Earnings-Fund Earnings-Other Investment Income'**
+  /// **'Investment Income-Stock Earnings-Fund Investment-Other Investment Income'**
   String get categoryIncomeInvestIncome;
 
   /// No description provided for @categoryIncomeSecondHand.
   ///
   /// In en, this message translates to:
-  /// **'Second-hand-Idle Items-Second-hand Goods'**
+  /// **'Second hand-Idle Items-Second hand Goods'**
   String get categoryIncomeSecondHand;
 
   /// No description provided for @categoryIncomeSocialBenefit.
@@ -3453,7 +3663,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryIncomeTaxRefund.
   ///
   /// In en, this message translates to:
-  /// **'Tax Refund-Individual Tax Refund-Other Refund'**
+  /// **'Tax Refund-Individual Tax Refund-Other Tax Refund'**
   String get categoryIncomeTaxRefund;
 
   /// No description provided for @categoryIncomeProvidentFund.
@@ -3465,8 +3675,14 @@ abstract class AppLocalizations {
   /// No description provided for @personalizeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Personalize'**
+  /// **'Theme color'**
   String get personalizeTitle;
+
+  /// No description provided for @personalizeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick or customize the app accent color'**
+  String get personalizeSubtitle;
 
   /// No description provided for @personalizeCustomColor.
   ///
@@ -6858,6 +7074,12 @@ abstract class AppLocalizations {
   /// **'Choose your preferred currency, you can change it anytime in settings'**
   String get welcomeCurrencyDescription;
 
+  /// No description provided for @welcomeCreateDefaultLedger.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a default ledger'**
+  String get welcomeCreateDefaultLedger;
+
   /// No description provided for @welcomePrivacyTitle.
   ///
   /// In en, this message translates to:
@@ -7242,6 +7464,42 @@ abstract class AppLocalizations {
   /// **'Watch detailed setup video tutorial'**
   String get iosAutoTutorialDesc;
 
+  /// No description provided for @iosAutoImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Shortcut in One Tap'**
+  String get iosAutoImportTitle;
+
+  /// No description provided for @iosAutoImportDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the button below to import the ready-made \"Screenshot → Auto Billing\" shortcut — no need to add the \"Take Screenshot\" action or connect parameters manually. After importing, binding it to \"Back Tap\" is recommended.'**
+  String get iosAutoImportDesc;
+
+  /// No description provided for @iosAutoImportButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Shortcut'**
+  String get iosAutoImportButton;
+
+  /// No description provided for @iosAutoImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the shortcut link. Check your connection and try again.'**
+  String get iosAutoImportFailed;
+
+  /// No description provided for @iosAutoManualConfigTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual Setup (Advanced)'**
+  String get iosAutoManualConfigTitle;
+
+  /// No description provided for @iosAutoManualConfigDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'If one-tap import isn\'t available, follow these steps to create the shortcut manually.'**
+  String get iosAutoManualConfigDesc;
+
   /// No description provided for @aiSettingsTitle.
   ///
   /// In en, this message translates to:
@@ -7263,7 +7521,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiEnableSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Use AI to enhance OCR accuracy, extract amount, merchant, time, and support natural language conversation'**
+  /// **'Use AI vision to recognize bill screenshots, extract amount, merchant, time, and support natural language conversation'**
   String get aiEnableSubtitle;
 
   /// No description provided for @aiEnableToastOn.
@@ -7380,24 +7638,6 @@ abstract class AppLocalizations {
   /// **'Go to Settings'**
   String get aiChatGoToSettings;
 
-  /// No description provided for @aiLocalModelTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Local Model'**
-  String get aiLocalModelTitle;
-
-  /// No description provided for @aiLocalModelTraining.
-  ///
-  /// In en, this message translates to:
-  /// **'Training'**
-  String get aiLocalModelTraining;
-
-  /// No description provided for @aiLocalModelUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Local model in training, not available yet'**
-  String get aiLocalModelUnavailable;
-
   /// No description provided for @aiOcrRecognizing.
   ///
   /// In en, this message translates to:
@@ -7409,6 +7649,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No valid amount recognized, please add manually'**
   String get aiOcrNoAmount;
+
+  /// No description provided for @aiNotConfiguredHint.
+  ///
+  /// In en, this message translates to:
+  /// **'AI service not configured. Go to \"Me → AI Settings\" to set up.'**
+  String get aiNotConfiguredHint;
+
+  /// No description provided for @aiOcrCheckLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognition failed. Check logs for details.'**
+  String get aiOcrCheckLog;
+
+  /// No description provided for @aiOcrNoBill.
+  ///
+  /// In en, this message translates to:
+  /// **'No bill recognized. Make sure the image is a bill, then try again.'**
+  String get aiOcrNoBill;
+
+  /// No description provided for @aiNotConfiguredNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'❌ Cannot recognize screenshot'**
+  String get aiNotConfiguredNotificationTitle;
+
+  /// No description provided for @aiNotConfiguredNotificationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'AI service not configured. Tap to set up.'**
+  String get aiNotConfiguredNotificationBody;
+
+  /// No description provided for @autoBillingNotifyDetectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'✅ Screenshot detected'**
+  String get autoBillingNotifyDetectedTitle;
+
+  /// No description provided for @autoBillingNotifyWaitingFileBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for file to be written...'**
+  String get autoBillingNotifyWaitingFileBody;
+
+  /// No description provided for @autoBillingNotifyRecognizingScreenshotTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognizing screenshot...'**
+  String get autoBillingNotifyRecognizingScreenshotTitle;
+
+  /// No description provided for @autoBillingNotifyVisionAnalyzingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Calling AI vision to analyze payment info, please wait'**
+  String get autoBillingNotifyVisionAnalyzingBody;
+
+  /// No description provided for @autoBillingNotifyRecognizingTextTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'⏳ Recognizing'**
+  String get autoBillingNotifyRecognizingTextTitle;
+
+  /// No description provided for @autoBillingNotifyTextAnalyzingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Calling AI to parse payment info...'**
+  String get autoBillingNotifyTextAnalyzingBody;
+
+  /// No description provided for @autoBillingNotifyRecognizeFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'❌ Recognition failed'**
+  String get autoBillingNotifyRecognizeFailedTitle;
+
+  /// No description provided for @autoBillingNotifyRecognizeFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not extract billing info from screenshot. Check AI config or the image.'**
+  String get autoBillingNotifyRecognizeFailedBody;
+
+  /// No description provided for @autoBillingNotifyNoBillTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No bill found'**
+  String get autoBillingNotifyNoBillTitle;
+
+  /// No description provided for @autoBillingNotifyNoBillBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No billing info found in this screenshot — it may not be a bill.'**
+  String get autoBillingNotifyNoBillBody;
+
+  /// No description provided for @autoBillingNotifyFileUnavailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognition failed'**
+  String get autoBillingNotifyFileUnavailableTitle;
+
+  /// No description provided for @autoBillingNotifyFileUnavailableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshot file is not available'**
+  String get autoBillingNotifyFileUnavailableBody;
+
+  /// No description provided for @autoBillingNotifyNoLedgerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'❌ Auto billing failed'**
+  String get autoBillingNotifyNoLedgerTitle;
+
+  /// No description provided for @autoBillingNotifyNoLedgerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No ledger available. Please create one first.'**
+  String get autoBillingNotifyNoLedgerBody;
+
+  /// No description provided for @autoBillingNotifyNoAmountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not recognize the amount'**
+  String get autoBillingNotifyNoAmountBody;
+
+  /// No description provided for @autoBillingNotifyCreateFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'❌ Failed to create'**
+  String get autoBillingNotifyCreateFailedTitle;
+
+  /// No description provided for @autoBillingNotifyCreateFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create transaction record'**
+  String get autoBillingNotifyCreateFailedBody;
+
+  /// No description provided for @autoBillingNotifyProcessFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'❌ Processing failed'**
+  String get autoBillingNotifyProcessFailedTitle;
+
+  /// No description provided for @autoBillingNotifyProcessFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {error}'**
+  String autoBillingNotifyProcessFailedBody(String error);
+
+  /// No description provided for @autoBillingNotifySuccessSingleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'✅ Auto billing succeeded ¥{amount}'**
+  String autoBillingNotifySuccessSingleTitle(String amount);
+
+  /// No description provided for @autoBillingNotifySuccessMultiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'✅ Auto billing succeeded ({count} entries)'**
+  String autoBillingNotifySuccessMultiTitle(int count);
+
+  /// No description provided for @autoBillingNotifySuccessMultiBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Total ¥{amount}'**
+  String autoBillingNotifySuccessMultiBody(String amount);
+
+  /// No description provided for @autoBillingNotifySuccessSingleBodyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: {note}'**
+  String autoBillingNotifySuccessSingleBodyNote(String note);
+
+  /// No description provided for @autoBillingNotifySuccessSingleBodyDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Record created automatically'**
+  String get autoBillingNotifySuccessSingleBodyDefault;
 
   /// No description provided for @aiOcrNoLedger.
   ///
@@ -7557,7 +7971,7 @@ abstract class AppLocalizations {
   /// No description provided for @cloudTutorialFeature4.
   ///
   /// In en, this message translates to:
-  /// **'🔜 Planned: shared ledgers (invite family / team to a common ledger)'**
+  /// **'🤝 Shared ledgers: invite family / team into one book with seconds-level sync'**
   String get cloudTutorialFeature4;
 
   /// No description provided for @cloudTutorialGotIt.
@@ -7641,7 +8055,7 @@ abstract class AppLocalizations {
   /// No description provided for @smartBillingDesc.
   ///
   /// In en, this message translates to:
-  /// **'AI Assistant, OCR scan, auto billing'**
+  /// **'AI Assistant, smart recognition, auto billing'**
   String get smartBillingDesc;
 
   /// No description provided for @smartBillingPageTitle.
@@ -7677,14 +8091,14 @@ abstract class AppLocalizations {
   /// No description provided for @smartBillingImageBillingGuide.
   ///
   /// In en, this message translates to:
-  /// **'Long press the + button at the bottom center of the home page and select \'Gallery\' to use image billing. With AI configured, it can intelligently recognize bill information; without AI, it can still extract text via OCR.'**
+  /// **'Long press the + button at the bottom center of the home page and select \'Gallery\' to use image billing. Requires AI service configured under \"Me → AI Settings\"; the vision model will extract amount, merchant, time, etc. from the screenshot.'**
   String get smartBillingImageBillingGuide;
 
-  /// No description provided for @smartBillingAIOptional.
+  /// No description provided for @smartBillingVisionAIRequired.
   ///
   /// In en, this message translates to:
-  /// **'AI recognition is optional, configuration can improve recognition accuracy'**
-  String get smartBillingAIOptional;
+  /// **'Image recognition requires an AI vision service. Set it up in \"Me → AI Settings\" first.'**
+  String get smartBillingVisionAIRequired;
 
   /// No description provided for @smartBillingCameraBilling.
   ///
@@ -7701,7 +8115,7 @@ abstract class AppLocalizations {
   /// No description provided for @smartBillingCameraBillingGuide.
   ///
   /// In en, this message translates to:
-  /// **'Long press the + button at the bottom center of the home page and select \'Camera\' to use camera billing. With AI configured, it can intelligently recognize bill information; without AI, it can still extract text via OCR.'**
+  /// **'Long press the + button at the bottom center of the home page and select \'Camera\' to use camera billing. Requires AI service configured under \"Me → AI Settings\"; the vision model will extract amount, merchant, time, etc. from the photo.'**
   String get smartBillingCameraBillingGuide;
 
   /// No description provided for @smartBillingVoiceBilling.
@@ -7725,7 +8139,7 @@ abstract class AppLocalizations {
   /// No description provided for @smartBillingAIRequired.
   ///
   /// In en, this message translates to:
-  /// **'Voice billing requires AI configuration (Zhipu GLM API), please configure AI settings above first'**
+  /// **'Voice billing requires an AI speech service. Set it up in \"Me → AI Settings\" first.'**
   String get smartBillingAIRequired;
 
   /// No description provided for @smartBillingAutoTags.
@@ -7752,11 +8166,41 @@ abstract class AppLocalizations {
   /// **'Automatically add original image as attachment for photo billing'**
   String get smartBillingAutoAttachmentDesc;
 
+  /// No description provided for @autoScreenshotBillingIosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Billing'**
+  String get autoScreenshotBillingIosTitle;
+
   /// No description provided for @autoScreenshotBillingIosDesc.
   ///
   /// In en, this message translates to:
-  /// **'Auto-recognize payment screenshots via Shortcuts'**
+  /// **'Auto-recognize payments via Shortcuts'**
   String get autoScreenshotBillingIosDesc;
+
+  /// No description provided for @shareBilling.
+  ///
+  /// In en, this message translates to:
+  /// **'Share to Bill'**
+  String get shareBilling;
+
+  /// No description provided for @shareBillingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Share a payment screenshot from Alipay/WeChat to bill it'**
+  String get shareBillingDesc;
+
+  /// No description provided for @shareBillingGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'When you see a payment screenshot in Alipay, WeChat, Photos, etc., tap \"Share\" and choose \"BeeCount\" to auto-recognize the amount, merchant, and time and create a transaction — no need to save the screenshot first.'**
+  String get shareBillingGuide;
+
+  /// No description provided for @shareBillingActionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognized automatically in the background after sharing — no need to open BeeCount'**
+  String get shareBillingActionHint;
 
   /// No description provided for @automation.
   ///
@@ -7785,25 +8229,25 @@ abstract class AppLocalizations {
   /// No description provided for @appearanceSettings.
   ///
   /// In en, this message translates to:
-  /// **'Appearance'**
+  /// **'Personalization'**
   String get appearanceSettings;
 
   /// No description provided for @appearanceSettingsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Theme, font and language settings'**
+  /// **'Theme, font, language, app lock, etc.'**
   String get appearanceSettingsDesc;
 
   /// No description provided for @appearanceSettingsPageTitle.
   ///
   /// In en, this message translates to:
-  /// **'Appearance'**
+  /// **'Personalization'**
   String get appearanceSettingsPageTitle;
 
   /// No description provided for @appearanceSettingsPageSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Personalize appearance and display'**
+  /// **'Appearance, display, security and other app preferences'**
   String get appearanceSettingsPageSubtitle;
 
   /// No description provided for @about.
@@ -7902,6 +8346,24 @@ abstract class AppLocalizations {
   /// **'More Products'**
   String get aboutRelatedProducts;
 
+  /// No description provided for @aboutBeeAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'BeeAssets'**
+  String get aboutBeeAssets;
+
+  /// No description provided for @aboutBeeAssetsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Visualize your full asset portfolio'**
+  String get aboutBeeAssetsSubtitle;
+
+  /// No description provided for @aboutBeeAssetsIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'BeeCount focuses on daily cash flow; BeeAssets is its sibling product, focused on asset portfolio visualization: net worth trends across accounts, property / investment / crypto classification, returns, holding period, and allocation breakdown.'**
+  String get aboutBeeAssetsIntro;
+
   /// No description provided for @aboutBeeDNS.
   ///
   /// In en, this message translates to:
@@ -7913,6 +8375,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Simple and efficient DNS management tool'**
   String get aboutBeeDNSSubtitle;
+
+  /// No description provided for @aboutBeeDNSIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Got domains across Cloudflare and Aliyun? BeeDNS unifies them in one place: batch edit records, A/AAAA toggles, resolution migration, subdomain bulk management — no more switching between provider consoles.'**
+  String get aboutBeeDNSIntro;
+
+  /// No description provided for @productPromoAndroidTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Beta Access'**
+  String get productPromoAndroidTitle;
+
+  /// No description provided for @productPromoAndroidMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This app is still in closed testing on Google Play — invitation only.\n\nHow to apply: email us with your Google account address (required) and a brief use case (optional). We\'ll reply within 1-3 days and add you to the beta whitelist.'**
+  String get productPromoAndroidMessage;
+
+  /// No description provided for @productPromoOpenStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in App Store'**
+  String get productPromoOpenStore;
+
+  /// No description provided for @productPromoTestFlight.
+  ///
+  /// In en, this message translates to:
+  /// **'TestFlight beta'**
+  String get productPromoTestFlight;
+
+  /// No description provided for @productPromoLearnMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro'**
+  String get productPromoLearnMore;
+
+  /// No description provided for @productPromoEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Application Email (tap to copy)'**
+  String get productPromoEmailLabel;
+
+  /// No description provided for @productPromoCopiedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Email copied to clipboard'**
+  String get productPromoCopiedToast;
+
+  /// No description provided for @productPromoMailUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No email app detected. The address has been copied — paste it into any mail app to send.'**
+  String get productPromoMailUnavailable;
+
+  /// No description provided for @productPromoEmailButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Email'**
+  String get productPromoEmailButton;
+
+  /// No description provided for @productPromoWebsiteButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit Website'**
+  String get productPromoWebsiteButton;
+
+  /// No description provided for @productPromoEmailSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Beta access request - {productName}'**
+  String productPromoEmailSubject(String productName);
+
+  /// No description provided for @productPromoEmailBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Hi,\n\nI\'d like to join the closed beta for {productName} on Google Play. My Google account email is:\n\n(please fill in your Gmail / Google account email)\n\nThanks!'**
+  String productPromoEmailBody(String productName);
 
   /// No description provided for @logCenterTitle.
   ///
@@ -9165,7 +9705,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiPromptVarOcrText.
   ///
   /// In en, this message translates to:
-  /// **'User input or OCR recognized text content'**
+  /// **'User input text content'**
   String get aiPromptVarOcrText;
 
   /// No description provided for @aiPromptVarCategories.
@@ -9210,40 +9750,10 @@ abstract class AppLocalizations {
   /// **'Switched to {modelName}'**
   String aiModelSwitched(String modelName);
 
-  /// No description provided for @aiUsingVisionDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Image recognition is enabled for higher recognition accuracy'**
-  String get aiUsingVisionDesc;
-
-  /// No description provided for @aiUnUsingVisionDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Image recognition turned off, OCR text only'**
-  String get aiUnUsingVisionDesc;
-
-  /// No description provided for @aiUploadImage.
-  ///
-  /// In en, this message translates to:
-  /// **'Upload images to AI'**
-  String get aiUploadImage;
-
-  /// No description provided for @aiUseVisionDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Use visual models for more accurate recognition'**
-  String get aiUseVisionDesc;
-
-  /// No description provided for @aiUnUseVisionDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Analyze OCR results using only text models'**
-  String get aiUnUseVisionDesc;
-
   /// No description provided for @aiCustomBaseUrlHelper.
   ///
   /// In en, this message translates to:
-  /// **'OpenAI-compatible API URL, e.g. https://api.openai.com/v1'**
+  /// **'Standard chat completion API URL, e.g. https://api.example.com/v1'**
   String get aiCustomBaseUrlHelper;
 
   /// No description provided for @aiTextModelTitle.
@@ -10338,6 +10848,18 @@ abstract class AppLocalizations {
   /// **'No transactions'**
   String get calendarNoTransactions;
 
+  /// No description provided for @calendarAddTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add entry on this day'**
+  String get calendarAddTransaction;
+
+  /// No description provided for @calendarAddTransactionTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a record on the selected day'**
+  String get calendarAddTransactionTooltip;
+
   /// No description provided for @commonUncategorized.
   ///
   /// In en, this message translates to:
@@ -10920,6 +11442,18 @@ abstract class AppLocalizations {
   /// **'Credit Card Settings'**
   String get creditCardSettings;
 
+  /// No description provided for @accountTabValuation.
+  ///
+  /// In en, this message translates to:
+  /// **'Valuation'**
+  String get accountTabValuation;
+
+  /// No description provided for @creditCardDaysRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select billing & due dates'**
+  String get creditCardDaysRequired;
+
   /// No description provided for @creditLimit.
   ///
   /// In en, this message translates to:
@@ -11430,6 +11964,12 @@ abstract class AppLocalizations {
   /// **'Attachments'**
   String get syncHealthRowAttachment;
 
+  /// No description provided for @syncHealthRowCategoryIcon.
+  ///
+  /// In en, this message translates to:
+  /// **'Category icons'**
+  String get syncHealthRowCategoryIcon;
+
   /// No description provided for @syncHealthRowBudget.
   ///
   /// In en, this message translates to:
@@ -11471,6 +12011,834 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Local {local} · Cloud —'**
   String syncHealthValueRemoteMissing(int local);
+
+  /// No description provided for @twofaChallengeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-factor authentication'**
+  String get twofaChallengeTitle;
+
+  /// No description provided for @twofaMethodTotp.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get twofaMethodTotp;
+
+  /// No description provided for @twofaMethodRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery code'**
+  String get twofaMethodRecovery;
+
+  /// No description provided for @twofaTotpHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code from your authenticator app (Google Authenticator / 1Password / Authy / etc).'**
+  String get twofaTotpHint;
+
+  /// No description provided for @twofaRecoveryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a recovery code saved when you enabled 2FA (e.g. abcd-efgh). Each code works once.'**
+  String get twofaRecoveryHint;
+
+  /// No description provided for @twofaTotpInputPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code'**
+  String get twofaTotpInputPlaceholder;
+
+  /// No description provided for @twofaRecoveryInputPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery code'**
+  String get twofaRecoveryInputPlaceholder;
+
+  /// No description provided for @twofaCountdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Time remaining {time}'**
+  String twofaCountdown(String time);
+
+  /// No description provided for @twofaVerifyButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get twofaVerifyButton;
+
+  /// No description provided for @twofaStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-factor authentication'**
+  String get twofaStatusTitle;
+
+  /// No description provided for @twofaStatusEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled ✓'**
+  String get twofaStatusEnabled;
+
+  /// No description provided for @twofaStatusDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enabled'**
+  String get twofaStatusDisabled;
+
+  /// No description provided for @twofaStatusEnabledAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled on {date}'**
+  String twofaStatusEnabledAt(String date);
+
+  /// No description provided for @twofaStatusManageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage from the Web app (enable / disable / regenerate recovery codes)'**
+  String get twofaStatusManageHint;
+
+  /// No description provided for @twofaStatusOpenWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable on the Web app →'**
+  String get twofaStatusOpenWeb;
+
+  /// No description provided for @sharedRoleOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get sharedRoleOwner;
+
+  /// No description provided for @sharedRoleEditor.
+  ///
+  /// In en, this message translates to:
+  /// **'Editor'**
+  String get sharedRoleEditor;
+
+  /// No description provided for @sharedRoleViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewer'**
+  String get sharedRoleViewer;
+
+  /// No description provided for @commonCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get commonCopied;
+
+  /// No description provided for @commonRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get commonRemove;
+
+  /// No description provided for @sharedJoinPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Join shared ledger'**
+  String get sharedJoinPageTitle;
+
+  /// No description provided for @sharedJoinPageSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an invite code or tap a shared link'**
+  String get sharedJoinPageSubtitle;
+
+  /// No description provided for @sharedJoinEnterCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter invite code'**
+  String get sharedJoinEnterCode;
+
+  /// No description provided for @sharedJoinEnterCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'6 uppercase letters / digits. You can also tap a share link to skip this step.'**
+  String get sharedJoinEnterCodeHint;
+
+  /// No description provided for @sharedJoinPreviewButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify code'**
+  String get sharedJoinPreviewButton;
+
+  /// No description provided for @sharedJoinAcceptButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get sharedJoinAcceptButton;
+
+  /// No description provided for @sharedJoinInvitedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} invited you to join'**
+  String sharedJoinInvitedBy(String name);
+
+  /// No description provided for @sharedJoinRoleLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Role: {role}'**
+  String sharedJoinRoleLine(String role);
+
+  /// No description provided for @sharedJoinExpiresInMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires in {n} min'**
+  String sharedJoinExpiresInMinutes(int n);
+
+  /// No description provided for @sharedJoinExpiresInHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires in {n}h'**
+  String sharedJoinExpiresInHours(int n);
+
+  /// No description provided for @sharedJoinExpiresInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires in {n}d'**
+  String sharedJoinExpiresInDays(int n);
+
+  /// No description provided for @sharedJoinSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined \"{name}\"'**
+  String sharedJoinSuccess(String name);
+
+  /// No description provided for @sharedJoinCodeFormatError.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite code must be 6 letters/digits.'**
+  String get sharedJoinCodeFormatError;
+
+  /// No description provided for @sharedJoinInvalidOrExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite code is invalid or expired. Ask the inviter for a new one.'**
+  String get sharedJoinInvalidOrExpired;
+
+  /// No description provided for @sharedJoinAlreadyMember.
+  ///
+  /// In en, this message translates to:
+  /// **'You are already a member of this ledger.'**
+  String get sharedJoinAlreadyMember;
+
+  /// No description provided for @sharedJoinMemberLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'This ledger has reached its member limit. Ask the owner.'**
+  String get sharedJoinMemberLimit;
+
+  /// No description provided for @sharedInvitePageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite new member'**
+  String get sharedInvitePageTitle;
+
+  /// No description provided for @sharedInviteFormRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get sharedInviteFormRole;
+
+  /// No description provided for @sharedInviteFormExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid for'**
+  String get sharedInviteFormExpiry;
+
+  /// No description provided for @sharedInviteExpiryHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} h'**
+  String sharedInviteExpiryHours(int n);
+
+  /// No description provided for @sharedInviteExpiryDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} day'**
+  String sharedInviteExpiryDays(int n);
+
+  /// No description provided for @sharedInviteGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate invite code'**
+  String get sharedInviteGenerate;
+
+  /// No description provided for @sharedInviteGenerateAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate another code'**
+  String get sharedInviteGenerateAnother;
+
+  /// No description provided for @sharedInviteCopyCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy code'**
+  String get sharedInviteCopyCode;
+
+  /// No description provided for @sharedInviteCopyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get sharedInviteCopyLink;
+
+  /// No description provided for @sharedInviteShareLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Share link'**
+  String get sharedInviteShareLink;
+
+  /// No description provided for @sharedInviteExpiresAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires at {dt}'**
+  String sharedInviteExpiresAt(String dt);
+
+  /// No description provided for @sharedInviteWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'⚠️ Don\'t post invite codes to public groups / social. Anyone with the code can join. Revoke and regenerate from Members if leaked.'**
+  String get sharedInviteWarning;
+
+  /// No description provided for @sharedInviteInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Send the code or short link to the other person. After they install BeeCount, they can tap the link or enter the code from \"Me → Join shared ledger\".'**
+  String get sharedInviteInstruction;
+
+  /// No description provided for @sharedInviteShareText.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m inviting you to BeeCount shared ledger \"{ledger}\".\n\nCode: {code}\nLink: {url}\n\nTap the link, or open BeeCount → Me → Join shared ledger and enter this code.'**
+  String sharedInviteShareText(String ledger, String code, String url);
+
+  /// No description provided for @sharedMembersPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get sharedMembersPageTitle;
+
+  /// No description provided for @sharedMembersYou.
+  ///
+  /// In en, this message translates to:
+  /// **'you'**
+  String get sharedMembersYou;
+
+  /// No description provided for @sharedMembersInviteCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite new member'**
+  String get sharedMembersInviteCta;
+
+  /// No description provided for @sharedMembersLeaveCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave ledger'**
+  String get sharedMembersLeaveCta;
+
+  /// No description provided for @sharedMembersLeaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave ledger'**
+  String get sharedMembersLeaveTitle;
+
+  /// No description provided for @sharedMembersLeaveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'After leaving \"{name}\" you won\'t be able to access its transactions. Continue?'**
+  String sharedMembersLeaveConfirm(String name);
+
+  /// No description provided for @sharedMembersLeaveDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Left the ledger'**
+  String get sharedMembersLeaveDone;
+
+  /// No description provided for @sharedMembersRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove member'**
+  String get sharedMembersRemoveTitle;
+
+  /// No description provided for @sharedMembersRemoveCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this member'**
+  String get sharedMembersRemoveCta;
+
+  /// No description provided for @sharedMembersRemoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}? They will immediately lose access to this ledger.'**
+  String sharedMembersRemoveConfirm(String name);
+
+  /// No description provided for @sharedMembersRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Member removed'**
+  String get sharedMembersRemoved;
+
+  /// No description provided for @sharedMembersTransferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer ownership'**
+  String get sharedMembersTransferTitle;
+
+  /// No description provided for @sharedMembersTransferTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer to this member'**
+  String get sharedMembersTransferTo;
+
+  /// No description provided for @sharedMembersTransferConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer ownership to {name}? You will become an editor and can no longer invite, rename, or delete the ledger.'**
+  String sharedMembersTransferConfirm(String name);
+
+  /// No description provided for @sharedMembersTransferConfirmCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get sharedMembersTransferConfirmCta;
+
+  /// No description provided for @sharedMembersTransferDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Ownership transferred'**
+  String get sharedMembersTransferDone;
+
+  /// No description provided for @sharedTxRecordedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'recorded by {name}'**
+  String sharedTxRecordedBy(String name);
+
+  /// No description provided for @sharedTxCreatedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Created by {name}'**
+  String sharedTxCreatedBy(String name);
+
+  /// No description provided for @sharedTxEditedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Last edited by {name}'**
+  String sharedTxEditedBy(String name);
+
+  /// No description provided for @sharedTxCreatedAndEditedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Created and edited by {name}'**
+  String sharedTxCreatedAndEditedBy(String name);
+
+  /// No description provided for @sharedRequiresCloudSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enable cloud sync first'**
+  String get sharedRequiresCloudSync;
+
+  /// No description provided for @sharedMembersStatsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Member balances'**
+  String get sharedMembersStatsTitle;
+
+  /// No description provided for @sharedMembersStatsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet'**
+  String get sharedMembersStatsEmpty;
+
+  /// No description provided for @sharedMembersStatsLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading…'**
+  String get sharedMembersStatsLoading;
+
+  /// No description provided for @sharedMembersStatsIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get sharedMembersStatsIncome;
+
+  /// No description provided for @sharedMembersStatsExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get sharedMembersStatsExpense;
+
+  /// No description provided for @sharedMembersStatsTxCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} tx'**
+  String sharedMembersStatsTxCount(int count);
+
+  /// No description provided for @maintenanceOrphanCleanupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Cleanup'**
+  String get maintenanceOrphanCleanupTitle;
+
+  /// No description provided for @maintenanceOrphanCleanupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Detect and clean local orphan data'**
+  String get maintenanceOrphanCleanupSubtitle;
+
+  /// No description provided for @maintenanceOrphanRescan.
+  ///
+  /// In en, this message translates to:
+  /// **'Rescan'**
+  String get maintenanceOrphanRescan;
+
+  /// No description provided for @maintenanceOrphanEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data is clean, no orphan data found'**
+  String get maintenanceOrphanEmpty;
+
+  /// No description provided for @maintenanceOrphanGroupDb.
+  ///
+  /// In en, this message translates to:
+  /// **'Database orphans'**
+  String get maintenanceOrphanGroupDb;
+
+  /// No description provided for @maintenanceOrphanGroupFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File orphans'**
+  String get maintenanceOrphanGroupFile;
+
+  /// No description provided for @maintenanceOrphanGroupSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync state orphans'**
+  String get maintenanceOrphanGroupSync;
+
+  /// No description provided for @maintenanceOrphanSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Found {count} issue(s)'**
+  String maintenanceOrphanSummary(int count);
+
+  /// No description provided for @maintenanceOrphanSummarySize.
+  ///
+  /// In en, this message translates to:
+  /// **'Reclaimable space ~ {size}'**
+  String maintenanceOrphanSummarySize(String size);
+
+  /// No description provided for @maintenanceOrphanSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get maintenanceOrphanSelectAll;
+
+  /// No description provided for @maintenanceOrphanDeselectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect all'**
+  String get maintenanceOrphanDeselectAll;
+
+  /// No description provided for @maintenanceOrphanDeleteOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this'**
+  String get maintenanceOrphanDeleteOne;
+
+  /// No description provided for @maintenanceOrphanSelectedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String maintenanceOrphanSelectedHint(int count);
+
+  /// No description provided for @maintenanceOrphanCleanSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean selected'**
+  String get maintenanceOrphanCleanSelected;
+
+  /// No description provided for @maintenanceOrphanConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm cleanup'**
+  String get maintenanceOrphanConfirmTitle;
+
+  /// No description provided for @maintenanceOrphanConfirmDeleteOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{title}\"? This cannot be undone.'**
+  String maintenanceOrphanConfirmDeleteOne(String title);
+
+  /// No description provided for @maintenanceOrphanConfirmDeleteBatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the {count} selected item(s)? This cannot be undone.'**
+  String maintenanceOrphanConfirmDeleteBatch(int count);
+
+  /// No description provided for @maintenanceOrphanCleanSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaned {count} item(s)'**
+  String maintenanceOrphanCleanSuccess(int count);
+
+  /// No description provided for @maintenanceOrphanCleanPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaned {ok} item(s), {fail} failed'**
+  String maintenanceOrphanCleanPartial(int ok, int fail);
+
+  /// No description provided for @syncProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing'**
+  String get syncProgressTitle;
+
+  /// No description provided for @syncProgressCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{applied} / {total}'**
+  String syncProgressCount(int applied, int total);
+
+  /// No description provided for @exchangeRatePageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Exchange Rates'**
+  String get exchangeRatePageTitle;
+
+  /// No description provided for @exchangeRateEntrySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-fetched rates with manual override'**
+  String get exchangeRateEntrySubtitle;
+
+  /// No description provided for @baseCurrencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary Currency'**
+  String get baseCurrencyLabel;
+
+  /// No description provided for @rateSourceAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get rateSourceAuto;
+
+  /// No description provided for @rateSourceManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get rateSourceManual;
+
+  /// No description provided for @rateUpdatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {date}'**
+  String rateUpdatedAt(String date);
+
+  /// No description provided for @rateNotFetched.
+  ///
+  /// In en, this message translates to:
+  /// **'Not fetched'**
+  String get rateNotFetched;
+
+  /// No description provided for @rateTapToSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to set manually'**
+  String get rateTapToSet;
+
+  /// No description provided for @rateEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Rate'**
+  String get rateEditTitle;
+
+  /// No description provided for @rateInverseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Inverse: 1 {base} ≈ {rate} {quote}'**
+  String rateInverseHint(String base, String rate, String quote);
+
+  /// No description provided for @rateResetToAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to auto'**
+  String get rateResetToAuto;
+
+  /// No description provided for @rateRefreshSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Rates updated'**
+  String get rateRefreshSuccess;
+
+  /// No description provided for @rateRefreshFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch failed, you can set rates manually'**
+  String get rateRefreshFailed;
+
+  /// No description provided for @ratesEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Rates appear here once your accounts use different currencies'**
+  String get ratesEmptyHint;
+
+  /// No description provided for @rateDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Source: open exchange-rate data, updated daily. Conversion is for reference only and may differ from bank rates.'**
+  String get rateDisclaimer;
+
+  /// No description provided for @convertedNetWorth.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth (in {currency})'**
+  String convertedNetWorth(String currency);
+
+  /// No description provided for @convertedFootnote.
+  ///
+  /// In en, this message translates to:
+  /// **'Converted at {date} rates, tap to manage'**
+  String convertedFootnote(String date);
+
+  /// No description provided for @convertedPartialWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'{currencies} not converted, tap to set rates'**
+  String convertedPartialWarning(String currencies);
+
+  /// No description provided for @unconvertedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Not converted'**
+  String get unconvertedBadge;
+
+  /// No description provided for @commonDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Detail'**
+  String get commonDetail;
+
+  /// No description provided for @conversionDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversion Details'**
+  String get conversionDetailTitle;
+
+  /// No description provided for @assetConversionToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert to primary currency'**
+  String get assetConversionToggle;
+
+  /// No description provided for @rateManualApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied {count} manual rates'**
+  String rateManualApplied(int count);
+
+  /// No description provided for @netWorthTrendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Net Worth Trend'**
+  String get netWorthTrendTitle;
+
+  /// No description provided for @netWorthTrend3M.
+  ///
+  /// In en, this message translates to:
+  /// **'3M'**
+  String get netWorthTrend3M;
+
+  /// No description provided for @netWorthTrend6M.
+  ///
+  /// In en, this message translates to:
+  /// **'6M'**
+  String get netWorthTrend6M;
+
+  /// No description provided for @netWorthTrend12M.
+  ///
+  /// In en, this message translates to:
+  /// **'12M'**
+  String get netWorthTrend12M;
+
+  /// No description provided for @netWorthTrendAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get netWorthTrendAll;
+
+  /// No description provided for @netWorthTrendLineNet.
+  ///
+  /// In en, this message translates to:
+  /// **'Net Worth'**
+  String get netWorthTrendLineNet;
+
+  /// No description provided for @netWorthTrendLineAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Assets'**
+  String get netWorthTrendLineAssets;
+
+  /// No description provided for @netWorthTrendLineLiabilities.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Liabilities'**
+  String get netWorthTrendLineLiabilities;
+
+  /// No description provided for @netWorthTrendMultiCurrencyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Historical net worth is the raw sum of each currency, not converted'**
+  String get netWorthTrendMultiCurrencyNote;
+
+  /// No description provided for @txFlagExcludeFromStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclude from income/expense'**
+  String get txFlagExcludeFromStats;
+
+  /// No description provided for @txFlagExcludeFromBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclude from budget'**
+  String get txFlagExcludeFromBudget;
+
+  /// No description provided for @txFlagMoreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get txFlagMoreOptions;
+
+  /// No description provided for @txFlagDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction flags'**
+  String get txFlagDialogTitle;
+
+  /// No description provided for @txFlagExcludeFromStatsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Excluded from stats, still counts toward balance'**
+  String get txFlagExcludeFromStatsHint;
+
+  /// No description provided for @txFlagExcludeFromBudgetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Doesn\'t count against your budget'**
+  String get txFlagExcludeFromBudgetHint;
+
+  /// No description provided for @txFlagExcludedTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Excluded'**
+  String get txFlagExcludedTag;
+
+  /// No description provided for @txFlagBudgetExcludedTag.
+  ///
+  /// In en, this message translates to:
+  /// **'No budget'**
+  String get txFlagBudgetExcludedTag;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

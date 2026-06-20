@@ -43,6 +43,10 @@ class CategoryBudgetUsage {
   final int categoryId;
   final String categoryName;
   final String? categoryIcon;
+  /// 完整的 Category 对象 —— 让 UI 走 CategoryIconWidget 拿 iconType /
+  /// customIconPath / iconCloudFileId,自定义图片预算也能正常渲染图标。
+  /// 老调用方还在读 categoryIcon 字段,这里两边并存。
+  final Category? category;
   final BudgetUsage usage;
 
   const CategoryBudgetUsage({
@@ -50,6 +54,7 @@ class CategoryBudgetUsage {
     required this.categoryId,
     required this.categoryName,
     this.categoryIcon,
+    this.category,
     required this.usage,
   });
 }
@@ -97,12 +102,18 @@ abstract class BudgetRepository {
   // ============ 预算统计 ============
 
   /// 获取预算使用情况
+  /// [month] 为周期锚点(调用方传 now):实际统计范围 = 包含该日期的
+  /// [账本起始日, 次月起始日) 周期,由账本 monthStartDay 决定(D5:预算跟随账本)。
   Future<BudgetUsage> getBudgetUsage(int budgetId, DateTime month);
 
   /// 获取账本当月预算概览
+  /// [month] 为周期锚点(调用方传 now):实际统计范围 = 包含该日期的
+  /// [账本起始日, 次月起始日) 周期,由账本 monthStartDay 决定(D5:预算跟随账本)。
   Future<BudgetOverview> getBudgetOverview(int ledgerId, DateTime month);
 
   /// 批量获取分类预算使用情况
+  /// [month] 为周期锚点(调用方传 now):实际统计范围 = 包含该日期的
+  /// [账本起始日, 次月起始日) 周期,由账本 monthStartDay 决定(D5:预算跟随账本)。
   Future<List<CategoryBudgetUsage>> getCategoryBudgetUsages(
     int ledgerId,
     DateTime month,

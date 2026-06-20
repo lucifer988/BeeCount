@@ -1,20 +1,21 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../billing/ocr_service.dart';
-import '../billing/category_matcher.dart';
-import '../billing/bill_creation_service.dart';
-import '../billing/post_processor.dart';
-import '../attachment_service.dart';
-import '../data/tag_seed_service.dart';
-import 'auto_billing_config.dart';
-import '../../providers.dart';
-import '../../data/db.dart';
-import '../../data/category_node.dart';
+import '../../ai/core/prompt_builder.dart';
+import '../../ai/providers/ai_provider_config.dart';
+import '../../ai/providers/ai_provider_manager.dart';
 import '../../l10n/app_localizations.dart';
+import '../../providers.dart';
+import '../../providers/ai_chat_providers.dart';
+import '../ai/bookkeeping_result.dart';
+import '../attachment_service.dart';
+import '../billing/post_processor.dart';
+import '../data/tag_seed_service.dart';
 import '../system/logger_service.dart';
+import 'auto_billing_config.dart';
 
 /// 自动记账服务 - 通用核心逻辑
 /// Android和iOS共用的OCR识别和自动记账逻辑
@@ -23,7 +24,6 @@ class AutoBillingService {
   static const _processedScreenshotsKey = 'processed_screenshots';
 
   final ProviderContainer _container;
-  final OcrService _ocrService = OcrService();
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
@@ -37,6 +37,23 @@ class AutoBillingService {
     _loadProcessedScreenshots();
   }
 
+  /// 解析当前账本 ID(Provider → SharedPreferences → 数据库默认)。
+  Future<int?> _resolveLedgerId() async {
+    try {
+      final id = _container.read(currentLedgerIdProvider);
+      return id;
+    } catch (_) {}
+    final prefs = await SharedPreferences.getInstance();
+    final fromPrefs = prefs.getInt(_ledgerIdKey);
+    if (fromPrefs != null) return fromPrefs;
+    final repo = _container.read(repositoryProvider);
+    final ledgers = await repo.getAllLedgers();
+    if (ledgers.isEmpty) return null;
+    final fallback = ledgers.first.id;
+    await prefs.setInt(_ledgerIdKey, fallback);
+    return fallback;
+  }
+
   /// 初始化通知
   Future<void> _initNotifications() async {
     const androidSettings =
@@ -48,7 +65,12 @@ class AutoBillingService {
       iOS: iosSettings,
     );
 
-    await _notificationsPlugin.initialize(initSettings);
+    // 同 _showNotification:通知子系统任何异常都不允许影响记账主流程
+    try {
+      await _notificationsPlugin.initialize(initSettings);
+    } catch (e) {
+      logger.warning('AutoBilling', '通知初始化失败(仅影响进度通知,不影响记账): $e');
+    }
   }
 
   /// 加载已处理的截图列表
@@ -118,24 +140,27 @@ class AutoBillingService {
     _lastProcessedPath = imagePath;
     _lastProcessedTime = now;
 
-    try {
-      const notificationId = 1001;
+    const notificationId = 1001;
+    // 最终结果(成功/失败)用独立 ID,避免 iOS 把它当成对 1001 的静默更新
+    const resultNotificationId = 1101;
 
+    try {
       // 检查文件是否存在
       final file = File(imagePath);
 
       // 如果文件不存在,可能需要短暂等待
       // (无障碍服务直接截图时文件已就绪,ContentObserver 可能需要等待)
       if (!await file.exists()) {
-        print('⏳ 文件尚未就绪,等待最多${AutoBillingConfig.fileWaitTimeout}ms...');
         logger.info('AutoBilling', '文件尚未就绪，开始等待',
             '路径=$imagePath, 超时=${AutoBillingConfig.fileWaitTimeout}ms');
 
         if (showNotification) {
+          final l10n =
+              lookupAppLocalizations(PlatformDispatcher.instance.locale);
           await _showNotification(
             id: notificationId,
-            title: '✅ 检测到截图',
-            body: '正在等待文件写入...',
+            title: l10n.autoBillingNotifyDetectedTitle,
+            body: l10n.autoBillingNotifyWaitingFileBody,
           );
         }
 
@@ -154,14 +179,16 @@ class AutoBillingService {
         }
 
         if (!await file.exists() || await file.length() == 0) {
-          print('❌ 截图文件等待超时 (${waitTime}ms)');
           logger.error('AutoBilling', '截图文件等待超时',
               '路径=$imagePath, 等待时间=${waitTime}ms, 文件存在=${await file.exists()}');
           if (showNotification) {
-            await _showNotification(
-              id: notificationId,
-              title: '识别失败',
-              body: '截图文件不可用',
+            final l10n =
+                lookupAppLocalizations(PlatformDispatcher.instance.locale);
+            await _showFinalNotification(
+              progressId: notificationId,
+              finalId: resultNotificationId,
+              title: l10n.autoBillingNotifyFileUnavailableTitle,
+              body: l10n.autoBillingNotifyFileUnavailableBody,
             );
           }
           return null;
@@ -171,159 +198,138 @@ class AutoBillingService {
         logger.debug('AutoBilling', '文件已就绪，无需等待');
       }
 
+      // 兜底:AI vision 未配置 → 系统通知告警,引导用户去设置(后台路径无 UI
+      // context,只能 push 系统通知。点击跳转由 deep link 处理,这里先不带
+      // payload)
+      if (!await AIProviderManager.isCapabilityConfigured(
+          AICapabilityType.vision)) {
+        logger.warning('AutoBilling', 'AI vision 未配置,跳过自动记账');
+        if (showNotification) {
+          final l10n = lookupAppLocalizations(
+              PlatformDispatcher.instance.locale);
+          await _showFinalNotification(
+            progressId: notificationId,
+            finalId: resultNotificationId,
+            title: l10n.aiNotConfiguredNotificationTitle,
+            body: l10n.aiNotConfiguredNotificationBody,
+          );
+        }
+        return null;
+      }
+
       // 更新通知：开始识别
       if (showNotification) {
+        final l10n =
+            lookupAppLocalizations(PlatformDispatcher.instance.locale);
         await _showNotification(
           id: notificationId,
-          title: '正在识别截图...',
-          body: '正在分析支付信息,请稍候',
+          title: l10n.autoBillingNotifyRecognizingScreenshotTitle,
+          body: l10n.autoBillingNotifyVisionAnalyzingBody,
         );
       }
 
-      // OCR 识别
-      final ocrStartTime = DateTime.now().millisecondsSinceEpoch;
-      print('⏱️ [性能] 开始OCR识别');
-      logger.info('AutoBilling', '开始OCR识别');
-
-      // 获取Repository实例用于账户识别
-      final repo = _container.read(repositoryProvider);
-      final result = await _ocrService.recognizePaymentImage(file, repo: repo);
-
-      final ocrElapsed = DateTime.now().millisecondsSinceEpoch - ocrStartTime;
-      print('⏱️ [性能] OCR识别完成, 耗时=${ocrElapsed}ms');
-      logger.info('AutoBilling', 'OCR识别完成', '耗时=${ocrElapsed}ms');
-
-      // 打印识别结果用于调试
-      print('📋 OCR识别原始文本: ${result.rawText}');
-      print('💰 识别到的金额: ${result.amount}');
-      print('📝 识别到的备注: ${result.note}');
-      print('⏰ 识别到的时间: ${result.time}');
-      print('🔢 所有数字: ${result.allNumbers}');
-      logger.info('AutoBilling', 'OCR识别结果', {
-        'rawText': result.rawText,
-        'amount': result.amount,
-        'note': result.note,
-        'time': result.time,
-        'allNumbers': result.allNumbers,
-      }.toString());
-
-      // 标记为已处理
-      await _markAsProcessed(imagePath);
-
-      // 根据识别结果处理
-      if (result.amount != null && result.amount!.abs() > 0) {
-        // 识别成功，自动创建记账记录（支持负数金额）
-        print('✅ OCR识别成功: 金额=${result.amount}, 备注=${result.note}');
-
-        try {
-          final dbStartTime = DateTime.now().millisecondsSinceEpoch;
-          print('⏱️ [性能] 开始创建交易记录');
-          // 读取智能记账设置
-          final autoAddTags = _container.read(smartBillingAutoTagsProvider);
-          final autoAddAttachment = _container.read(smartBillingAutoAttachmentProvider);
-
-          // 确定记账方式标签：图片记账 + AI（如果使用了AI增强）
-          final billingTypes = <String>[TagSeedService.billingTypeImage];
-          if (result.aiEnhanced) {
-            billingTypes.add(TagSeedService.billingTypeAi);
-          }
-          final transactionId = await _createTransaction(
-            result,
-            billingTypes: billingTypes,
-            autoAddTags: autoAddTags,
-          );
-          final dbElapsed = DateTime.now().millisecondsSinceEpoch - dbStartTime;
-          print('⏱️ [性能] 交易记录创建完成, 耗时=${dbElapsed}ms');
-
-          if (transactionId != null) {
-            // 记账成功
-            // 保存图片附件（根据设置开关）
-            if (autoAddAttachment) {
-              try {
-                final attachmentService = _container.read(attachmentServiceProvider);
-                await attachmentService.saveAttachment(
-                  transactionId: transactionId,
-                  sourceFile: file,
-                  index: 0,
-                );
-                logger.info('AutoBilling', '截图附件保存成功', 'transactionId=$transactionId');
-                // 刷新附件列表
-                _container.read(attachmentListRefreshProvider.notifier).state++;
-              } catch (e, st) {
-                logger.error('AutoBilling', '保存截图附件失败', e, st);
-                // 附件保存失败不影响交易记录
-              }
-            }
-
-            // 刷新统计信息
-            _container.read(statsRefreshProvider.notifier).state++;
-            if (showNotification) {
-              await _showNotification(
-                id: notificationId,
-                title: '✅ 自动记账成功 ¥${result.amount!.toStringAsFixed(2)}',
-                body: result.note != null
-                    ? '备注: ${result.note}'
-                    : '已自动创建支出记录',
-              );
-            }
-            print('✅ 自动记账成功: ID=$transactionId');
-            logger.info('AutoBilling', '自动记账成功', 'ID=$transactionId, 金额=${result.amount}');
-            return transactionId;
-          } else {
-            // 记账失败
-            if (showNotification) {
-              await _showNotification(
-                id: notificationId,
-                title: '❌ 自动记账失败',
-                body: '识别成功但创建记录失败，请手动记账',
-              );
-            }
-            print('❌ 自动记账失败: 创建交易记录返回null');
-            logger.error('AutoBilling', '自动记账失败：创建交易记录返回null');
-            return null;
-          }
-        } catch (e, stackTrace) {
-          print('❌ 自动记账失败: $e');
-          logger.error('AutoBilling', '自动记账失败', {
-            'path': imagePath,
-            'amount': result.amount,
-            'note': result.note,
-            'error': e.toString(),
-          }, stackTrace);
-          if (showNotification) {
-            await _showNotification(
-              id: notificationId,
-              title: '❌ 自动记账失败',
-              body: '识别成功但创建记录失败: $e',
-            );
-          }
-          return null;
-        }
-      } else if (result.allNumbers.isNotEmpty) {
-        // 识别到数字但未确定金额
+      // AI 视觉识别 + 多笔保存(全部委托 AiBookkeeper)
+      final ledgerId = await _resolveLedgerId();
+      if (ledgerId == null) {
+        logger.error('AutoBilling', '无可用账本');
         if (showNotification) {
-          await _showNotification(
-            id: notificationId,
-            title: '⚠️ 识别到金额候选',
-            body: '可能的金额: ${result.allNumbers.join(", ")} | 请手动确认',
+          final l10n =
+              lookupAppLocalizations(PlatformDispatcher.instance.locale);
+          await _showFinalNotification(
+            progressId: notificationId,
+            finalId: resultNotificationId,
+            title: l10n.autoBillingNotifyNoLedgerTitle,
+            body: l10n.autoBillingNotifyNoLedgerBody,
           );
         }
-        print('⚠️ 识别到数字但未确定金额: ${result.allNumbers}');
-        logger.warning('AutoBilling', '识别到数字但未确定金额', result.allNumbers.toString());
-        return null;
-      } else {
-        // 完全未识别到
-        if (showNotification) {
-          await _showNotification(
-            id: notificationId,
-            title: '❌ 未识别到支付信息',
-            body: '可能不是支付截图,或图片质量较差',
-          );
-        }
-        print('⚠️ 未识别到任何有效金额');
-        logger.warning('AutoBilling', '未识别到任何有效金额');
+        await _markAsProcessed(imagePath);
         return null;
       }
+
+      final aiStartTime = DateTime.now().millisecondsSinceEpoch;
+      logger.info('AutoBilling', '开始 AI 视觉识别 + 落库');
+
+      final autoAddAttachment =
+          _container.read(smartBillingAutoAttachmentProvider);
+      final result = await _container.read(aiBookkeeperProvider).fromImage(
+        image: file,
+        ledgerId: ledgerId,
+        billGuard: PromptBuilder.billGuardForImage,
+        billingTypes: const [
+          TagSeedService.billingTypeImage,
+          TagSeedService.billingTypeAi,
+        ],
+        l10n: lookupAppLocalizations(PlatformDispatcher.instance.locale),
+        // 多笔截图(罕见,但 AI 可能识别出一张账单页里的多笔)时,每笔都挂
+        // 同一张原图,与相册路径行为对齐。
+        //
+        // 走 urgent 模式:跳过 FlutterImageCompress(platform channel,后台冻
+        // 结时会卡)和 _getImageInfo,用 sync File.copy 几十 ms 内完成。
+        // 这样 attachment 在 perform() return 前就写完,不依赖用户开 app。
+        onSaved: autoAddAttachment
+            ? (txId, _) async {
+                try {
+                  final attachmentService =
+                      _container.read(attachmentServiceProvider);
+                  await attachmentService.saveAttachment(
+                    transactionId: txId,
+                    sourceFile: file,
+                    index: 0,
+                    urgent: true,
+                  );
+                  _container
+                      .read(attachmentListRefreshProvider.notifier)
+                      .state++;
+                } catch (e, st) {
+                  logger.error('AutoBilling', '保存截图附件失败', e, st);
+                }
+              }
+            : null,
+      );
+
+      final aiElapsed = DateTime.now().millisecondsSinceEpoch - aiStartTime;
+      logger.info('AutoBilling', 'AI 识别 + 落库完成',
+          '耗时=${aiElapsed}ms, 成功=${result.savedCount} 笔, 失败=${result.failedCount}');
+
+      // 不管成败,这张截图都不再处理
+      await _markAsProcessed(imagePath);
+
+      if (!result.success) {
+        if (showNotification) {
+          final l10n =
+              lookupAppLocalizations(PlatformDispatcher.instance.locale);
+          // failedCount>0:提取到账单但入库失败(真·错误);否则=AI 判定不是账单
+          final isNoBill = result.failedCount == 0;
+          await _showFinalNotification(
+            progressId: notificationId,
+            finalId: resultNotificationId,
+            title: isNoBill
+                ? l10n.autoBillingNotifyNoBillTitle
+                : l10n.autoBillingNotifyRecognizeFailedTitle,
+            body: isNoBill
+                ? l10n.autoBillingNotifyNoBillBody
+                : l10n.autoBillingNotifyRecognizeFailedBody,
+          );
+        }
+        return null;
+      }
+
+      _container.read(statsRefreshProvider.notifier).state++;
+      await PostProcessor.runC(_container, ledgerId: ledgerId, tags: true);
+
+      if (showNotification) {
+        final l10n =
+            lookupAppLocalizations(PlatformDispatcher.instance.locale);
+        await _showFinalNotification(
+          progressId: notificationId,
+          finalId: resultNotificationId,
+          title: _successTitle(result, l10n),
+          body: _successBody(result, l10n),
+        );
+      }
+      logger.info('AutoBilling', '自动记账成功',
+          'ids=${result.transactionIds}, 总金额=${result.totalAbsAmount}');
+      return result.firstTransactionId;
     } catch (e, stackTrace) {
       print('❌ 处理截图失败: $e');
       logger.error('AutoBilling', '处理截图失败', {
@@ -331,6 +337,18 @@ class AutoBillingService {
         'error': e.toString(),
         'stage': '未知阶段',
       }, stackTrace);
+      if (showNotification) {
+        try {
+          final l10n =
+              lookupAppLocalizations(PlatformDispatcher.instance.locale);
+          await _showFinalNotification(
+            progressId: notificationId,
+            finalId: resultNotificationId,
+            title: l10n.autoBillingNotifyRecognizeFailedTitle,
+            body: l10n.autoBillingNotifyRecognizeFailedBody,
+          );
+        } catch (_) {}
+      }
       return null;
     } finally {
       final totalElapsed =
@@ -352,204 +370,126 @@ class AutoBillingService {
 
     try {
       const notificationId = 1002;
+      const resultNotificationId = 1102;
+      final l10n = lookupAppLocalizations(PlatformDispatcher.instance.locale);
+
+      // 兜底:AI text 未配置 → 系统通知,引导用户去配置
+      if (!await AIProviderManager.isCapabilityConfigured(
+          AICapabilityType.text)) {
+        logger.warning('AutoBilling', 'AI text 未配置,跳过文本记账');
+        if (showNotification) {
+          await _showNotification(
+            id: notificationId,
+            title: l10n.aiNotConfiguredNotificationTitle,
+            body: l10n.aiNotConfiguredNotificationBody,
+          );
+        }
+        return null;
+      }
 
       // 显示"正在识别"通知
       if (showNotification) {
         await _showNotification(
           id: notificationId,
-          title: '⏳ 正在识别',
-          body: '正在解析支付信息...',
+          title: l10n.autoBillingNotifyRecognizingTextTitle,
+          body: l10n.autoBillingNotifyTextAnalyzingBody,
         );
       }
 
-      // 直接解析文本(无需OCR)
-      final ocrResult = _ocrService.parsePaymentText(text);
-
-      if (ocrResult.amount == null) {
-        print('❌ 未能识别出金额');
+      // AI 文本提取 + 多笔保存(全部委托 AiBookkeeper)
+      final ledgerId = await _resolveLedgerId();
+      if (ledgerId == null) {
         if (showNotification) {
-          await _showNotification(
-            id: notificationId,
-            title: '❌ 识别失败',
-            body: '未能识别出金额信息',
+          await _showFinalNotification(
+            progressId: notificationId,
+            finalId: resultNotificationId,
+            title: l10n.autoBillingNotifyNoLedgerTitle,
+            body: l10n.autoBillingNotifyNoLedgerBody,
           );
         }
         return null;
       }
 
-      print('✅ 识别成功: 金额=${ocrResult.amount}, 备注=${ocrResult.note}');
+      final result = await _container.read(aiBookkeeperProvider).fromText(
+        text: text,
+        ledgerId: ledgerId,
+        billingTypes: const [
+          TagSeedService.billingTypeImage, // 通知文本场景沿用 image 标签习惯
+          TagSeedService.billingTypeAi,
+        ],
+        l10n: l10n,
+      );
 
-      // 更新通知状态
+      if (!result.success) {
+        if (showNotification) {
+          await _showFinalNotification(
+            progressId: notificationId,
+            finalId: resultNotificationId,
+            title: l10n.autoBillingNotifyRecognizeFailedTitle,
+            body: l10n.autoBillingNotifyNoAmountBody,
+          );
+        }
+        return null;
+      }
+
+      _container.read(statsRefreshProvider.notifier).state++;
+      await PostProcessor.runC(_container, ledgerId: ledgerId, tags: true);
+
       if (showNotification) {
-        await _showNotification(
-          id: notificationId,
-          title: '✅ 识别成功',
-          body: '正在创建交易记录...',
+        await _showFinalNotification(
+          progressId: notificationId,
+          finalId: resultNotificationId,
+          title: _successTitle(result, l10n),
+          body: _successBody(result, l10n),
         );
       }
-
-      // 获取分类并创建交易
-      final repo = _container.read(repositoryProvider);
-      final topLevelCategories = await repo.getTopLevelCategories('expense');
-      final allCategories = <Category>[];
-      allCategories.addAll(topLevelCategories);
-      // 获取所有子分类
-      for (final category in topLevelCategories) {
-        final subCategories = await repo.getSubCategories(category.id);
-        allCategories.addAll(subCategories);
-      }
-
-      // 过滤出可用分类（排除有子分类的父分类）
-      final categories = CategoryHierarchy.getUsableCategories(allCategories);
-
-      final suggestedCategoryId = CategoryMatcher.smartMatch(
-        merchant: ocrResult.note,
-        fullText: ocrResult.rawText,
-        categories: categories,
-      );
-
-      final resultWithCategory = OcrResult(
-        amount: ocrResult.amount,
-        note: ocrResult.note,
-        time: ocrResult.time,
-        rawText: ocrResult.rawText,
-        allNumbers: ocrResult.allNumbers,
-        suggestedCategoryId: suggestedCategoryId,
-      );
-
-      // 创建交易记录
-      final txId = await _createTransaction(resultWithCategory);
-
-      if (txId != null) {
-        // 刷新统计信息
-        _container.read(statsRefreshProvider.notifier).state++;
-        print('✅ 交易创建成功: id=$txId');
-        if (showNotification) {
-          await _showNotification(
-            id: notificationId,
-            title: '✅ 记账成功',
-            body: '已自动创建支出记录: ¥${ocrResult.amount}',
-          );
-        }
-        return txId;
-      } else {
-        print('❌ 交易创建失败');
-        if (showNotification) {
-          await _showNotification(
-            id: notificationId,
-            title: '❌ 创建失败',
-            body: '无法创建交易记录',
-          );
-        }
-        return null;
-      }
+      return result.firstTransactionId;
     } catch (e) {
-      print('❌ [AutoBilling] 文本处理失败: $e');
+      logger.error('AutoBilling', '文本处理失败', e);
       if (showNotification) {
+        final l10n =
+            lookupAppLocalizations(PlatformDispatcher.instance.locale);
         await _showNotification(
           id: 1002,
-          title: '❌ 处理失败',
-          body: '错误: $e',
+          title: l10n.autoBillingNotifyProcessFailedTitle,
+          body: l10n.autoBillingNotifyProcessFailedBody(e.toString()),
         );
       }
       return null;
     } finally {
       final totalElapsed =
           DateTime.now().millisecondsSinceEpoch - totalStartTime;
-      print('⏱️ [性能] 文本处理完成, 总耗时=${totalElapsed}ms');
+      logger.debug('AutoBilling', '文本处理完成', '总耗时=${totalElapsed}ms');
     }
   }
 
-  /// 创建交易记录
-  /// [billingTypes] 记账方式列表，用于添加标签
-  /// [autoAddTags] 是否自动添加标签
-  Future<int?> _createTransaction(
-    OcrResult result, {
-    List<String>? billingTypes,
-    bool autoAddTags = true,
-  }) async {
-    try {
-      // 获取当前账本ID（优先从Provider读取，失败则从SharedPreferences读取，最后从数据库获取默认账本）
-      int? ledgerId;
-
-      // 方案1: 尝试从Provider读取
-      try {
-        ledgerId = _container.read(currentLedgerIdProvider);
-        print('✅ 从Provider获取账本ID: $ledgerId');
-      } catch (e) {
-        print('⚠️ 从Provider获取账本ID失败: $e');
-      }
-
-      // 方案2: 如果Provider失败，从SharedPreferences读取
-      if (ledgerId == null) {
-        final prefs = await SharedPreferences.getInstance();
-        ledgerId = prefs.getInt(_ledgerIdKey);
-        if (ledgerId != null) {
-          print('✅ 从SharedPreferences获取账本ID: $ledgerId');
-        }
-      }
-
-      // 方案3: 如果都失败，从数据库获取第一个账本
-      if (ledgerId == null) {
-        print('⚠️ 无法从缓存获取账本ID，尝试从数据库获取默认账本');
-        final repo = _container.read(repositoryProvider);
-        final ledgers = await repo.getAllLedgers();
-        if (ledgers.isNotEmpty) {
-          ledgerId = ledgers.first.id;
-          print('✅ 从数据库获取默认账本ID: $ledgerId');
-          // 保存到SharedPreferences供下次使用
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setInt(_ledgerIdKey, ledgerId!);
-        }
-      }
-
-      if (ledgerId == null) {
-        print('❌ 无法获取任何账本ID，请先创建账本');
-        return null;
-      }
-
-      print('📝 准备创建交易: ledgerId=$ledgerId');
-
-      // 使用共享的BillCreationService创建交易
-      final repo = _container.read(repositoryProvider);
-      final billCreationService = BillCreationService(repo);
-
-      // 准备备注
-      String? note;
-      if (result.note != null) {
-        note = result.note!;
-      }
-
-      // 获取 l10n（使用系统语言设置）
-      final systemLocale = PlatformDispatcher.instance.locale;
-      final l10n = lookupAppLocalizations(systemLocale);
-
-      final transactionId = await billCreationService.createBillTransaction(
-        result: result,
-        ledgerId: ledgerId,
-        note: note,
-        billingTypes: billingTypes,
-        l10n: l10n,
-        autoAddTags: autoAddTags,
-      );
-
-      if (transactionId != null) {
-        logger.info('AutoBilling', '交易记录已创建', 'ID=$transactionId');
-        // 统一后处理：刷新UI + 触发云同步
-        await PostProcessor.runC(_container, ledgerId: ledgerId, tags: true);
-      } else {
-        logger.warning('AutoBilling', '创建交易记录失败');
-      }
-
-      return transactionId;
-    } catch (e) {
-      print('❌ 创建交易记录失败: $e');
-      print('❌ 错误堆栈: ${StackTrace.current}');
-      rethrow;
+  /// 通知标题统一格式
+  String _successTitle(BookkeepingResult result, AppLocalizations l10n) {
+    if (result.isMulti) {
+      return l10n.autoBillingNotifySuccessMultiTitle(result.savedCount);
     }
+    return l10n.autoBillingNotifySuccessSingleTitle(
+        result.totalAbsAmount.toStringAsFixed(2));
   }
 
-  /// 显示通知
+  /// 通知正文统一格式
+  String _successBody(BookkeepingResult result, AppLocalizations l10n) {
+    if (result.isMulti) {
+      return l10n.autoBillingNotifySuccessMultiBody(
+          result.totalAbsAmount.toStringAsFixed(2));
+    }
+    final note = result.firstBill?.note;
+    return (note != null && note.isNotEmpty)
+        ? l10n.autoBillingNotifySuccessSingleBodyNote(note)
+        : l10n.autoBillingNotifySuccessSingleBodyDefault;
+  }
+
+  /// 显示通知。
+  ///
+  /// 通知失败**绝不向外抛**:通知只是进度提示,记账主流程不能因它中断。
+  /// iOS 27 起对未授权通知的应用调 show() 会抛 PlatformException(Error 2003,
+  /// "Source is not authorized"),而 iOS ≤26 同场景是静默不弹 —— 不隔离的话
+  /// 截图还没进 AI 识别就在"开始识别"通知处整链失败(#322)。
   Future<void> _showNotification({
     required int id,
     required String title,
@@ -570,11 +510,34 @@ class AutoBillingService {
       iOS: iosDetails,
     );
 
-    await _notificationsPlugin.show(id, title, body, details);
+    try {
+      await _notificationsPlugin.show(id, title, body, details);
+    } catch (e) {
+      logger.warning('AutoBilling',
+          '通知发送失败(未授权通知时属预期,不中断记账流程): $e');
+    }
   }
 
-  /// 释放资源
-  void dispose() {
-    _ocrService.dispose();
+  /// 显示「最终结果」通知。
+  ///
+  /// iOS 上,**用同一 ID 重复 `show()` 只会静默更新通知中心条目,不会重新弹
+  /// banner**。所以「正在识别 → 成功/失败」如果共用 ID,用户只能看到第一条
+  /// banner,直到进通知中心才看到结果。
+  ///
+  /// 这个方法用**新 ID** 发结果通知,iOS 把它当作新通知重新弹 banner。
+  /// 不 cancel 旧的「正在识别」—— 实测在 AppIntent background-launch 状态下
+  /// cancel + show 紧挨着的组合 iOS 会把它当成一次「替换」处理,banner 不弹;
+  /// 留着旧的反而能保证新的作为独立通知正常弹出(旧的在结果通知出现后用户可自
+  /// 行清理或自然过期)。
+  Future<void> _showFinalNotification({
+    required int progressId,
+    required int finalId,
+    required String title,
+    required String body,
+  }) async {
+    await _showNotification(id: finalId, title: title, body: body);
   }
+
+  /// 释放资源(AI 服务无 native handle,不需要 dispose,保留方法以备后续添加)
+  void dispose() {}
 }

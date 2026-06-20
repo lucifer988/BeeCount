@@ -8,7 +8,7 @@ class WebsiteUrls {
 
   /// 官网基础域名
   /// 未来换域名时只需修改这里
-  static const String baseUrl = 'https://beecount.youths.cc';
+  static const String baseUrl = 'https://count.beejz.com';
 
   /// 获取语言前缀
   /// 中文不需要前缀，英文需要 /en 前缀
@@ -26,6 +26,14 @@ class WebsiteUrls {
   /// 使用帮助/文档首页
   static String docs([Locale? locale]) =>
       '$baseUrl${_langPrefix(locale)}/docs/intro';
+
+  /// 文档首页 — App 内嵌(embed)模式。
+  /// 文档站会隐藏 navbar/footer 等带外链的 chrome(审核风险),并跟随 App 的
+  /// 暗黑模式与主题色,站点侧实现见 BeeCount-Website docusaurus.config.ts。
+  static String docsEmbed(Locale? locale,
+          {required bool dark, required String primaryHex}) =>
+      '$baseUrl${_langPrefix(locale)}/docs/intro'
+      '?embed=1&theme=${dark ? 'dark' : 'light'}&primary=$primaryHex';
 
   /// 功能介绍
   static String docsFeature(String feature, [Locale? locale]) =>

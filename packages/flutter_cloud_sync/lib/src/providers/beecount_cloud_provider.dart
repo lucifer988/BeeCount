@@ -15,7 +15,67 @@ import '../core/exceptions.dart';
 import '../core/storage_service.dart';
 import '../utils/path_helper.dart';
 
+// ============================================================================
+// 2FA(TOTP)— 见 BeeCount 主仓 .docs/2fa-design.md
+// ============================================================================
+// 设计要点:
+// - 启用 / 管理 UI 只在 Web 端;App 仅承担"登录时若 server 要 2FA → 弹出输码视图"
+// - 两处登录入口(cloud_service_page 配置确认 / beecount_cloud_sync_page 重新登录)
+//   不感知 2FA — 只 await `signInWithEmail()`,2FA 流程被封装在 service 内部
+// - service 通过 `BeeCountCloudProvider.globalTwoFactorHandler` 拿到回调,
+//   handler 由 App 在启动时注册(典型实现:用全局 navigator key push 一个
+//   `Login2FAChallengeView`,等用户输完码后 resolve)
+
+/// 当 server 返回 requires_2fa=true 时,通过 [TwoFactorChallengeHandler] 传给 App。
+///
+/// `verify` 由 service 注入:UI 在用户输完码点验证后调它,
+/// 返回 null = 验证通过(UI 应关闭对话框并让 handler 返回 true),
+/// 返回非 null 字符串 = 错误信息(UI 就地展示,让用户重试)。
+///
+/// 这样 view 留在原地,失败可重试,不再"输错就跳走没提示"。
+class TwoFactorChallengeRequest {
+  final String challengeToken;
+  final List<String> availableMethods; // ['totp', 'recovery_code']
+  final String email;
+  final Future<String?> Function(String method, String code) verify;
+
+  const TwoFactorChallengeRequest({
+    required this.challengeToken,
+    required this.availableMethods,
+    required this.email,
+    required this.verify,
+  });
+}
+
+/// 处理 2FA challenge 的回调。返回 true = 验证已通过(view 内调 verify 返回 null),
+/// false = 用户取消 / 关闭对话框。
+typedef TwoFactorChallengeHandler = Future<bool> Function(
+  TwoFactorChallengeRequest request,
+);
+
+/// `/auth/2fa/status` 响应。
+class TwoFactorStatus {
+  final bool enabled;
+  final DateTime? enabledAt;
+
+  const TwoFactorStatus({required this.enabled, this.enabledAt});
+}
+
+/// 用户在 2FA 输码视图取消了流程 — 把它当成普通登录失败抛出去。
+class TwoFactorCancelledException implements Exception {
+  final String message;
+  const TwoFactorCancelledException([this.message = '2FA verification cancelled']);
+  @override
+  String toString() => 'TwoFactorCancelledException: $message';
+}
+
 class BeeCountCloudProvider implements CloudProvider {
+  /// 在 App 启动时设置一次。auth service 处理 signInWithEmail 时,server
+  /// 若返回 requires_2fa=true,会调这个 handler 让 App 弹输码 UI。
+  /// 不设置 = 老 App / 服务端未启 2FA 行为不变;若 server 要求 2FA 而 App
+  /// 没注册 handler,signInWithEmail 会抛 [CloudAuthException]。
+  static TwoFactorChallengeHandler? globalTwoFactorHandler;
+
   BeeCountCloudAuthService? _auth;
   BeeCountCloudStorageService? _storage;
   BeeCountCloudRealtimeClient? _realtime;
@@ -25,6 +85,10 @@ class BeeCountCloudProvider implements CloudProvider {
 
   @override
   String get providerName => 'BeeCount Cloud';
+
+  /// 拼接绝对 URL 用 — 头像 / 附件下载等场景。null = 未初始化。
+  String? get baseUrl => _auth?.baseUrl;
+  String? get apiPrefix => _auth?.apiPrefix;
 
   @override
   CloudAuthService get auth {
@@ -61,6 +125,7 @@ class BeeCountCloudProvider implements CloudProvider {
     final authService = BeeCountCloudAuthService(
       baseUrl: baseUrl,
       apiPrefix: apiPrefix,
+      twoFactorHandler: BeeCountCloudProvider.globalTwoFactorHandler,
     );
     await authService.initialize();
 
@@ -131,6 +196,16 @@ class BeeCountCloudProvider implements CloudProvider {
     return storage.getMyProfile();
   }
 
+  /// 转发到 BeeCountCloudAuthService.getTwoFactorStatus,云同步页用它展示状态行。
+  Future<TwoFactorStatus> getTwoFactorStatus() async {
+    final auth = _auth;
+    if (auth == null) {
+      throw CloudConfigurationException(
+          'BeeCount Cloud auth is not initialized.');
+    }
+    return auth.getTwoFactorStatus();
+  }
+
   Future<BeeCountCloudProfile> updateMyProfileDisplayName({
     required String displayName,
   }) async {
@@ -140,6 +215,32 @@ class BeeCountCloudProvider implements CloudProvider {
           'BeeCount Cloud storage is not initialized.');
     }
     return storage.updateMyProfileDisplayName(displayName: displayName);
+  }
+
+  /// 更新主币种(ISO code,如 `CNY`)。单向 mobile → server → web,多币种 MVP
+  /// user-level 字段。
+  Future<BeeCountCloudProfile> updateMyProfileBaseCurrency({
+    required String primaryCurrency,
+  }) async {
+    final storage = _storage;
+    if (storage == null) {
+      throw CloudConfigurationException(
+          'BeeCount Cloud storage is not initialized.');
+    }
+    return storage.updateMyProfileBaseCurrency(
+        primaryCurrency: primaryCurrency);
+  }
+
+  /// 拉取 server 汇率代理(GET /read/exchange-rates?base=XXX)。server 未开
+  /// 代理返回 null,调用方下滑公网源链。
+  Future<Map<String, dynamic>?> fetchExchangeRates(
+      {required String base}) async {
+    final storage = _storage;
+    if (storage == null) {
+      throw CloudConfigurationException(
+          'BeeCount Cloud storage is not initialized.');
+    }
+    return storage.fetchExchangeRates(base: base);
   }
 
   Future<BeeCountCloudAvatarUploadResult> uploadMyAvatar({
@@ -230,16 +331,27 @@ class BeeCountCloudProvider implements CloudProvider {
     return storage.downloadMyAvatar(userId: userId, version: version);
   }
 
+  /// 拉取增量变更。
+  ///
+  /// [persistCursor] 默认 true 兼容老 caller。传 false 时,本方法返回 cursor
+  /// 但**不**持久化到 SharedPreferences,由 caller 自己在 apply 成功后决定何时
+  /// 推进。这是为了避免"cursor 已推进但本地 apply 失败"导致这一页 change 永远
+  /// 拉不回的经典 bug,详见 BeeCount 项目 `.docs/full-pull-refactor/`。
   Future<BeeCountCloudPullResult> pullChanges({
     int? since,
     int limit = 1000,
+    bool persistCursor = true,
   }) async {
     final storage = _storage;
     if (storage == null) {
       throw CloudConfigurationException(
           'BeeCount Cloud storage is not initialized.');
     }
-    return storage.pullChanges(since: since, limit: limit);
+    return storage.pullChanges(
+      since: since,
+      limit: limit,
+      persistCursor: persistCursor,
+    );
   }
 
   /// 推送增量变更（个体实体级别，非 ledger_snapshot 包装）
@@ -282,6 +394,24 @@ class BeeCountCloudProvider implements CloudProvider {
     }
     return storage.uploadAttachment(
       ledgerId: ledgerId,
+      bytes: bytes,
+      fileName: fileName,
+      mimeType: mimeType,
+    );
+  }
+
+  /// 上传分类自定义图标 — user-global,不绑 ledger。
+  Future<BeeCountCloudAttachmentUploadResult> uploadCategoryIcon({
+    required Uint8List bytes,
+    required String fileName,
+    String? mimeType,
+  }) async {
+    final storage = _storage;
+    if (storage == null) {
+      throw CloudConfigurationException(
+          'BeeCount Cloud storage is not initialized.');
+    }
+    return storage.uploadCategoryIcon(
       bytes: bytes,
       fileName: fileName,
       mimeType: mimeType,
@@ -361,6 +491,111 @@ class BeeCountCloudProvider implements CloudProvider {
           'BeeCount Cloud storage is not initialized.');
     }
     return storage.fetchServerVersion();
+  }
+
+  // ===========================================================================
+  // 共享账本(Sprint 2.4):invites + members + shared-resources
+  // ===========================================================================
+
+  Future<BeeCountCloudInvite> createInvite({
+    required String ledgerId,
+    String role = 'editor',
+    int expiresInHours = 24,
+  }) async {
+    final storage = _storage;
+    if (storage == null) {
+      throw CloudConfigurationException(
+          'BeeCount Cloud storage is not initialized.');
+    }
+    return storage.createInvite(
+      ledgerId: ledgerId, role: role, expiresInHours: expiresInHours,
+    );
+  }
+
+  Future<List<BeeCountCloudInvite>> listInvites({required String ledgerId}) async {
+    final storage = _storage;
+    if (storage == null) {
+      throw CloudConfigurationException('BeeCount Cloud storage is not initialized.');
+    }
+    return storage.listInvites(ledgerId: ledgerId);
+  }
+
+  Future<void> revokeInvite({required String ledgerId, required String code}) async {
+    final storage = _storage;
+    if (storage == null) {
+      throw CloudConfigurationException('BeeCount Cloud storage is not initialized.');
+    }
+    return storage.revokeInvite(ledgerId: ledgerId, code: code);
+  }
+
+  Future<BeeCountCloudInvitePreview> previewInvite({required String code}) async {
+    final storage = _storage;
+    if (storage == null) {
+      throw CloudConfigurationException('BeeCount Cloud storage is not initialized.');
+    }
+    return storage.previewInvite(code: code);
+  }
+
+  Future<BeeCountCloudInviteAcceptResult> acceptInvite({required String code}) async {
+    final storage = _storage;
+    if (storage == null) {
+      throw CloudConfigurationException('BeeCount Cloud storage is not initialized.');
+    }
+    return storage.acceptInvite(code: code);
+  }
+
+  Future<List<BeeCountCloudLedgerMember>> listMembers({required String ledgerId}) async {
+    final storage = _storage;
+    if (storage == null) {
+      throw CloudConfigurationException('BeeCount Cloud storage is not initialized.');
+    }
+    return storage.listMembers(ledgerId: ledgerId);
+  }
+
+  Future<BeeCountCloudLedgerMember> updateMemberRole({
+    required String ledgerId,
+    required String userId,
+    required String role,
+  }) async {
+    final storage = _storage;
+    if (storage == null) {
+      throw CloudConfigurationException('BeeCount Cloud storage is not initialized.');
+    }
+    return storage.updateMemberRole(ledgerId: ledgerId, userId: userId, role: role);
+  }
+
+  Future<void> removeMember({required String ledgerId, required String userId}) async {
+    final storage = _storage;
+    if (storage == null) {
+      throw CloudConfigurationException('BeeCount Cloud storage is not initialized.');
+    }
+    return storage.removeMember(ledgerId: ledgerId, userId: userId);
+  }
+
+  Future<BeeCountCloudSharedResources> fetchSharedResources({required String ledgerId}) async {
+    final storage = _storage;
+    if (storage == null) {
+      throw CloudConfigurationException('BeeCount Cloud storage is not initialized.');
+    }
+    return storage.fetchSharedResources(ledgerId: ledgerId);
+  }
+
+  Future<BeeCountCloudMemberStats> fetchMemberStats({
+    required String ledgerId,
+    String scope = 'month',
+    String? period,
+    int? tzOffsetMinutes,
+  }) async {
+    final storage = _storage;
+    if (storage == null) {
+      throw CloudConfigurationException('BeeCount Cloud storage is not initialized.');
+    }
+    return storage.fetchMemberStats(
+      ledgerId: ledgerId,
+      scope: scope,
+      period: period,
+      tzOffsetMinutes: tzOffsetMinutes,
+    );
   }
 
   Future<List<BeeCountCloudReadTransaction>> readTransactions({
@@ -883,11 +1118,14 @@ class BeeCountCloudAuthService implements CloudAuthService {
     required this.baseUrl,
     required this.apiPrefix,
     http.Client? httpClient,
-  }) : _httpClient = httpClient ?? http.Client();
+    TwoFactorChallengeHandler? twoFactorHandler,
+  })  : _httpClient = httpClient ?? http.Client(),
+        _twoFactorHandler = twoFactorHandler;
 
   final String baseUrl;
   final String apiPrefix;
   final http.Client _httpClient;
+  final TwoFactorChallengeHandler? _twoFactorHandler;
 
   final StreamController<CloudUser?> _authStateController =
       StreamController<CloudUser?>.broadcast();
@@ -903,10 +1141,25 @@ class BeeCountCloudAuthService implements CloudAuthService {
   String? _recoveryPassword;
   Future<CloudUser>? _recoveryInFlight;
 
+  /// 静默恢复失败后冷却到这个时间点,期间所有 currentUser / requireAccessToken
+  /// 调用都直接返 null,**不再发新的 /auth/login 请求**。
+  /// 防止 UI 频繁 rebuild 导致 silent recovery 狂打 login 撞上 server 30/min 限流,
+  /// 后果是用户主动点「重新登录」时反而被 429 挡掉。
+  /// 触发场景:
+  ///   - 服务端开了 2FA,silent 模式拿到 requires_2fa=true 后立即 cancel
+  ///   - 邮密被改了 / 账号被禁
+  ///   - server 暂时 5xx
+  /// 登录成功后会清掉(见 _saveSession)。
+  DateTime? _silentRecoveryCooldownUntil;
+  static const _silentRecoveryCooldown = Duration(seconds: 30);
+
   void setRecoveryCredentials({String? email, String? password}) {
     _recoveryEmail = (email != null && email.isNotEmpty) ? email : null;
     _recoveryPassword =
         (password != null && password.isNotEmpty) ? password : null;
+    // 凭证更新 = 用户在 cloud 配置页保存了新邮密 / 切回 BeeCount,清掉旧冷却,
+    // 让下一次 currentUser 立刻尝试一次新凭证的登录。
+    _silentRecoveryCooldownUntil = null;
   }
 
   String get _sessionStorageKey {
@@ -989,10 +1242,21 @@ class BeeCountCloudAuthService implements CloudAuthService {
 
   /// 凭恢复邮密自动重登一次。并发多次调用只跑一个请求,其他调用方共享结果。
   /// 没邮密 / 登录失败都返回 null(不抛),让上层按"未登录"路径处理。
+  ///
+  /// 失败后进 30 秒冷却期(见 [_silentRecoveryCooldownUntil] 注释):
+  /// 防止 UI 频繁 rebuild 导致每次都 POST /auth/login,撞 server 30/min 限流,
+  /// 让用户主动点「重新登录」时反而被 429 挡掉。
   Future<CloudUser?> _tryRecoveryLogin() async {
     final email = _recoveryEmail;
     final password = _recoveryPassword;
     if (email == null || password == null) return null;
+
+    // 冷却期内直接返 null,不打网络请求
+    final cooldown = _silentRecoveryCooldownUntil;
+    if (cooldown != null && DateTime.now().isBefore(cooldown)) {
+      return null;
+    }
+
     final existing = _recoveryInFlight;
     if (existing != null) {
       try {
@@ -1001,11 +1265,17 @@ class BeeCountCloudAuthService implements CloudAuthService {
         return null;
       }
     }
-    final future = signInWithEmail(email: email, password: password);
+    // 后台恢复用 silent 模式:遇到 2FA 不弹 dialog,直接当登录失败处理,
+    // 让用户在 sync page 主动点「重新登录」时再触发。
+    final future =
+        _signInWithEmailSilent(email: email, password: password);
     _recoveryInFlight = future;
     try {
       return await future;
     } catch (_) {
+      // 失败 → 启冷却,30 秒内别再敲 server
+      _silentRecoveryCooldownUntil =
+          DateTime.now().add(_silentRecoveryCooldown);
       return null;
     } finally {
       _recoveryInFlight = null;
@@ -1015,7 +1285,33 @@ class BeeCountCloudAuthService implements CloudAuthService {
   String? get currentDeviceId => _session?.deviceId;
   String? get currentUserId => _session?.userId;
 
+  /// Refresh 请求去重的 in-flight future。
+  ///
+  /// server 用 rotating refresh token:每次 /auth/refresh 都旋转 — 老 token 立刻
+  /// revoke,返回新 token。如果 cold start 时 initialize() 看到 access_token 过期
+  /// 同步触发一次 refresh,UI 又同时调 currentUser/requireAccessToken 触发另一次,
+  /// 两个 POST 用的是 SAME 老 refresh_token → 第一个成功(新 token 入库,老 token
+  /// revoke)→ 第二个用已 revoke 的老 token → 401 → _clearSession() 把刚保存的
+  /// 新 session 也清掉。下次启动就回到"silent recovery 撞 2FA"的循环。
+  ///
+  /// 用 in-flight dedup 让并发调用共享同一个 refresh future,只发一次 server 请求。
+  Future<bool>? _refreshInFlight;
+
   Future<bool> tryRefreshSession() async {
+    final existing = _refreshInFlight;
+    if (existing != null) {
+      return existing;
+    }
+    final future = _doRefreshSession();
+    _refreshInFlight = future;
+    try {
+      return await future;
+    } finally {
+      _refreshInFlight = null;
+    }
+  }
+
+  Future<bool> _doRefreshSession() async {
     try {
       await _refreshSession();
       return true;
@@ -1232,6 +1528,24 @@ class BeeCountCloudAuthService implements CloudAuthService {
     return _toCloudUser(session);
   }
 
+  /// 内部用:登录但**不弹** 2FA dialog。供后台 token recovery / 自动登录场景调用,
+  /// 避免用户没主动操作就被弹出输码框。如果服务端要求 2FA 而我们处于 silent 模式,
+  /// 抛 [TwoFactorCancelledException],调用方用 try/catch 当作"恢复失败"处理,
+  /// 让 UI 上的「重新登录」按钮继续兜底(那条路径走的是公开 signInWithEmail,会弹)。
+  Future<CloudUser> _signInWithEmailSilent({
+    required String email,
+    required String password,
+  }) async {
+    final body = await _buildAuthBody(email: email, password: password);
+    final session = await _authenticate(
+      path: '/auth/login',
+      body: body,
+      actionName: 'login',
+      silent2fa: true,
+    );
+    return _toCloudUser(session);
+  }
+
   @override
   Future<CloudUser> signUpWithEmail({
     required String email,
@@ -1288,6 +1602,7 @@ class BeeCountCloudAuthService implements CloudAuthService {
     required String path,
     required Map<String, dynamic> body,
     required String actionName,
+    bool silent2fa = false,
   }) async {
     final response = await _request(method: 'POST', path: path, body: body);
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -1296,17 +1611,117 @@ class BeeCountCloudAuthService implements CloudAuthService {
     }
 
     final payload = _decodeJsonObject(response.body);
+
+    // server 返回 requires_2fa=true → 弹 challenge UI 拿 6 位码,POST /auth/2fa/verify
+    // 兑换真 token。register 不会要 2FA(新用户尚未启用),仅 login 路径会进这个分支。
+    if (payload['requires_2fa'] == true) {
+      // 后台 token recovery / 自动恢复登录场景:silent2fa=true,直接跑 cancel 异常,
+      // 不弹 dialog。让 UI 上的「重新登录」按钮触发用户感知到的登录,那条路径走的是
+      // 公开 signInWithEmail,会正常弹。
+      if (silent2fa) {
+        throw const TwoFactorCancelledException(
+            '2FA required but skipped in silent recovery mode');
+      }
+      return _handleTwoFactorChallenge(
+        loginBody: body,
+        challengePayload: payload,
+      );
+    }
+
     final session = _BeeCountCloudSession.fromAuthResponse(payload);
     await _saveSession(session);
     return session;
   }
 
-  Future<void> _refreshSessionOrClear() async {
-    try {
-      await _refreshSession();
-    } catch (_) {
-      await _clearSession();
+  Future<_BeeCountCloudSession> _handleTwoFactorChallenge({
+    required Map<String, dynamic> loginBody,
+    required Map<String, dynamic> challengePayload,
+  }) async {
+    final challengeToken = challengePayload['challenge_token'];
+    if (challengeToken is! String || challengeToken.isEmpty) {
+      throw CloudAuthException(
+          'Login response advertised requires_2fa but no challenge_token.');
     }
+    final rawMethods = challengePayload['available_methods'];
+    final methods = (rawMethods is List)
+        ? rawMethods.whereType<String>().toList()
+        : <String>['totp', 'recovery_code'];
+
+    final handler = _twoFactorHandler;
+    if (handler == null) {
+      throw CloudAuthException(
+          'Server requires 2FA but no TwoFactorChallengeHandler is registered. '
+          'Set BeeCountCloudProvider.globalTwoFactorHandler at app startup.');
+    }
+
+    // verify callback:UI 输完码点验证 → 调这个 → 命中就保存 session,
+    // 返回 null,UI 关闭;失败返回 server 错误消息,UI 就地展示让用户重试。
+    _BeeCountCloudSession? successSession;
+
+    Future<String?> verify(String method, String code) async {
+      final verifyBody = Map<String, dynamic>.of(loginBody)
+        ..remove('email')
+        ..remove('password');
+      verifyBody['challenge_token'] = challengeToken;
+      verifyBody['method'] = method;
+      verifyBody['code'] = code;
+      verifyBody['client_type'] ??= 'app';
+
+      final verifyResp = await _request(
+        method: 'POST',
+        path: '/auth/2fa/verify',
+        body: verifyBody,
+      );
+      if (verifyResp.statusCode < 200 || verifyResp.statusCode >= 300) {
+        return _extractErrorMessage(verifyResp);
+      }
+      final verifyPayload = _decodeJsonObject(verifyResp.body);
+      final session = _BeeCountCloudSession.fromAuthResponse(verifyPayload);
+      await _saveSession(session);
+      successSession = session;
+      return null;
+    }
+
+    final ok = await handler(TwoFactorChallengeRequest(
+      challengeToken: challengeToken,
+      availableMethods: methods,
+      email: (loginBody['email'] as String?) ?? '',
+      verify: verify,
+    ));
+    if (!ok || successSession == null) {
+      throw const TwoFactorCancelledException();
+    }
+    return successSession!;
+  }
+
+  /// GET /auth/2fa/status — UI 用来在云同步页展示「已启用 ✓ / 未启用」状态行。
+  Future<TwoFactorStatus> getTwoFactorStatus() async {
+    final accessToken = await requireAccessToken();
+    final response = await _request(
+      method: 'GET',
+      path: '/auth/2fa/status',
+      accessToken: accessToken,
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CloudAuthException(
+          'Get 2FA status failed: ${_extractErrorMessage(response)}');
+    }
+    final payload = _decodeJsonObject(response.body);
+    final enabledAtRaw = payload['enabled_at'];
+    DateTime? enabledAt;
+    if (enabledAtRaw is String && enabledAtRaw.isNotEmpty) {
+      enabledAt = DateTime.tryParse(enabledAtRaw)?.toLocal();
+    }
+    return TwoFactorStatus(
+      enabled: payload['enabled'] == true,
+      enabledAt: enabledAt,
+    );
+  }
+
+  Future<void> _refreshSessionOrClear() async {
+    // 走 tryRefreshSession 拿到 in-flight 去重保护,避免跟 currentUser/requireAccessToken
+    // 并发的 refresh 撞 server 的 rotating refresh token 机制。
+    await tryRefreshSession();
   }
 
   Future<void> _refreshSession() async {
@@ -1332,6 +1747,8 @@ class BeeCountCloudAuthService implements CloudAuthService {
 
   Future<void> _saveSession(_BeeCountCloudSession session) async {
     _session = session;
+    // 任何成功登录路径都清掉静默恢复冷却,避免之前的失败状态拖到现在。
+    _silentRecoveryCooldownUntil = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_sessionStorageKey, jsonEncode(session.toJson()));
     await prefs.setString(_localDeviceIdStorageKey, session.deviceId);
@@ -1637,6 +2054,7 @@ class BeeCountCloudStorageService implements CloudStorageService {
   Future<BeeCountCloudPullResult> pullChanges({
     int? since,
     int limit = 1000,
+    bool persistCursor = true,
   }) async {
     final currentCursor = since ?? await _loadCursor();
     final query = <String, String>{
@@ -1698,7 +2116,9 @@ class BeeCountCloudStorageService implements CloudStorageService {
       }
     }
 
-    await _saveCursor(nextCursor);
+    if (persistCursor) {
+      await _saveCursor(nextCursor);
+    }
     return BeeCountCloudPullResult(
       changes: changes,
       serverCursor: nextCursor,
@@ -1797,6 +2217,40 @@ class BeeCountCloudStorageService implements CloudStorageService {
       throw CloudStorageException('Update profile failed: empty display name');
     }
     return _patchMyProfile(body: {'display_name': normalized});
+  }
+
+  /// 推送主币种到服务端。`primaryCurrency` 形如 `CNY`(归一为大写)。
+  /// 同 display_name:mobile → server → web 单向同步。
+  Future<BeeCountCloudProfile> updateMyProfileBaseCurrency({
+    required String primaryCurrency,
+  }) async {
+    final normalized = primaryCurrency.trim().toUpperCase();
+    if (normalized.isEmpty) {
+      throw CloudStorageException(
+          'Update profile failed: empty primary currency');
+    }
+    return _patchMyProfile(body: {'primary_currency': normalized});
+  }
+
+  /// GET /read/exchange-rates?base=XXX(server 汇率代理)。
+  /// server 未开代理(404)返回 null,App 源链下滑公网;其它错误按本类惯例抛出。
+  /// 返回 body 原样:{base, rate_date, source, fetched_at, stale, rates:{USD:"0.1477"}}。
+  Future<Map<String, dynamic>?> fetchExchangeRates(
+      {required String base}) async {
+    final response = await _authedRequest(
+      method: 'GET',
+      path: '/read/exchange-rates',
+      query: {'base': base.trim().toUpperCase()},
+    );
+    if (response.statusCode == 404) {
+      // server 未开代理,交给调用方下滑公网源链。
+      return null;
+    }
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CloudStorageException(
+          'Fetch exchange rates failed: ${_extractErrorMessage(response)}');
+    }
+    return _decodeJsonObject(response.body);
   }
 
   /// 推送收支颜色方案偏好到服务端。mobile 端 `incomeExpenseColorSchemeProvider`
@@ -1927,6 +2381,49 @@ class BeeCountCloudStorageService implements CloudStorageService {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw CloudStorageException(
           'Attachment upload failed: ${_extractErrorMessage(response)}');
+    }
+    final payload = _decodeJsonObject(response.body);
+    return BeeCountCloudAttachmentUploadResult.fromJson(payload);
+  }
+
+  /// 上传分类自定义图标(user-global,不绑 ledger)。
+  ///
+  /// 走专用 endpoint `/attachments/category-icons/upload`,server 端按
+  /// (user_id, sha256) 去重,落库 attachment_files 行的 ledger_id=NULL、
+  /// attachment_kind='category_icon'。跨账本只需上传一次,避免历史按 ledger
+  /// 重复上传 N 份的问题。
+  Future<BeeCountCloudAttachmentUploadResult> uploadCategoryIcon({
+    required Uint8List bytes,
+    required String fileName,
+    String? mimeType,
+  }) async {
+    if (bytes.isEmpty) {
+      throw CloudStorageException('Category icon upload failed: empty file');
+    }
+    var token = await auth.requireAccessToken();
+    var response = await _categoryIconMultipartRequest(
+      bytes: bytes,
+      fileName: fileName,
+      mimeType: mimeType,
+      token: token,
+    );
+    if (response.statusCode == 401) {
+      final refreshed = await auth.tryRefreshSession();
+      if (!refreshed) {
+        throw CloudNotAuthenticatedException(
+            'Session expired, please login again.');
+      }
+      token = await auth.requireAccessToken();
+      response = await _categoryIconMultipartRequest(
+        bytes: bytes,
+        fileName: fileName,
+        mimeType: mimeType,
+        token: token,
+      );
+    }
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CloudStorageException(
+          'Category icon upload failed: ${_extractErrorMessage(response)}');
     }
     final payload = _decodeJsonObject(response.body);
     return BeeCountCloudAttachmentUploadResult.fromJson(payload);
@@ -2065,6 +2562,155 @@ class BeeCountCloudStorageService implements CloudStorageService {
     }
     final payload = _decodeJsonObject(response.body);
     return BeeCountCloudServerVersion.fromJson(payload);
+  }
+
+  // ===========================================================================
+  // 共享账本(Sprint 2.4)— invites / members / shared-resources HTTP 实现
+  // ===========================================================================
+
+  Future<BeeCountCloudInvite> createInvite({
+    required String ledgerId,
+    required String role,
+    required int expiresInHours,
+  }) async {
+    final response = await _authedRequest(
+      method: 'POST',
+      path: '/ledgers/$ledgerId/invites',
+      body: {'role': role, 'expires_in_hours': expiresInHours},
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CloudStorageException(
+          'Create invite failed: ${_extractErrorMessage(response)}');
+    }
+    return BeeCountCloudInvite.fromJson(_decodeJsonObject(response.body));
+  }
+
+  Future<List<BeeCountCloudInvite>> listInvites({required String ledgerId}) async {
+    final response = await _authedRequest(
+      method: 'GET', path: '/ledgers/$ledgerId/invites',
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CloudStorageException(
+          'List invites failed: ${_extractErrorMessage(response)}');
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) return const [];
+    return [
+      for (final row in decoded)
+        if (row is Map<String, dynamic>) BeeCountCloudInvite.fromJson(row),
+    ];
+  }
+
+  Future<void> revokeInvite({required String ledgerId, required String code}) async {
+    final response = await _authedRequest(
+      method: 'DELETE', path: '/ledgers/$ledgerId/invites/$code',
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CloudStorageException(
+          'Revoke invite failed: ${_extractErrorMessage(response)}');
+    }
+  }
+
+  Future<BeeCountCloudInvitePreview> previewInvite({required String code}) async {
+    final response = await _authedRequest(
+      method: 'POST', path: '/invites/$code/preview',
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CloudStorageException(
+          'Preview invite failed: ${_extractErrorMessage(response)}');
+    }
+    return BeeCountCloudInvitePreview.fromJson(_decodeJsonObject(response.body));
+  }
+
+  Future<BeeCountCloudInviteAcceptResult> acceptInvite({required String code}) async {
+    final response = await _authedRequest(
+      method: 'POST', path: '/invites/$code/accept',
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CloudStorageException(
+          'Accept invite failed: ${_extractErrorMessage(response)}');
+    }
+    return BeeCountCloudInviteAcceptResult.fromJson(_decodeJsonObject(response.body));
+  }
+
+  Future<List<BeeCountCloudLedgerMember>> listMembers({required String ledgerId}) async {
+    final response = await _authedRequest(
+      method: 'GET', path: '/ledgers/$ledgerId/members',
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CloudStorageException(
+          'List members failed: ${_extractErrorMessage(response)}');
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) return const [];
+    return [
+      for (final row in decoded)
+        if (row is Map<String, dynamic>) BeeCountCloudLedgerMember.fromJson(row),
+    ];
+  }
+
+  Future<BeeCountCloudLedgerMember> updateMemberRole({
+    required String ledgerId,
+    required String userId,
+    required String role,
+  }) async {
+    final response = await _authedRequest(
+      method: 'PATCH',
+      path: '/ledgers/$ledgerId/members/$userId',
+      body: {'role': role},
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CloudStorageException(
+          'Update member role failed: ${_extractErrorMessage(response)}');
+    }
+    return BeeCountCloudLedgerMember.fromJson(_decodeJsonObject(response.body));
+  }
+
+  Future<void> removeMember({required String ledgerId, required String userId}) async {
+    final response = await _authedRequest(
+      method: 'DELETE', path: '/ledgers/$ledgerId/members/$userId',
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CloudStorageException(
+          'Remove member failed: ${_extractErrorMessage(response)}');
+    }
+  }
+
+  /// 拉 Owner 的 user-global 资源快照(§7 决策 — Editor 端 picker 用)。
+  Future<BeeCountCloudSharedResources> fetchSharedResources({required String ledgerId}) async {
+    final response = await _authedRequest(
+      method: 'GET', path: '/ledgers/$ledgerId/shared-resources',
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CloudStorageException(
+          'Fetch shared resources failed: ${_extractErrorMessage(response)}');
+    }
+    return BeeCountCloudSharedResources.fromJson(_decodeJsonObject(response.body));
+  }
+
+  /// 共享账本成员收支统计:server `/ledgers/{id}/member-stats`。
+  /// scope: month / year / all;period 可选(YYYY-MM 或 YYYY)。
+  Future<BeeCountCloudMemberStats> fetchMemberStats({
+    required String ledgerId,
+    String scope = 'month',
+    String? period,
+    int? tzOffsetMinutes,
+  }) async {
+    final qp = <String, String>{
+      'scope': scope,
+      if (period != null && period.isNotEmpty) 'period': period,
+      if (tzOffsetMinutes != null) 'tz_offset_minutes': '$tzOffsetMinutes',
+    };
+    final response = await _authedRequest(
+      method: 'GET',
+      path: '/ledgers/$ledgerId/member-stats',
+      query: qp,
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CloudStorageException(
+          'Fetch member stats failed: ${_extractErrorMessage(response)}');
+    }
+    return BeeCountCloudMemberStats.fromJson(_decodeJsonObject(response.body));
   }
 
   Future<List<BeeCountCloudReadTransaction>> readTransactions({
@@ -2716,6 +3362,31 @@ class BeeCountCloudStorageService implements CloudStorageService {
     return http.Response.fromStream(streamed);
   }
 
+  /// 分类图标上传的 multipart 请求。跟 [_multipartRequest] 的差别:
+  /// 走 `/attachments/category-icons/upload`,不传 ledger_id form 字段。
+  Future<http.Response> _categoryIconMultipartRequest({
+    required Uint8List bytes,
+    required String fileName,
+    required String token,
+    String? mimeType,
+  }) async {
+    final uri = Uri.parse('$baseUrl$apiPrefix/attachments/category-icons/upload');
+    final request = http.MultipartRequest('POST', uri);
+    request.headers['Authorization'] = 'Bearer $token';
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'file',
+        bytes,
+        filename: fileName,
+      ),
+    );
+    if (mimeType != null && mimeType.trim().isNotEmpty) {
+      request.fields['mime_type'] = mimeType.trim();
+    }
+    final streamed = await _httpClient.send(request);
+    return http.Response.fromStream(streamed);
+  }
+
   Future<http.Response> _profileAvatarMultipartRequest({
     required Uint8List bytes,
     required String fileName,
@@ -2962,6 +3633,7 @@ class BeeCountCloudReadLedger {
     required this.role,
     this.isShared = false,
     this.memberCount = 1,
+    this.monthStartDay,
     this.exportedAt,
     this.updatedAt,
   });
@@ -2976,6 +3648,11 @@ class BeeCountCloudReadLedger {
   final String role;
   final bool isShared;
   final int memberCount;
+
+  /// server ReadLedgerOut.month_start_day;null = 老 server 未返回该字段
+  /// (调用方应保持本地值不动,勿当 1 处理 —— 防版本偏斜时覆盖用户设置)。
+  final int? monthStartDay;
+
   final DateTime? exportedAt;
   final DateTime? updatedAt;
 
@@ -2991,6 +3668,7 @@ class BeeCountCloudReadLedger {
       role: json['role'] as String? ?? 'viewer',
       isShared: json['is_shared'] as bool? ?? false,
       memberCount: (json['member_count'] as num?)?.toInt() ?? 1,
+      monthStartDay: (json['month_start_day'] as num?)?.toInt(),
       exportedAt: DateTime.tryParse(json['exported_at'] as String? ?? ''),
       updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? ''),
     );
@@ -3020,6 +3698,7 @@ class BeeCountCloudLedgerStats {
     required this.transactionTotal,
     required this.attachmentCount,
     required this.attachmentTotal,
+    required this.categoryAttachmentTotal,
     required this.budgetCount,
     required this.budgetTotal,
     required this.accountCount,
@@ -3033,10 +3712,15 @@ class BeeCountCloudLedgerStats {
   /// `*Count`:当前账本口径。`*Total`:当前用户全量账本合计。
   /// user-level 实体(account/category/tag)两者同值,tx/attachment/budget 则
   /// 一般 total 比 count 大。Server 没返 total 字段时(老版本兼容)回退到 count。
+  ///
+  /// `attachmentCount` / `attachmentTotal` 现在只统计交易附件(server
+  /// attachment_kind='transaction')。`categoryAttachmentTotal` 是分类自定
+  /// 义图标的全量(user-global,不分账本),老版本 server 没返这个字段时回退到 0。
   final int transactionCount;
   final int transactionTotal;
   final int attachmentCount;
   final int attachmentTotal;
+  final int categoryAttachmentTotal;
   final int budgetCount;
   final int budgetTotal;
   final int accountCount;
@@ -3058,6 +3742,7 @@ class BeeCountCloudLedgerStats {
       transactionTotal: readTotalOrFallback('transaction_total', 'transaction_count'),
       attachmentCount: readCount('attachment_count'),
       attachmentTotal: readTotalOrFallback('attachment_total', 'attachment_count'),
+      categoryAttachmentTotal: readCount('category_attachment_total'),
       budgetCount: readCount('budget_count'),
       budgetTotal: readTotalOrFallback('budget_total', 'budget_count'),
       accountCount: readCount('account_count'),
@@ -3083,6 +3768,7 @@ class BeeCountCloudReadLedgerDetail extends BeeCountCloudReadLedger {
     required super.isShared,
     required super.memberCount,
     required this.sourceChangeId,
+    super.monthStartDay,
     super.exportedAt,
     super.updatedAt,
   });
@@ -3102,6 +3788,7 @@ class BeeCountCloudReadLedgerDetail extends BeeCountCloudReadLedger {
       role: base.role,
       isShared: base.isShared,
       memberCount: base.memberCount,
+      monthStartDay: base.monthStartDay,
       exportedAt: base.exportedAt,
       updatedAt: base.updatedAt,
       sourceChangeId: (json['source_change_id'] as num?)?.toInt() ?? 0,
@@ -3222,6 +3909,7 @@ class BeeCountCloudProfile {
     this.themePrimaryColor,
     this.appearance,
     this.aiConfig,
+    this.primaryCurrency,
   });
 
   final String userId;
@@ -3231,6 +3919,8 @@ class BeeCountCloudProfile {
   final int avatarVersion;
   final bool? incomeIsRed;
   final String? themePrimaryColor;
+  /// 用户主币种(ISO code,如 `CNY`)。多币种 MVP user-level 字段,跨设备同步。
+  final String? primaryCurrency;
   /// 外观类设置(header_decoration_style / compact_amount /
   /// show_transaction_time …)的 dict,跨设备同步的 user-level JSON。
   final Map<String, dynamic>? appearance;
@@ -3254,6 +3944,7 @@ class BeeCountCloudProfile {
       aiConfig: aiConfigRaw is Map<String, dynamic>
           ? Map<String, dynamic>.from(aiConfigRaw)
           : null,
+      primaryCurrency: _trimOrNull(json['primary_currency'] as String?),
     );
   }
 }
@@ -3445,11 +4136,16 @@ class BeeCountCloudRealtimeEvent {
     required this.type,
     this.ledgerId,
     this.serverCursor,
+    this.rawData = const <String, dynamic>{},
   });
 
   final String type;
   final String? ledgerId;
   final int? serverCursor;
+  /// 完整 payload(server 推过来的 dict)。新事件类型(member_change /
+  /// shared_resource_change)字段从这里读,避免每加一种事件都改 RealtimeEvent
+  /// 类。
+  final Map<String, dynamic> rawData;
 }
 
 class BeeCountCloudRealtimeClient {
@@ -3571,6 +4267,7 @@ class BeeCountCloudRealtimeClient {
           type: type,
           ledgerId: payload['ledgerId'] as String?,
           serverCursor: serverCursor,
+          rawData: payload,
         ),
       );
     } catch (_) {}
@@ -3637,4 +4334,399 @@ String _extractErrorMessage(http.Response response) {
     }
   } catch (_) {}
   return 'HTTP ${response.statusCode}';
+}
+
+// =============================================================================
+// 共享账本数据类(Sprint 2.4 — Phase 1)
+// =============================================================================
+
+class BeeCountCloudInvite {
+  const BeeCountCloudInvite({
+    required this.code,
+    required this.formattedCode,
+    required this.targetRole,
+    required this.expiresAt,
+    required this.createdAt,
+    required this.shareUrl,
+    this.invitedByUserId,
+  });
+
+  /// 6 位明文邀请码(`ABC123`)。
+  final String code;
+  /// 显示用 "ABC 123"(中间空格易读)。
+  final String formattedCode;
+  final String targetRole;
+  final DateTime expiresAt;
+  final DateTime createdAt;
+  final String shareUrl;
+  /// list endpoint 返回时带,create 不带(创建者自己即 caller)。
+  final String? invitedByUserId;
+
+  factory BeeCountCloudInvite.fromJson(Map<String, dynamic> json) {
+    return BeeCountCloudInvite(
+      code: (json['code'] as String?)?.trim() ?? '',
+      formattedCode: (json['formatted_code'] as String?)?.trim() ?? '',
+      targetRole: (json['target_role'] as String?)?.trim() ?? 'editor',
+      expiresAt: DateTime.tryParse(json['expires_at'] as String? ?? '')?.toUtc()
+          ?? DateTime.now().toUtc(),
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '')?.toUtc()
+          ?? DateTime.now().toUtc(),
+      shareUrl: (json['share_url'] as String?)?.trim() ?? '',
+      invitedByUserId: (json['invited_by_user_id'] as String?)?.trim().isEmpty == true
+          ? null
+          : json['invited_by_user_id'] as String?,
+    );
+  }
+}
+
+class BeeCountCloudInvitePreview {
+  const BeeCountCloudInvitePreview({
+    required this.code,
+    required this.ledgerExternalId,
+    required this.ledgerCurrency,
+    required this.invitedByDisplay,
+    required this.targetRole,
+    required this.expiresAt,
+    this.ledgerName,
+  });
+
+  final String code;
+  final String ledgerExternalId;
+  final String? ledgerName;
+  final String ledgerCurrency;
+  final String invitedByDisplay;
+  final String targetRole;
+  final DateTime expiresAt;
+
+  factory BeeCountCloudInvitePreview.fromJson(Map<String, dynamic> json) {
+    return BeeCountCloudInvitePreview(
+      code: (json['code'] as String?)?.trim() ?? '',
+      ledgerExternalId: (json['ledger_external_id'] as String?)?.trim() ?? '',
+      ledgerName: json['ledger_name'] as String?,
+      ledgerCurrency: (json['ledger_currency'] as String?)?.trim() ?? 'CNY',
+      invitedByDisplay: (json['invited_by_display'] as String?)?.trim() ?? 'Unknown',
+      targetRole: (json['target_role'] as String?)?.trim() ?? 'editor',
+      expiresAt: DateTime.tryParse(json['expires_at'] as String? ?? '')?.toUtc()
+          ?? DateTime.now().toUtc(),
+    );
+  }
+}
+
+class BeeCountCloudInviteAcceptResult {
+  const BeeCountCloudInviteAcceptResult({
+    required this.ledgerExternalId,
+    required this.ledgerCurrency,
+    required this.role,
+    required this.memberCount,
+    this.ledgerName,
+  });
+
+  final String ledgerExternalId;
+  final String? ledgerName;
+  final String ledgerCurrency;
+  final String role;
+  final int memberCount;
+
+  factory BeeCountCloudInviteAcceptResult.fromJson(Map<String, dynamic> json) {
+    return BeeCountCloudInviteAcceptResult(
+      ledgerExternalId: (json['ledger_external_id'] as String?)?.trim() ?? '',
+      ledgerName: json['ledger_name'] as String?,
+      ledgerCurrency: (json['ledger_currency'] as String?)?.trim() ?? 'CNY',
+      role: (json['role'] as String?)?.trim() ?? 'editor',
+      memberCount: (json['member_count'] as num?)?.toInt() ?? 1,
+    );
+  }
+}
+
+class BeeCountCloudLedgerMember {
+  const BeeCountCloudLedgerMember({
+    required this.userId,
+    required this.email,
+    required this.role,
+    required this.joinedAt,
+    required this.isSelf,
+    this.displayName,
+    this.invitedByUserId,
+    this.avatarUrl,
+    this.avatarVersion = 0,
+  });
+
+  final String userId;
+  final String email;
+  final String? displayName;
+  final String role;
+  final DateTime joinedAt;
+  final String? invitedByUserId;
+  final bool isSelf;
+  /// server-side relative path,例 "/api/v1/profile/avatar/{uid}?v=N"。null = 用户未上传头像。
+  final String? avatarUrl;
+  final int avatarVersion;
+
+  factory BeeCountCloudLedgerMember.fromJson(Map<String, dynamic> json) {
+    return BeeCountCloudLedgerMember(
+      userId: (json['user_id'] as String?)?.trim() ?? '',
+      email: (json['email'] as String?)?.trim() ?? '',
+      displayName: json['display_name'] as String?,
+      role: (json['role'] as String?)?.trim() ?? 'editor',
+      joinedAt: DateTime.tryParse(json['joined_at'] as String? ?? '')?.toUtc()
+          ?? DateTime.now().toUtc(),
+      invitedByUserId: json['invited_by_user_id'] as String?,
+      isSelf: json['is_self'] as bool? ?? false,
+      avatarUrl: (json['avatar_url'] as String?)?.trim().isEmpty == true
+          ? null
+          : json['avatar_url'] as String?,
+      avatarVersion: (json['avatar_version'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+/// §7 决策 — Editor 接受邀请后拉到的 Owner user-global 资源快照。
+class BeeCountCloudSharedResources {
+  const BeeCountCloudSharedResources({
+    required this.ownerUserId,
+    required this.categories,
+    required this.accounts,
+    required this.tags,
+  });
+
+  final String ownerUserId;
+  final List<BeeCountCloudSharedCategory> categories;
+  final List<BeeCountCloudSharedAccount> accounts;
+  final List<BeeCountCloudSharedTag> tags;
+
+  factory BeeCountCloudSharedResources.fromJson(Map<String, dynamic> json) {
+    final cats = json['categories'];
+    final accts = json['accounts'];
+    final tgs = json['tags'];
+    return BeeCountCloudSharedResources(
+      ownerUserId: (json['owner_user_id'] as String?)?.trim() ?? '',
+      categories: cats is List
+          ? [
+              for (final c in cats)
+                if (c is Map<String, dynamic>)
+                  BeeCountCloudSharedCategory.fromJson(c),
+            ]
+          : const [],
+      accounts: accts is List
+          ? [
+              for (final a in accts)
+                if (a is Map<String, dynamic>)
+                  BeeCountCloudSharedAccount.fromJson(a),
+            ]
+          : const [],
+      tags: tgs is List
+          ? [
+              for (final t in tgs)
+                if (t is Map<String, dynamic>) BeeCountCloudSharedTag.fromJson(t),
+            ]
+          : const [],
+    );
+  }
+}
+
+class BeeCountCloudSharedCategory {
+  const BeeCountCloudSharedCategory({
+    required this.syncId,
+    required this.name,
+    required this.kind,
+    this.icon,
+    this.iconType,
+    this.iconCloudFileId,
+    this.iconCloudSha256,
+    this.sortOrder,
+    this.level,
+    this.parentName,
+    this.parentSyncId,
+  });
+
+  final String syncId;
+  final String name;
+  final String kind; // expense / income
+  final String? icon;
+  final String? iconType; // material / custom / community
+  final String? iconCloudFileId;
+  final String? iconCloudSha256;
+  final int? sortOrder;
+  final int? level;
+  final String? parentName;
+  // 共享账本二级分类:parent 的 syncId,client 端用它建稳定父子链。
+  final String? parentSyncId;
+
+  factory BeeCountCloudSharedCategory.fromJson(Map<String, dynamic> json) {
+    return BeeCountCloudSharedCategory(
+      syncId: (json['sync_id'] as String?)?.trim() ?? '',
+      name: (json['name'] as String?)?.trim() ?? '',
+      kind: (json['kind'] as String?)?.trim() ?? 'expense',
+      icon: json['icon'] as String?,
+      iconType: json['icon_type'] as String?,
+      iconCloudFileId: json['icon_cloud_file_id'] as String?,
+      iconCloudSha256: json['icon_cloud_sha256'] as String?,
+      sortOrder: (json['sort_order'] as num?)?.toInt(),
+      level: (json['level'] as num?)?.toInt(),
+      parentName: json['parent_name'] as String?,
+      parentSyncId: json['parent_sync_id'] as String?,
+    );
+  }
+}
+
+class BeeCountCloudSharedAccount {
+  const BeeCountCloudSharedAccount({
+    required this.syncId,
+    required this.name,
+    this.accountType,
+    this.currency,
+    this.initialBalance,
+    this.note,
+    this.creditLimit,
+    this.billingDay,
+    this.paymentDueDay,
+    this.bankName,
+    this.cardLastFour,
+  });
+
+  final String syncId;
+  final String name;
+  final String? accountType;
+  final String? currency;
+  final double? initialBalance;
+  final String? note;
+  final double? creditLimit;
+  final int? billingDay;
+  final int? paymentDueDay;
+  final String? bankName;
+  final String? cardLastFour;
+
+  factory BeeCountCloudSharedAccount.fromJson(Map<String, dynamic> json) {
+    return BeeCountCloudSharedAccount(
+      syncId: (json['sync_id'] as String?)?.trim() ?? '',
+      name: (json['name'] as String?)?.trim() ?? '',
+      accountType: json['account_type'] as String?,
+      currency: json['currency'] as String?,
+      initialBalance: (json['initial_balance'] as num?)?.toDouble(),
+      note: json['note'] as String?,
+      creditLimit: (json['credit_limit'] as num?)?.toDouble(),
+      billingDay: (json['billing_day'] as num?)?.toInt(),
+      paymentDueDay: (json['payment_due_day'] as num?)?.toInt(),
+      bankName: json['bank_name'] as String?,
+      cardLastFour: json['card_last_four'] as String?,
+    );
+  }
+}
+
+class BeeCountCloudSharedTag {
+  const BeeCountCloudSharedTag({
+    required this.syncId,
+    required this.name,
+    this.color,
+  });
+
+  final String syncId;
+  final String name;
+  final String? color;
+
+  factory BeeCountCloudSharedTag.fromJson(Map<String, dynamic> json) {
+    return BeeCountCloudSharedTag(
+      syncId: (json['sync_id'] as String?)?.trim() ?? '',
+      name: (json['name'] as String?)?.trim() ?? '',
+      color: json['color'] as String?,
+    );
+  }
+}
+
+/// 共享账本成员收支统计单行(对应 server MemberStatItem)。
+class BeeCountCloudMemberStatItem {
+  const BeeCountCloudMemberStatItem({
+    required this.userId,
+    required this.role,
+    required this.incomeTotal,
+    required this.expenseTotal,
+    required this.txCount,
+    this.email,
+    this.displayName,
+    this.avatarUrl,
+    this.avatarVersion = 0,
+  });
+
+  final String userId;
+  final String? email;
+  final String? displayName;
+  /// server-side relative path,例 "/api/v1/profile/avatar/{uid}?v=N"。null = 用户未上传头像。
+  final String? avatarUrl;
+  final int avatarVersion;
+  /// 'owner' / 'editor' / 'removed'(被踢成员但 tx 仍有归属)。
+  final String role;
+  final double incomeTotal;
+  final double expenseTotal;
+  final int txCount;
+
+  factory BeeCountCloudMemberStatItem.fromJson(Map<String, dynamic> json) {
+    final avatar = (json['avatar_url'] as String?)?.trim();
+    return BeeCountCloudMemberStatItem(
+      userId: (json['user_id'] as String?)?.trim() ?? '',
+      email: (json['email'] as String?)?.trim().isEmpty == true
+          ? null
+          : json['email'] as String?,
+      displayName: json['display_name'] as String?,
+      avatarUrl: (avatar == null || avatar.isEmpty) ? null : avatar,
+      avatarVersion: (json['avatar_version'] as num?)?.toInt() ?? 0,
+      role: (json['role'] as String?)?.trim() ?? 'editor',
+      incomeTotal: (json['income_total'] as num?)?.toDouble() ?? 0.0,
+      expenseTotal: (json['expense_total'] as num?)?.toDouble() ?? 0.0,
+      txCount: (json['tx_count'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+/// 共享账本成员收支统计响应(对应 server MemberStatsResponse)。
+class BeeCountCloudMemberStats {
+  const BeeCountCloudMemberStats({
+    required this.ledgerId,
+    required this.ledgerCurrency,
+    required this.scope,
+    required this.items,
+    this.period,
+    this.startAt,
+    this.endAt,
+  });
+
+  final String ledgerId;
+  final String ledgerCurrency;
+  /// 'month' / 'year' / 'all'。
+  final String scope;
+  /// month → "YYYY-MM";year → "YYYY";all → null。
+  final String? period;
+  final DateTime? startAt;
+  final DateTime? endAt;
+  final List<BeeCountCloudMemberStatItem> items;
+
+  factory BeeCountCloudMemberStats.fromJson(Map<String, dynamic> json) {
+    final rawItems = json['items'];
+    final items = <BeeCountCloudMemberStatItem>[];
+    if (rawItems is List) {
+      for (final entry in rawItems) {
+        if (entry is Map<String, dynamic>) {
+          items.add(BeeCountCloudMemberStatItem.fromJson(entry));
+        }
+      }
+    }
+    DateTime? parseDate(String key) {
+      final raw = json[key];
+      if (raw is String && raw.isNotEmpty) {
+        return DateTime.tryParse(raw)?.toUtc();
+      }
+      return null;
+    }
+
+    return BeeCountCloudMemberStats(
+      ledgerId: (json['ledger_id'] as String?)?.trim() ?? '',
+      ledgerCurrency: (json['ledger_currency'] as String?)?.trim() ?? 'CNY',
+      scope: (json['scope'] as String?)?.trim() ?? 'month',
+      period: (json['period'] as String?)?.trim().isEmpty == true
+          ? null
+          : json['period'] as String?,
+      startAt: parseDate('start_at'),
+      endAt: parseDate('end_at'),
+      items: items,
+    );
+  }
 }

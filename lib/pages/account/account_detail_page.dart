@@ -49,9 +49,11 @@ class AccountTransactionsPaginationNotifier
     extends StateNotifier<AccountTransactionsPaginationState> {
   final Ref ref;
   final int accountId;
+  /// 资金流向过滤:'expense'=支出+转出,'income'=收入+转入,null=全部
+  final String? flow;
   static const _pageSize = 50;
 
-  AccountTransactionsPaginationNotifier(this.ref, this.accountId)
+  AccountTransactionsPaginationNotifier(this.ref, this.accountId, this.flow)
       : super(const AccountTransactionsPaginationState()) {
     _loadInitial();
   }
@@ -60,8 +62,8 @@ class AccountTransactionsPaginationNotifier
     state = state.copyWith(isLoading: true);
     try {
       final repo = ref.read(repositoryProvider);
-      final transactions =
-          await repo.getAccountTransactions(accountId, limit: _pageSize, offset: 0);
+      final transactions = await repo.getAccountTransactions(
+          accountId, limit: _pageSize, offset: 0, flow: flow);
       state = AccountTransactionsPaginationState(
         transactions: transactions,
         isLoading: false,
@@ -81,6 +83,7 @@ class AccountTransactionsPaginationNotifier
         accountId,
         limit: _pageSize,
         offset: state.transactions.length,
+        flow: flow,
       );
       state = state.copyWith(
         transactions: [...state.transactions, ...transactions],
@@ -96,8 +99,8 @@ class AccountTransactionsPaginationNotifier
     state = const AccountTransactionsPaginationState(isLoading: true);
     try {
       final repo = ref.read(repositoryProvider);
-      final transactions =
-          await repo.getAccountTransactions(accountId, limit: _pageSize, offset: 0);
+      final transactions = await repo.getAccountTransactions(
+          accountId, limit: _pageSize, offset: 0, flow: flow);
       state = AccountTransactionsPaginationState(
         transactions: transactions,
         isLoading: false,
@@ -111,8 +114,9 @@ class AccountTransactionsPaginationNotifier
 
 final accountTransactionsPaginatedProvider = StateNotifierProvider.family
     .autoDispose<AccountTransactionsPaginationNotifier,
-        AccountTransactionsPaginationState, int>(
-  (ref, accountId) => AccountTransactionsPaginationNotifier(ref, accountId),
+        AccountTransactionsPaginationState, ({int accountId, String? flow})>(
+  (ref, params) =>
+      AccountTransactionsPaginationNotifier(ref, params.accountId, params.flow),
 );
 
 /// 分类统计 Provider
@@ -158,11 +162,20 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
     super.dispose();
   }
 
+  /// 列表的资金流向过滤,跟随图表 tab:支出=支出+转出,收入=收入+转入。
+  /// 信用卡没有 tab 切换,保持展示全部交易(消费+还款转账)。
+  String? get _listFlow {
+    if (widget.account.type == 'credit_card') return null;
+    return _detailChartTab == 0 ? 'expense' : 'income';
+  }
+
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       ref
-          .read(accountTransactionsPaginatedProvider(widget.account.id).notifier)
+          .read(accountTransactionsPaginatedProvider(
+                  (accountId: widget.account.id, flow: _listFlow))
+              .notifier)
           .loadMore();
     }
   }
@@ -172,10 +185,11 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
     final l10n = AppLocalizations.of(context);
     final primaryColor = ref.watch(primaryColorProvider);
     final statsAsync = ref.watch(accountStatsProvider(widget.account.id));
-    final paginationState =
-        ref.watch(accountTransactionsPaginatedProvider(widget.account.id));
-    final currentLedgerAsync = ref.watch(currentLedgerProvider);
-    final currencyCode = currentLedgerAsync.asData?.value?.currency ?? 'CNY';
+    final paginationState = ref.watch(accountTransactionsPaginatedProvider(
+        (accountId: widget.account.id, flow: _listFlow)));
+    // 货币符号跟随账户(每个账户有自己的 currency 字段),不是账本 —
+    // 用户在一个 CNY 账本里可能有 USD 账户,详情页应显示账户自己的 $。
+    final currencyCode = widget.account.currency;
     final categoriesAsync = ref.watch(categoriesProvider);
 
     // 分类统计数据
@@ -185,7 +199,6 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
         (accountId: widget.account.id, type: 'income')));
 
     final account = widget.account;
-    final isDark = BeeTokens.isDark(context);
     final typeColor = getColorForAccountType(account.type, primaryColor);
     final isValuation = isValuationOnlyType(account.type);
 
@@ -237,9 +250,12 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
                   // 估值账户：显示估值卡片
                   _buildValuationCard(context, ref, account, statsAsync, currencyCode, primaryColor, l10n),
                 ] else ...[
-                  // 可交易账户：余额/收入/支出统计卡片
-                  _buildStatsCard(context, ref, account, statsAsync, currencyCode, l10n),
-                  SizedBox(height: 4.0.scaled(context, ref)),
+                  // 信用卡不显示"收入/支出"卡(概念错位),概览卡=欠款/额度/还款即主卡;
+                  // 其它可交易账户仍显示 余额/收入/支出
+                  if (account.type != 'credit_card') ...[
+                    _buildStatsCard(context, ref, account, statsAsync, currencyCode, l10n),
+                    SizedBox(height: 4.0.scaled(context, ref)),
+                  ],
                   // 账户概览卡片（合并 metadata + 类型统计）
                   _buildOverviewCard(
                     context, ref, account, statsAsync,
@@ -248,10 +264,11 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
 
                   SizedBox(height: 8.0.scaled(context, ref)),
 
-                  // 图表区域（支出分布/收入分布 切换）
+                  // 图表区域（支出分布/收入分布 切换;信用卡仅消费分布）
                   _buildDetailChartSection(
                     context, ref, l10n, primaryColor,
                     expenseStatsAsync, incomeStatsAsync, typeColor,
+                    isCreditCard: account.type == 'credit_card',
                   ),
 
                   SizedBox(height: 12.0.scaled(context, ref)),
@@ -610,10 +627,12 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
     Color typeColor,
     AppLocalizations l10n,
   ) {
-    if (account.type == 'credit_card' && account.creditLimit != null) {
-      final creditLimit = account.creditLimit!;
+    if (account.type == 'credit_card') {
+      final creditLimit = account.creditLimit;
       final usedAmount = stats.balance < 0 ? -stats.balance : 0.0;
-      final usageRate = creditLimit > 0 ? (usedAmount / creditLimit).clamp(0.0, 1.0) : 0.0;
+      final usageRate = (creditLimit != null && creditLimit > 0)
+          ? (usedAmount / creditLimit).clamp(0.0, 1.0)
+          : 0.0;
 
       // 计算距还款日天数
       final hasBillingInfo = account.billingDay != null && account.paymentDueDay != null;
@@ -632,28 +651,55 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
       }
 
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 当前欠款(待还) —— 永远显示,不依赖额度
           Row(
             children: [
-              Expanded(child: _OverviewStatCell(label: l10n.creditLimit, value: creditLimit)),
-              Expanded(child: _OverviewStatCell(label: l10n.creditUsed, value: usedAmount)),
-              Expanded(child: _OverviewStatCell(label: l10n.creditAvailable, value: creditLimit - usedAmount)),
+              Text(
+                l10n.creditCardOwed,
+                style: TextStyle(fontSize: 13, color: BeeTokens.textSecondary(context)),
+              ),
+              const Spacer(),
+              AmountText(
+                value: usedAmount,
+                signed: false,
+                showCurrency: false,
+                useCompactFormat: ref.watch(compactAmountProvider),
+                currencyCode: currencyCode,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: BeeTokens.textPrimary(context),
+                ),
+              ),
             ],
           ),
-          SizedBox(height: 8.0.scaled(context, ref)),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
-              value: usageRate,
-              backgroundColor: BeeTokens.divider(context),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                usageRate < 0.5 ? BeeTokens.success(context)
-                    : usageRate < 0.8 ? BeeTokens.warning(context)
-                    : BeeTokens.error(context),
-              ),
-              minHeight: 4,
+          // 额度/已用/可用 + 进度条 —— 仅设过额度时
+          if (creditLimit != null) ...[
+            SizedBox(height: 12.0.scaled(context, ref)),
+            Row(
+              children: [
+                Expanded(child: _OverviewStatCell(label: l10n.creditLimit, value: creditLimit)),
+                Expanded(child: _OverviewStatCell(label: l10n.creditUsed, value: usedAmount)),
+                Expanded(child: _OverviewStatCell(label: l10n.creditAvailable, value: creditLimit - usedAmount)),
+              ],
             ),
-          ),
+            SizedBox(height: 8.0.scaled(context, ref)),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: usageRate,
+                backgroundColor: BeeTokens.divider(context),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  usageRate < 0.5 ? BeeTokens.success(context)
+                      : usageRate < 0.8 ? BeeTokens.warning(context)
+                      : BeeTokens.error(context),
+                ),
+                minHeight: 4,
+              ),
+            ),
+          ],
           // 账单日/还款日信息
           if (hasBillingInfo || account.paymentDueDay != null) ...[
             SizedBox(height: 10.0.scaled(context, ref)),
@@ -743,8 +789,9 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
     Color primaryColor,
     AsyncValue<List<({int? id, String name, String? icon, double total})>> expenseStatsAsync,
     AsyncValue<List<({int? id, String name, String? icon, double total})>> incomeStatsAsync,
-    Color typeColor,
-  ) {
+    Color typeColor, {
+    required bool isCreditCard,
+  }) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 12.0.scaled(context, ref)),
       child: SectionCard(
@@ -759,22 +806,24 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
                 children: [
                   _DetailChartTab(
                     label: l10n.homeExpense,
-                    isSelected: _detailChartTab == 0,
+                    isSelected: isCreditCard || _detailChartTab == 0,
                     primaryColor: primaryColor,
                     onTap: () => setState(() => _detailChartTab = 0),
                   ),
-                  SizedBox(width: 6.0.scaled(context, ref)),
-                  _DetailChartTab(
-                    label: l10n.homeIncome,
-                    isSelected: _detailChartTab == 1,
-                    primaryColor: primaryColor,
-                    onTap: () => setState(() => _detailChartTab = 1),
-                  ),
+                  if (!isCreditCard) ...[
+                    SizedBox(width: 6.0.scaled(context, ref)),
+                    _DetailChartTab(
+                      label: l10n.homeIncome,
+                      isSelected: _detailChartTab == 1,
+                      primaryColor: primaryColor,
+                      onTap: () => setState(() => _detailChartTab = 1),
+                    ),
+                  ],
                 ],
               ),
               SizedBox(height: 12.0.scaled(context, ref)),
               // 图表内容
-              if (_detailChartTab == 0)
+              if (isCreditCard || _detailChartTab == 0)
                 expenseStatsAsync.when(
                   data: (data) {
                     if (data.isEmpty) {
@@ -790,6 +839,7 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
                       incomeData: const [],
                       accentColor: primaryColor,
                       embedded: true,
+                      type: 'expense',
                     );
                   },
                   loading: () => const SizedBox(
@@ -814,6 +864,7 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
                       incomeData: data,
                       accentColor: primaryColor,
                       embedded: true,
+                      type: 'income',
                     );
                   },
                   loading: () => const SizedBox(
@@ -980,8 +1031,9 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
     // 刷新数据
     ref.invalidate(accountStatsProvider(widget.account.id));
     ref
-        .read(
-            accountTransactionsPaginatedProvider(widget.account.id).notifier)
+        .read(accountTransactionsPaginatedProvider(
+                (accountId: widget.account.id, flow: _listFlow))
+            .notifier)
         .refresh();
     ref.invalidate(accountCategoryStatsProvider(
         (accountId: widget.account.id, type: 'expense')));
@@ -1207,6 +1259,7 @@ class _TransactionTile extends ConsumerWidget {
 
     String displayTitle;
     String? displaySubtitle;
+    String? noteSuffix; // 非转账时，备注接在分类名后面（对齐首页）
 
     if (transaction.type == 'transfer') {
       if (transaction.note?.isNotEmpty == true) {
@@ -1231,14 +1284,12 @@ class _TransactionTile extends ConsumerWidget {
         }
       }
     } else {
-      if (transaction.note?.isNotEmpty == true) {
-        displayTitle = transaction.note!;
-      } else if (category != null) {
-        displayTitle = category.name;
-      } else {
-        displayTitle = transaction.type == 'income'
-            ? l10n.homeIncome
-            : l10n.homeExpense;
+      // 分类名常驻，备注接在分类名后面（对齐首页 / TransactionListItem）
+      displayTitle = category != null
+          ? category.name
+          : (transaction.type == 'income' ? l10n.homeIncome : l10n.homeExpense);
+      if (transaction.note?.isNotEmpty == true && transaction.note != displayTitle) {
+        noteSuffix = transaction.note;
       }
     }
 
@@ -1280,12 +1331,24 @@ class _TransactionTile extends ConsumerWidget {
                   Row(
                     children: [
                       Flexible(
-                        child: Text(
-                          displayTitle,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: BeeTokens.textPrimary(context),
+                        child: Text.rich(
+                          TextSpan(
+                            text: displayTitle,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: BeeTokens.textPrimary(context),
+                            ),
+                            children: [
+                              if (noteSuffix != null)
+                                TextSpan(
+                                  text: '  ($noteSuffix)',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: BeeTokens.textSecondary(context),
+                                  ),
+                                ),
+                            ],
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

@@ -5,6 +5,7 @@ import '../../db.dart';
 import '../../../services/system/logger_service.dart';
 import '../../../utils/account_type_utils.dart';
 import '../account_repository.dart';
+import '../exceptions.dart';
 
 /// 本地账户Repository实现
 /// 基于 Drift 数据库实现
@@ -93,9 +94,19 @@ class LocalAccountRepository implements AccountRepository {
     String? bankName,
     String? cardLastFour,
     String? note,
+    String? syncId,
   }) async {
-    logger.info('AccountCreate', '📝 开始创建账户: name=$name, ledgerId=$ledgerId, type=$type, currency=$currency, initialBalance=$initialBalance');
-
+    // 撞同名抛 DuplicateNameException(name 全局唯一)。静默路径(import /
+    // app-link 等)请改用 [upsertAccount]。
+    final existingByName =
+        await (db.select(db.accounts)..where((a) => a.name.equals(name))).get();
+    if (existingByName.isNotEmpty) {
+      throw DuplicateNameException(
+        entityType: 'account',
+        name: name,
+        existingId: existingByName.first.id,
+      );
+    }
     try {
       // 计算同类型最大 sortOrder + 1
       final maxSortOrderResult = await db.customSelect(
@@ -119,19 +130,40 @@ class LocalAccountRepository implements AccountRepository {
         bankName: d.Value(bankName),
         cardLastFour: d.Value(cardLastFour),
         note: d.Value(note),
-        syncId: d.Value(_uuid.v4()),
+        syncId: d.Value(syncId ?? _uuid.v4()),
       );
 
-      logger.info('AccountCreate', '📦 Companion 创建成功，准备插入数据库');
-
       final id = await db.into(db.accounts).insert(companion);
-
-      logger.info('AccountCreate', '✅ 账户创建成功！ID=$id');
+      // 单条 INFO 日志(import 批量场景下 3 条/账户 会把 logger 队列冲爆,降级
+      // 到 debug;只在出错时 error)
+      logger.debug('AccountCreate', '账户创建: id=$id name=$name type=$type');
       return id;
     } catch (e, stack) {
-      logger.error('AccountCreate', '❌ 创建账户失败', e, stack);
+      logger.error('AccountCreate', '创建账户失败 name=$name', e, stack);
       rethrow;
     }
+  }
+
+  @override
+  Future<int> upsertAccount({
+    required String name,
+    int ledgerId = 0,
+    String type = 'cash',
+    String currency = 'CNY',
+    double initialBalance = 0.0,
+  }) async {
+    final existing = await (db.select(db.accounts)
+          ..where((a) => a.name.equals(name)))
+        .get();
+    if (existing.isNotEmpty) return existing.first.id;
+    // 复用 createAccount(此时 name 不冲突,不会抛)
+    return createAccount(
+      ledgerId: ledgerId,
+      name: name,
+      type: type,
+      currency: currency,
+      initialBalance: initialBalance,
+    );
   }
 
   @override
@@ -186,6 +218,25 @@ class LocalAccountRepository implements AccountRepository {
     await (db.delete(db.accounts)..where((a) => a.id.equals(id))).go();
   }
 
+  /// 「以成员身份加入的共享账本」ledger id 集合 —— **个人资产统计一律排除
+  /// 这些账本的交易**。加入他人共享账本时,Owner 的历史流水会同步到本机并
+  /// 挂在本地账户行上,若计入会把别人账本的收支算进自己的净资产,且与
+  /// Web/服务端口径(成员侧不计共享账本)永久不一致。
+  /// 注意:**自己 Own 的共享账本不排除** —— 那是自己的账本分享给别人,
+  /// 服务端也记在 Owner 名下。SQL 版条件见 _kExcludeJoinedSharedLedgerSql。
+  Future<Set<int>> _sharedLedgerIds() async {
+    final rows = await (db.selectOnly(db.ledgers)
+          ..addColumns([db.ledgers.id])
+          ..where(db.ledgers.isShared.equals(true) &
+              db.ledgers.myRole.equals('owner').not()))
+        .get();
+    return rows.map((r) => r.read(db.ledgers.id)!).toSet();
+  }
+
+  /// customSelect 用的排除条件(语义同 [_sharedLedgerIds])
+  static const String _kExcludeJoinedSharedLedgerSql =
+      "ledger_id NOT IN (SELECT id FROM ledgers WHERE is_shared = 1 AND my_role != 'owner')";
+
   @override
   Future<double> getAccountBalance(int accountId) async {
     // 获取账户初始资金
@@ -201,10 +252,12 @@ class LocalAccountRepository implements AccountRepository {
     }
 
     double balance = account.initialBalance;
+    final sharedIds = await _sharedLedgerIds();
 
-    // 收入和支出
+    // 收入和支出(排除共享账本)
     final normalTxs = await (db.select(db.transactions)
-          ..where((t) => t.accountId.equals(accountId)))
+          ..where((t) =>
+              t.accountId.equals(accountId) & t.ledgerId.isNotIn(sharedIds)))
         .get();
 
     for (final t in normalTxs) {
@@ -220,9 +273,12 @@ class LocalAccountRepository implements AccountRepository {
       }
     }
 
-    // 作为转入账户的转账
+    // 作为转入账户的转账(排除共享账本)
     final transfersIn = await (db.select(db.transactions)
-          ..where((t) => t.toAccountId.equals(accountId) & t.type.equals('transfer')))
+          ..where((t) =>
+              t.toAccountId.equals(accountId) &
+              t.type.equals('transfer') &
+              t.ledgerId.isNotIn(sharedIds)))
         .get();
 
     for (final t in transfersIn) {
@@ -243,9 +299,12 @@ class LocalAccountRepository implements AccountRepository {
       return account.initialBalance;
     }
 
-    // 获取所有交易
+    // 获取所有交易(排除共享账本)
+    final sharedIds = await _sharedLedgerIds();
     final transactions = await (db.select(db.transactions)
-          ..where((t) => t.accountId.equals(accountId) | t.toAccountId.equals(accountId)))
+          ..where((t) =>
+              (t.accountId.equals(accountId) | t.toAccountId.equals(accountId)) &
+              t.ledgerId.isNotIn(sharedIds)))
         .get();
 
     double balance = account.initialBalance;
@@ -346,9 +405,13 @@ class LocalAccountRepository implements AccountRepository {
   Future<double> getAccountExpense(int accountId) async {
     double expense = 0.0;
 
-    // 获取作为主账户的支出和转出
+    // 获取作为主账户的支出和转出(排除共享账本;不计入收支的交易也排除)
+    final sharedIds = await _sharedLedgerIds();
     final normalTxs = await (db.select(db.transactions)
-          ..where((t) => t.accountId.equals(accountId)))
+          ..where((t) =>
+              t.accountId.equals(accountId) &
+              t.ledgerId.isNotIn(sharedIds) &
+              t.excludeFromStats.equals(false)))
         .get();
 
     for (final t in normalTxs) {
@@ -367,9 +430,13 @@ class LocalAccountRepository implements AccountRepository {
   Future<double> getAccountIncome(int accountId) async {
     double income = 0.0;
 
-    // 获取作为主账户的收入
+    // 获取作为主账户的收入(排除共享账本;不计入收支的交易也排除)
+    final sharedIds = await _sharedLedgerIds();
     final normalTxs = await (db.select(db.transactions)
-          ..where((t) => t.accountId.equals(accountId)))
+          ..where((t) =>
+              t.accountId.equals(accountId) &
+              t.ledgerId.isNotIn(sharedIds) &
+              t.excludeFromStats.equals(false)))
         .get();
 
     for (final t in normalTxs) {
@@ -378,9 +445,13 @@ class LocalAccountRepository implements AccountRepository {
       }
     }
 
-    // 作为转入账户的转账
+    // 作为转入账户的转账(排除共享账本;不计入收支的交易也排除)
     final transfersIn = await (db.select(db.transactions)
-          ..where((t) => t.toAccountId.equals(accountId) & t.type.equals('transfer')))
+          ..where((t) =>
+              t.toAccountId.equals(accountId) &
+              t.type.equals('transfer') &
+              t.ledgerId.isNotIn(sharedIds) &
+              t.excludeFromStats.equals(false)))
         .get();
 
     for (final t in transfersIn) {
@@ -424,8 +495,13 @@ class LocalAccountRepository implements AccountRepository {
     // 总收入/支出：直接从交易表查询，排除转账类型
     final accountIds = accounts.map((a) => a.id).toSet();
 
+    // 收入/支出排除不计入收支的交易(余额不受影响,见上方 totalBalance)
+    final sharedIds = await _sharedLedgerIds();
     final allTxs = await (db.select(db.transactions)
-          ..where((t) => t.accountId.isNotNull()))
+          ..where((t) =>
+              t.accountId.isNotNull() &
+              t.ledgerId.isNotIn(sharedIds) &
+              t.excludeFromStats.equals(false)))
         .get();
 
     double totalIncome = 0.0;
@@ -559,11 +635,18 @@ class LocalAccountRepository implements AccountRepository {
 
   @override
   Future<List<Transaction>> getAccountTransactions(
-    int accountId, {int limit = 50, int offset = 0}) async {
+    int accountId, {int limit = 50, int offset = 0, String? flow}) async {
+    // flow 过滤按资金流向:支出视图含转出,收入视图含转入,null 为全部
+    final where = switch (flow) {
+      'expense' => "account_id = ?1 AND type IN ('expense', 'transfer')",
+      'income' =>
+        "(type = 'income' AND account_id = ?1) OR (type = 'transfer' AND to_account_id = ?1)",
+      _ => 'account_id = ?1 OR to_account_id = ?1',
+    };
     final results = await db.customSelect(
       '''
       SELECT * FROM transactions
-      WHERE account_id = ?1 OR to_account_id = ?1
+      WHERE ($where) AND $_kExcludeJoinedSharedLedgerSql
       ORDER BY happened_at DESC
       LIMIT ?2 OFFSET ?3
       ''',
@@ -589,6 +672,8 @@ class LocalAccountRepository implements AccountRepository {
         note: row.data['note'] as String?,
         recurringId: row.data['recurring_id'] as int?,
         syncId: row.data['sync_id'] as String?,
+        excludeFromStats: (row.data['exclude_from_stats'] as int? ?? 0) != 0,
+        excludeFromBudget: (row.data['exclude_from_budget'] as int? ?? 0) != 0,
       );
     }).toList();
   }
@@ -611,10 +696,17 @@ class LocalAccountRepository implements AccountRepository {
       return result;
     }
 
-    // 获取 endDate 之前的所有交易（按日期升序）
+    // 获取 endDate **当天结束**之前的所有交易(按日期升序,排除共享账本)。
+    // endDate 语义是「含当天」:调用方(trendTodayAnchor)传当天 0 点,若用
+    // <= endDate 会把当天发生的交易全部截掉 —— 趋势终点永远停在"昨晚为止",
+    // 今天记的账不进趋势线。
+    final endExclusive = DateTime(endDate.year, endDate.month, endDate.day)
+        .add(const Duration(days: 1));
+    final sharedIds = await _sharedLedgerIds();
     final allTxs = await (db.select(db.transactions)
           ..where((t) => t.accountId.equals(accountId) | t.toAccountId.equals(accountId))
-          ..where((t) => t.happenedAt.isSmallerOrEqualValue(endDate))
+          ..where((t) => t.happenedAt.isSmallerThanValue(endExclusive))
+          ..where((t) => t.ledgerId.isNotIn(sharedIds))
           ..orderBy([(t) => d.OrderingTerm(expression: t.happenedAt)]))
         .get();
 
@@ -686,6 +778,7 @@ class LocalAccountRepository implements AccountRepository {
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
       WHERE t.account_id = ?1 AND t.type = ?2
+        AND t.$_kExcludeJoinedSharedLedgerSql
       GROUP BY c.id
       ORDER BY total DESC
       ''',
@@ -735,7 +828,7 @@ class LocalAccountRepository implements AccountRepository {
 
     for (final account in accounts) {
       final balance = await getAccountBalance(account.id);
-      final currency = account.currency;
+      final currency = account.currency.toUpperCase();
       final prev = result[currency] ?? (totalAssets: 0.0, totalLiabilities: 0.0, netWorth: 0.0);
 
       if (isAssetType(account.type)) {
@@ -797,6 +890,49 @@ class LocalAccountRepository implements AccountRepository {
   }
 
   @override
+  Future<List<({DateTime date, double assets, double liabilities, double net})>>
+      getNetWorthTrendSeries({
+    required DateTime startDate,
+    required DateTime endDate,
+    required Map<String, double> ratesToBase,
+  }) async {
+    final accounts = await getAllAccounts();
+    if (accounts.isEmpty) return [];
+
+    final allBalances = <int, List<({DateTime date, double balance})>>{};
+    for (final account in accounts) {
+      allBalances[account.id] =
+          await getAccountDailyBalances(account.id, startDate: startDate, endDate: endDate);
+    }
+
+    final result = <({DateTime date, double assets, double liabilities, double net})>[];
+    var currentDate = DateTime(startDate.year, startDate.month, startDate.day);
+    final end = DateTime(endDate.year, endDate.month, endDate.day);
+    int dayIndex = 0;
+    while (!currentDate.isAfter(end)) {
+      double assets = 0.0, liabilities = 0.0;
+      for (final account in accounts) {
+        final balances = allBalances[account.id]!;
+        if (dayIndex < balances.length) {
+          // 折算到主币种:缺汇率的币种整条剔除(与净资产卡同口径,绝不按 1.0 裸加)。
+          final rate = ratesToBase[account.currency.toUpperCase()];
+          if (rate == null) continue;
+          final bal = balances[dayIndex].balance * rate;
+          if (isAssetType(account.type)) {
+            assets += bal;
+          } else {
+            liabilities += bal;
+          }
+        }
+      }
+      result.add((date: currentDate, assets: assets, liabilities: liabilities, net: assets + liabilities));
+      currentDate = currentDate.add(const Duration(days: 1));
+      dayIndex++;
+    }
+    return result;
+  }
+
+  @override
   Future<List<({String type, double totalBalance})>> getAssetCompositionByType() async {
     final accounts = await getAllAccounts();
     final Map<String, double> typeBalances = {};
@@ -812,6 +948,28 @@ class LocalAccountRepository implements AccountRepository {
   }
 
   @override
+  Future<List<({String type, String currency, double totalBalance})>>
+      getAssetCompositionByTypeAndCurrency() async {
+    final accounts = await getAllAccounts();
+    // (type, currency 大写) -> 余额累加
+    final Map<({String type, String currency}), double> balances = {};
+
+    for (final account in accounts) {
+      final balance = await getAccountBalance(account.id);
+      final key = (type: account.type, currency: account.currency.toUpperCase());
+      balances.update(key, (v) => v + balance, ifAbsent: () => balance);
+    }
+
+    return balances.entries
+        .map((e) => (
+              type: e.key.type,
+              currency: e.key.currency,
+              totalBalance: e.value,
+            ))
+        .toList();
+  }
+
+  @override
   Future<void> updateAccountValuation(int accountId, double newValue) async {
     await (db.update(db.accounts)..where((a) => a.id.equals(accountId))).write(
       AccountsCompanion(
@@ -819,5 +977,22 @@ class LocalAccountRepository implements AccountRepository {
         updatedAt: d.Value(DateTime.now()),
       ),
     );
+  }
+
+  @override
+  Future<SharedLedgerAccount?> getSharedAccountBySyncId(String syncId) {
+    return (db.select(db.sharedLedgerAccounts)
+          ..where((t) => t.syncId.equals(syncId)))
+        .getSingleOrNull();
+  }
+
+  @override
+  Future<Set<String>> getUsedCurrencies() async {
+    final rows = await db
+        .customSelect('SELECT DISTINCT currency FROM accounts')
+        .get();
+    return rows
+        .map((r) => (r.read<String>('currency')).toUpperCase())
+        .toSet();
   }
 }

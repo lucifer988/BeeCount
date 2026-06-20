@@ -2,11 +2,34 @@ import '../../data/db.dart';
 import '../../l10n/app_localizations.dart';
 import '../system/logger_service.dart';
 import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
 
 /// 种子数据服务
 /// 负责生成应用初始化时的默认数据（账本、账户、分类等）
 class SeedService {
   SeedService._();
+
+  /// 固定命名空间,给默认 seed 数据生成**确定性** syncId(uuid v5)。
+  /// ⚠️ 不要改这个常量 —— 改了会让同一份默认数据在新老版本算出不同 syncId,
+  /// 反而制造重复。
+  static const _seedSyncNamespace = 'b3e7c0de-0000-4000-8000-beec00000001';
+  static const _seedUuid = Uuid();
+
+  /// 默认分类的确定性 syncId。key 用**稳定的 seed key**(不是翻译后的名字),
+  /// 这样任何设备、任何语言 seed 出来的同一个默认分类都得到同一个 syncId,
+  /// 云端按 syncId 天然只留一份 —— 从源头杜绝多设备各自 seed 造成的重复。
+  /// 收敛存量重复时的 keeper 规则见 data/repositories/entity_dedup.dart。
+  static String deterministicCategorySyncId({
+    required String kind,
+    required int level,
+    required String key,
+  }) =>
+      _seedUuid.v5(_seedSyncNamespace, 'cat:$kind:$level:$key');
+
+  /// 默认账户的确定性 syncId。seed 每个 type(cash/bank_card/credit_card)
+  /// 恰好一个,用 type 作 key。
+  static String deterministicAccountSyncId(String type) =>
+      _seedUuid.v5(_seedSyncNamespace, 'acc:$type');
 
   // ========== 一级分类模式的默认分类 key ==========
 
@@ -401,6 +424,7 @@ class SeedService {
         type: const Value('cash'),
         currency: Value(currency),
         initialBalance: const Value(0.0),
+        syncId: Value(deterministicAccountSyncId('cash')),
       ),
     );
 
@@ -412,6 +436,7 @@ class SeedService {
         type: const Value('bank_card'),
         currency: Value(currency),
         initialBalance: const Value(0.0),
+        syncId: Value(deterministicAccountSyncId('bank_card')),
       ),
     );
 
@@ -423,6 +448,7 @@ class SeedService {
         type: const Value('credit_card'),
         currency: Value(currency),
         initialBalance: const Value(0.0),
+        syncId: Value(deterministicAccountSyncId('credit_card')),
       ),
     );
   }
@@ -597,6 +623,8 @@ class SeedService {
           icon: Value(getDefaultIcon(key)),
           sortOrder: Value(i),
           level: const Value(1),
+          syncId: Value(
+              deterministicCategorySyncId(kind: 'expense', level: 1, key: key)),
         ),
       );
     }
@@ -615,6 +643,8 @@ class SeedService {
           icon: Value(getDefaultIcon(key)),
           sortOrder: Value(i),
           level: const Value(1),
+          syncId: Value(
+              deterministicCategorySyncId(kind: 'income', level: 1, key: key)),
         ),
       );
     }
@@ -639,6 +669,8 @@ class SeedService {
           icon: Value(getDefaultIcon(parentKey)),
           sortOrder: Value(sortOrder++),
           level: const Value(1),
+          syncId: Value(deterministicCategorySyncId(
+              kind: 'expense', level: 1, key: parentKey)),
         ),
       );
 
@@ -657,6 +689,8 @@ class SeedService {
             sortOrder: Value(i),
             level: const Value(2),
             parentId: Value(parentId),
+            syncId: Value(deterministicCategorySyncId(
+                kind: 'expense', level: 2, key: childKey)),
           ),
         );
       }
@@ -679,6 +713,8 @@ class SeedService {
           icon: Value(getDefaultIcon(parentKey)),
           sortOrder: Value(sortOrder++),
           level: const Value(1),
+          syncId: Value(deterministicCategorySyncId(
+              kind: 'income', level: 1, key: parentKey)),
         ),
       );
 
@@ -697,6 +733,8 @@ class SeedService {
             sortOrder: Value(i),
             level: const Value(2),
             parentId: Value(parentId),
+            syncId: Value(deterministicCategorySyncId(
+                kind: 'income', level: 2, key: childKey)),
           ),
         );
       }
@@ -714,9 +752,11 @@ class SeedService {
     String currency = 'CNY',
     bool useHierarchicalCategories = false,
     bool skipCategories = false,
+    bool createDefaultLedger = true,
   }) async {
     logger.info('seed', '开始初始化数据库');
     logger.info('seed', '货币: $currency');
+    logger.info('seed', '创建默认账本: $createDefaultLedger');
     if (skipCategories) {
       logger.info('seed', '分类模式: 不创建分类');
     } else {
@@ -725,9 +765,14 @@ class SeedService {
     logger.info('seed', '账本名称: ${l10n.ledgerDefaultName}');
     logger.info('seed', '现金账户名: ${l10n.accountTypeCash}');
 
-    // 1. 创建默认账本
-    final ledgerId = await createDefaultLedger(db, l10n, currency);
-    logger.info('seed', '已创建账本 ID: $ledgerId');
+    // 1. 创建默认账本(可选 — 关掉之后用户进首页空状态自己新建,避免每次测试
+    //    清数据都在 server 上留一个默认账本)
+    if (createDefaultLedger) {
+      final ledgerId = await SeedService.createDefaultLedger(db, l10n, currency);
+      logger.info('seed', '已创建账本 ID: $ledgerId');
+    } else {
+      logger.info('seed', '跳过默认账本创建');
+    }
 
     // 2. 创建默认分类（可选）
     if (!skipCategories) {
@@ -776,6 +821,8 @@ class SeedService {
         icon: const Value('swap_horiz'), // 默认图标
         sortOrder: const Value(-1), // 使用负数排序，确保不会影响正常分类
         level: const Value(1),
+        syncId: Value(deterministicCategorySyncId(
+            kind: 'transfer', level: 1, key: 'transfer')),
       ),
     );
 

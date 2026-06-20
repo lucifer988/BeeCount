@@ -7,11 +7,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_cloud_sync/flutter_cloud_sync.dart' hide SyncStatus;
 import '../cloud/sync_service.dart';
+import 'shared_ledger_providers.dart';
+import '../cloud/sync/sync_coordinator.dart';
 import '../cloud/sync/sync_engine.dart';
 import '../cloud/sync/sync_providers.dart' as sync_p;
 import '../cloud/transactions_sync_manager.dart';
 import '../models/ledger_display_item.dart';
-import '../services/ai/ai_provider_manager.dart';
+import '../ai/providers/ai_provider_manager.dart';
+import '../pages/ai/ai_provider_manage_page.dart' show aiProviderListRefreshProvider;
 import 'ai_config_providers.dart';
 import '../services/attachment_service.dart' show attachmentListRefreshProvider;
 import '../services/system/logger_service.dart';
@@ -24,6 +27,23 @@ import 'avatar_providers.dart';
 import 'tag_providers.dart';
 import 'ui_state_providers.dart';
 import 'statistics_providers.dart';
+import 'currency_providers.dart';
+
+/// SyncEngine 对外广播事件流(PR 1 引入)。
+///
+/// 当前阶段:跟老的 7 个 callback 字段(`onAutoPullCompleted` 等)**并行**运行,
+/// 每个 callback fire 点同时 emit 等价 [SyncEvent]。新的 UI caller 应订阅这
+/// 个 provider;老 caller 暂保留(PR 2 逐个迁移,PR 3 删 callback)。
+///
+/// 不是 SyncEngine 模式时返空 stream,订阅者拿不到事件即可。
+final StreamProvider<SyncEvent> syncEventStreamProvider =
+    StreamProvider<SyncEvent>((ref) {
+  final svc = ref.watch(syncServiceProvider);
+  if (svc is! SyncEngine) {
+    return const Stream<SyncEvent>.empty();
+  }
+  return svc.events;
+});
 
 // 同步状态（根据 ledgerId 与刷新 tick 缓存），避免因 UI 重建重复拉取
 final syncStatusProvider =
@@ -161,75 +181,110 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     }
     final cloudProvider = providerAsync.value!;
     final db = ref.watch(databaseProvider);
-    final tracker = ref.watch(sync_p.changeTrackerProvider);
-    final repo = ref.watch(repositoryProvider);
-    final engine = SyncEngine(
-      db: db,
-      provider: cloudProvider,
-      changeTracker: tracker,
-      repo: repo,
-    );
+    // SyncEngine 改走 family 缓存唯一实例 — 跟 shared_ledger_providers.dart
+    // / join_shared_ledger_page.dart 共享同一 engine。否则两个独立 engine
+    // 各跑各的 sync(同一 ledger 1 秒内 2-3 次)。disposal 归 family,这里
+    // 不再 ref.onDispose(engine.dispose())。
+    final engine = ref.watch(sync_p.syncEngineProvider(cloudProvider));
 
-    // 开始监听 WebSocket 实时事件，自动触发 pull
-    engine.onAutoPullCompleted = (ledgerId) {
-      // pull 完成把远端变更落到 Drift 之后，把所有"UI 刷新 tick" 全部 +1，
-      // 这样各领域既有的 refresh 机制就能自然触发下游 FutureProvider 重算；
-      // syncGenerationProvider 作为总 bump，覆盖后续新增但没有单独 tick 的。
-      ref.read(syncStatusRefreshProvider.notifier).state++;
-      ref.read(ledgerListRefreshProvider.notifier).state++;
-      ref.read(syncGenerationProvider.notifier).state++;
-      ref.read(statsRefreshProvider.notifier).state++;
-      ref.read(budgetRefreshProvider.notifier).state++;
-      ref.read(tagListRefreshProvider.notifier).state++;
-      ref.read(calendarRefreshProvider.notifier).state++;
-      // 附件计数 / 列表的 tick：TransactionList 用它重新 _loadAttachmentCounts，
-      // 另一端删除 / 新增的附件就能在对端实时反映，不需要重启 app。
-      ref.read(attachmentListRefreshProvider.notifier).state++;
-      // 关键：把首页的"预加载交易详情"模式切掉。否则 Drift 里 tx 的 accountId
-      // 已经更新，但 TransactionList 还在用 Splash 阶段 cache 住的 accountName
-      // —— UI 看起来就是"pull 到了但没刷新"。
-      ref.read(homeSwitchToStreamProvider.notifier).state++;
-      ref.read(cachedTransactionsProvider.notifier).state = null;
-      // SyncEngine.sync 结束时会顺带拉一次头像；这里 bump 让 Mine 页面的
-      // avatarPathProvider 重新读取本地路径，新下来的头像立刻显示。
-      ref.read(avatarRefreshProvider.notifier).state++;
-    };
+    // PR 2/3:订阅 SyncEvent stream 替代 7 个 callback 绑定。
+    //
+    // SyncEngine 完全不知道 Riverpod / widget 存在,只往 events stream 写;
+    // 本 listener 把事件 dispatch 到对应的 provider bump / invalidate。
+    //
+    // 直接订阅 `engine.events` 而不是走 [syncEventStreamProvider] —— 否则会跟
+    // syncServiceProvider 形成循环依赖(syncEventStreamProvider 需要 watch
+    // syncServiceProvider 拿 engine,syncServiceProvider 又 listen
+    // syncEventStreamProvider,运行时 Riverpod 抛 CircularDependencyError)。
+    // syncEventStreamProvider 仍然存在,留给 UI/测试直接订阅 SyncEvent 用,
+    // 跟本 listener 互不冲突。
+    //
+    // 历史背景(原 callback 注释保留意图):
+    //   - PullCompleted:每次 auto-pull 都 fire(含空 pull),用于刷新各域 tick;
+    //     `sharedResourceRefreshProvider` 故意不在这里 bump 避免 home 全局刷新,
+    //     它走单独的 SharedResourceChanged event。
+    //   - SharedResourceChanged:Owner 共享资源(分类/账户/标签)变了,Editor 端
+    //     SharedLedger* 镜像表已更新,UI 应重建。
+    //   - AvatarChanged:只在真下载新头像时 fire,不是每次 pull 都触发,避免
+    //     冷启动头像闪一下。
+    //   - ProfileFieldApplied:server 下来的 theme/income/appearance/aiConfig
+    //     回写本地 Riverpod state + SharedPreferences。
+    final eventSub = engine.events.listen((event) {
+      switch (event) {
+        case PullCompleted(:final applied):
+          // pulled=0 是大量"空 sync"场景的常态:WS 重连、connectivity 恢复、
+          // 自我推送回声被过滤掉、profile_change 触发的 pull、新设备首次绑定
+          // 后又被触发的 sync 等等。这些场景下没有任何实质数据变化,如果照样
+          // bump 一堆 refresh tick → home/统计/预算/StreamBuilder 全部 cascade
+          // rebuild,体感就是"莫名其妙首页全量刷一次"。
+          //
+          // 真有数据被 apply 时(applied > 0)才走完整刷新链。
+          if (applied == 0) break;
+          // 同步 bump — 跟 PR3 前的 onAutoPullCompleted callback 等价。配合
+          // SyncEngine 的 broadcast(sync: true),listener 收到 emit 后立即同步
+          // 执行 state 变更,Flutter framework 把所有 markNeedsBuild 合并到当前
+          // 帧的同一次 rebuild,不会跨帧 cascade。
+          ref.read(syncStatusRefreshProvider.notifier).state++;
+          ref.read(ledgerListRefreshProvider.notifier).state++;
+          // currentLedgerProvider 已是 StreamProvider(Drift watch 自动推送),
+          // 此 invalidate 仅作防御性重订阅(如流曾进入 error 态),正常路径冗余无害。
+          ref.invalidate(currentLedgerProvider);
+          ref.read(syncGenerationProvider.notifier).state++;
+          ref.read(statsRefreshProvider.notifier).state++;
+          ref.read(budgetRefreshProvider.notifier).state++;
+          ref.read(tagListRefreshProvider.notifier).state++;
+          ref.read(calendarRefreshProvider.notifier).state++;
+          ref.read(attachmentListRefreshProvider.notifier).state++;
+          // 切到 Stream 模式 — 否则 Drift 已更新但 TransactionList 仍用
+          // Splash 阶段 cache 住的 accountName。不清 cachedTransactionsProvider:
+          // 切到 stream 模式后 cache 不再被读取,留旧值给到 stream 推送之前
+          // 平滑过渡。
+          ref.read(homeSwitchToStreamProvider.notifier).state++;
+        case SharedResourceChanged():
+          ref.read(sharedResourceRefreshProvider.notifier).state++;
+        case AvatarChanged():
+          ref.read(avatarRefreshProvider.notifier).state++;
+        case ProfileFieldApplied(:final field, :final value):
+          switch (field) {
+            case ProfileField.themeColor:
+              _applyThemeColorFromServer(ref, value as String);
+            case ProfileField.incomeColor:
+              _applyIncomeColorFromServer(ref, value as bool);
+            case ProfileField.appearance:
+              _applyAppearanceFromServer(
+                  ref, value as Map<String, dynamic>);
+            case ProfileField.displayName:
+              _applyDisplayNameFromServer(ref, value as String);
+            case ProfileField.primaryCurrency:
+              unawaited(
+                  _applyBaseCurrencyFromServer(ref, value as String));
+            case ProfileField.aiConfig:
+              unawaited(() async {
+                await AIProviderManager.applyFromServer(
+                    value as Map<String, dynamic>);
+                try {
+                  ref
+                      .read(aiCapabilityBindingRefreshProvider.notifier)
+                      .state++;
+                  ref
+                      .read(aiProviderListForCapabilityRefreshProvider
+                          .notifier)
+                      .state++;
+                  ref.read(aiProviderListRefreshProvider.notifier).state++;
+                  ref.invalidate(aiConfigProvider);
+                } catch (e, st) {
+                  logger.warning(
+                      'CloudSync', 'AI 配置 apply 后 UI bump 失败: $e', st);
+                }
+              }());
+          }
+      }
+    });
+
     // 让 SyncEngine 在 WS 重连 / 网络恢复触发 auto sync 时能拿到当前 ledgerId
     engine.ledgerIdResolver = () {
       final id = ref.read(currentLedgerIdProvider);
       return id > 0 ? id.toString() : '';
-    };
-
-    // 外观 / 主题色 / 收支配色从 server 拉下来后落到 Riverpod state +
-    // SharedPreferences。值跟当前相同就不设,避免循环触发 ref.listen push。
-    engine.onThemeColorApplied = (hex) {
-      _applyThemeColorFromServer(ref, hex);
-    };
-    engine.onIncomeColorApplied = (incomeIsRed) {
-      _applyIncomeColorFromServer(ref, incomeIsRed);
-    };
-    engine.onAppearanceApplied = (appearance) {
-      _applyAppearanceFromServer(ref, appearance);
-    };
-    engine.onAiConfigApplied = (aiConfig) {
-      unawaited(() async {
-        // 先把 server 下来的配置落到 SharedPreferences。
-        await AIProviderManager.applyFromServer(aiConfig);
-        // 然后把 UI 层的 Provider 全部 bump/invalidate 一遍,让 AI 设置
-        // 页、能力绑定卡片、服务商列表都能从新 prefs 读最新值重新渲染。
-        // 不手动 bump 的话,Riverpod 不知道 prefs 写进来了,UI 停在旧状态
-        // 直到用户手动重启 / 切页面才重读。
-        try {
-          ref.read(aiCapabilityBindingRefreshProvider.notifier).state++;
-          ref.read(aiProviderListForCapabilityRefreshProvider.notifier).state++;
-          // aiConfigProvider 是 StateNotifierProvider,notifier 里的 state
-          // 在构造时从 prefs 读一次后就不再管。invalidate 让 notifier 重建,
-          // 触发 _loadFromPrefs 重新拉新值。
-          ref.invalidate(aiConfigProvider);
-        } catch (e, st) {
-          logger.warning('CloudSync', 'AI 配置 apply 后 UI bump 失败: $e', st);
-        }
-      }());
     };
 
     // AI 配置变更时推到 server。包含 providers / binding / custom_prompt /
@@ -251,6 +306,23 @@ final syncServiceProvider = Provider<SyncService>((ref) {
 
     engine.startListeningRealtime();
 
+    // §7 共享账本兜底:切账本时(尤其是切回共享账本时)触发一次 sync。
+    // 用户报告"切到自己账本再切回来 WS 不同步" — 实际可能 WS 还在但
+    // pull 漏了或某次 ws 推送漏了。这里 ref.listen 切账本就主动同步,
+    // 跟 _scheduleAutoSync 的 2 秒防抖叠加可以兜住绝大多数边界。
+    ref.listen<int>(currentLedgerIdProvider, (prev, next) {
+      if (prev == next || next <= 0) return;
+      logger.info('SyncProvider',
+          'ledger switched $prev → $next, schedule auto sync as fallback');
+      engine.triggerAutoSync(reason: 'ledger_switched');
+    });
+
+    // 反应式同步触发器:监听 local_changes 表,任何 mutation 写进未推送
+    // 行都会自动调度 sync。把"是否触发同步"的责任完全转移到"是否记录
+    // 变更"——后者是数据层的天然职责。详见 sync_coordinator.dart 的注释。
+    final coordinator = SyncCoordinator(db: db, engine: engine);
+    coordinator.start();
+
     // 监听网络连接状态：从"无网"恢复时触发一次 sync 把离线累积的
     // local_changes 推出去。SyncEngine 内部有 2 秒防抖，WS 重连和 connectivity
     // 恢复几乎同时命中时最终只会触发 1 次 sync。
@@ -270,11 +342,13 @@ final syncServiceProvider = Provider<SyncService>((ref) {
       });
     });
 
-    // 当 Provider 被销毁时停止监听
+    // 当 Provider 被销毁时停止监听。engine.dispose 归 syncEngineProvider
+    // (family),这里只清本 provider 自己持有的资源。
     ref.onDispose(() {
+      eventSub.cancel();
       connectivityDebounce?.cancel();
       connectivitySubscription.cancel();
-      engine.dispose();
+      coordinator.dispose();
     });
 
     // Profile（含头像）同步和 ledger 同步解耦：新设备首次登录时，用户可能还
@@ -284,10 +358,10 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     // 字段补推上去(theme / income / appearance / ai_config) —— 用户之前
     // 一直用 A,升级到带同步的版本时本地早就有配置,server 却是空的。
     Future(() async {
-      final changed = await engine.syncMyProfile();
-      if (changed) {
-        ref.read(avatarRefreshProvider.notifier).state++;
-      }
+      // avatar bump 走 engine.onAvatarChanged 回调,不再用 changed 兜底
+      // (changed=true 包含 theme/income/appearance/ai 等任意字段被 apply,
+      // 不只是头像,会引发头像组件无谓重渲)。
+      await engine.syncMyProfile();
       await reconcileProfileToServer(
         cloudProviderFuture: ref.read(beecountCloudProviderInstance.future),
         currentThemeColor: ref.read(primaryColorProvider),
@@ -295,6 +369,8 @@ final syncServiceProvider = Provider<SyncService>((ref) {
         currentHeaderStyle: ref.read(headerDecorationStyleProvider),
         currentCompactAmount: ref.read(compactAmountProvider),
         currentShowTransactionTime: ref.read(showTransactionTimeProvider),
+        currentDisplayName: ref.read(displayNameProvider),
+        currentHeaderSkin: ref.read(headerSkinProvider),
       );
     });
 
@@ -357,7 +433,8 @@ final syncServiceProvider = Provider<SyncService>((ref) {
           ref.read(calendarRefreshProvider.notifier).state++;
           ref.read(homeSwitchToStreamProvider.notifier).state++;
           ref.read(cachedTransactionsProvider.notifier).state = null;
-          ref.read(avatarRefreshProvider.notifier).state++;
+          // 不再无条件 bump avatarRefreshProvider — engine.onAvatarChanged
+          // 只在真下载头像时触发,避免每次 bootstrap 闪一次头像。
           ref.read(lastSyncErrorProvider.notifier).state = null;
         } catch (e, st) {
           logger.error('SyncProvider', '自动同步异常', e, st);
@@ -446,10 +523,20 @@ final beecountCloudProviderInstance =
   return null;
 });
 
-/// BeeCount Cloud 服务端版本号。拉一次后 keepAlive,Mine 页面 / 云同步页
-/// 都能直接用;失败就 null,UI 自己隐藏。非 BeeCount Cloud 模式直接 null。
+/// BeeCount Cloud 服务端版本号。Mine 页面 / 云同步页都能直接用;失败就
+/// null,UI 自己隐藏。非 BeeCount Cloud 模式直接 null。
+///
+/// **自动刷新**:依赖 [syncStatusRefreshProvider],每次同步完成会 bump 这个
+/// ticker,版本号 provider 重新跑 fetchServerVersion。这样 server 升级后用户
+/// 不需要重登/手动到云配置页点确认,下一次同步触发后版本号就更新了。
+///
+/// /version 是个轻量 endpoint,跟着每次 sync 多发一次 HTTP 请求开销可忽略。
 final beecountCloudServerVersionProvider =
     FutureProvider<String?>((ref) async {
+  // server 升级后用户在 app 内做任何会触发同步的操作(加交易 / 切账本 / 进
+  // Mine 页面 bump refresh 等)都能让版本号刷新。
+  ref.watch(syncStatusRefreshProvider);
+
   final cloud = await ref.watch(beecountCloudProviderInstance.future);
   if (cloud == null) return null;
   try {
@@ -480,6 +567,8 @@ Future<void> reconcileProfileToServer({
   required String currentHeaderStyle,
   required bool currentCompactAmount,
   required bool currentShowTransactionTime,
+  required String currentDisplayName,
+  required String currentHeaderSkin,
 }) async {
   try {
     final cloud = await cloudProviderFuture;
@@ -519,11 +608,26 @@ Future<void> reconcileProfileToServer({
           'header_decoration_style': currentHeaderStyle,
           'compact_amount': currentCompactAmount,
           'show_transaction_time': currentShowTransactionTime,
+          'header_skin': currentHeaderSkin,
         };
         await cloud.updateMyProfileAppearance(appearance: appearance);
         logger.info('CloudSync', 'reconcile: pushed appearance=$appearance');
       } catch (e, st) {
         logger.warning('CloudSync', 'reconcile appearance 推送失败: $e', st);
+      }
+    }
+
+    // display_name：server 没有但本地已设 → 补推(首次绑定 cloud 时本地昵称
+    // 不会因 value 未变而触发 listener push，靠这里兜底)。
+    if ((profile.displayName == null || profile.displayName!.isEmpty) &&
+        currentDisplayName.trim().isNotEmpty) {
+      try {
+        await cloud.updateMyProfileDisplayName(
+            displayName: currentDisplayName.trim());
+        logger.info('CloudSync',
+            'reconcile: pushed display_name=${currentDisplayName.trim()}');
+      } catch (e, st) {
+        logger.warning('CloudSync', 'reconcile display_name 推送失败: $e', st);
       }
     }
 
@@ -610,6 +714,32 @@ void _applyIncomeColorFromServer(Ref ref, bool incomeIsRed) {
   logger.info('profile_sync', 'applied income_is_red from server: $incomeIsRed');
 }
 
+void _applyDisplayNameFromServer(Ref ref, String name) {
+  final trimmed = name.trim();
+  if (trimmed.isEmpty) return; // v1 不下空,避免清空对端本地昵称
+  final current = ref.read(displayNameProvider);
+  if (current == trimmed) return; // 相同值不写,StateProvider 不 notify → 无 echo
+  ref.read(displayNameProvider.notifier).state = trimmed;
+  logger.info('profile_sync', 'applied display_name from server: $trimmed');
+}
+
+Future<void> _applyBaseCurrencyFromServer(Ref ref, String code) async {
+  try {
+    final normalized = code.trim().toUpperCase();
+    if (normalized.isEmpty) return; // server 不下空,这里再兜一层
+    final current = ref.read(baseCurrencyProvider);
+    if (current == normalized) return; // 相同值不写,StateProvider 不 notify → 无 echo
+    // primaryCurrency 回流:写 provider + prefs。StateProvider 同值赋值不触发
+    // listener,不会造成 推送→广播→回流→再推送 的循环。
+    ref.read(baseCurrencyProvider.notifier).state = normalized;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('baseCurrency', normalized);
+    logger.info('profile_sync', 'applied primary_currency from server: $normalized');
+  } catch (e, st) {
+    logger.warning('profile_sync', 'apply primary currency failed: $e', st);
+  }
+}
+
 void _applyAppearanceFromServer(Ref ref, Map<String, dynamic> appearance) {
   final headerStyle = appearance['header_decoration_style'] as String?;
   if (headerStyle != null && headerStyle.isNotEmpty) {
@@ -630,6 +760,13 @@ void _applyAppearanceFromServer(Ref ref, Map<String, dynamic> appearance) {
     final current = ref.read(showTransactionTimeProvider);
     if (current != showTime) {
       ref.read(showTransactionTimeProvider.notifier).state = showTime;
+    }
+  }
+  final skin = appearance['header_skin'] as String?;
+  if (skin != null && skin.isNotEmpty) {
+    final current = ref.read(headerSkinProvider);
+    if (current != skin) {
+      ref.read(headerSkinProvider.notifier).state = skin;
     }
   }
   logger.info('profile_sync', 'applied appearance from server: $appearance');
@@ -706,6 +843,9 @@ final localLedgersProvider =
         createdAt: ledger.createdAt,
         transactionCount: stats.transactionCount,
         balance: stats.balance,
+        isShared: ledger.isShared,
+        memberCount: ledger.memberCount,
+        myRole: ledger.myRole,
       ));
     }
 
@@ -765,6 +905,11 @@ final remoteLedgersProvider =
     for (final r in remote) {
       if (r.ledgerId.isEmpty) continue;
       if (localSyncIds.contains(r.ledgerId)) continue;
+      // 共享账本不出现在"远端账本"列表 — 远端账本是单人账本的备份恢复
+      // 概念,共享账本是动态成员关系,只能通过"加入共享账本"流程进入。
+      // Editor "仅删除本地"等同于退出账本(走 DELETE /members/self),
+      // 不应再显示让用户重复"恢复",会绕开 server 的 membership 校验。
+      if (r.isShared) continue;
       out.add(LedgerDisplayItem.fromRemote(
         remoteSyncId: r.ledgerId,
         name: r.ledgerName.isEmpty ? '(unnamed)' : r.ledgerName,
@@ -804,6 +949,9 @@ final allLedgersProvider = FutureProvider<List<LedgerDisplayItem>>((ref) async {
         createdAt: ledger.createdAt,
         transactionCount: stats.transactionCount,
         balance: stats.balance,
+        isShared: ledger.isShared,
+        memberCount: ledger.memberCount,
+        myRole: ledger.myRole,
       ));
     }
 

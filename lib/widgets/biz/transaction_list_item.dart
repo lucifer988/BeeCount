@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/db.dart' as db;
+import '../../l10n/app_localizations.dart';
 import '../../styles/tokens.dart';
 import '../../widgets/ui/ui.dart';
 import '../../widgets/category_icon.dart';
@@ -20,6 +21,7 @@ class TransactionListItem extends ConsumerWidget {
   final VoidCallback? onTap;
   final VoidCallback? onCategoryTap; // 点击分类图标/名称的回调
   final String? categoryName; // 分类名称，用于显示
+  final String? ledgerName; // 账本名称（仅"全部账本"模式下显示标签）
   final VoidCallback? onDelete; // 删除回调
   final String? accountName; // 账户名称，用于显示
   final DateTime? happenedAt; // 交易时间，用于显示时分
@@ -38,6 +40,9 @@ class TransactionListItem extends ConsumerWidget {
   final int attachmentCount; // 附件数量
   final VoidCallback? onAttachmentTap; // 点击附件图标回调
 
+  final bool excludeFromStats; // 不计入收支:第二行显示「不计收支」标签
+  final bool excludeFromBudget; // 不计入预算:第二行显示「不计预算」标签
+
   const TransactionListItem({
       super.key,
       required this.icon,
@@ -51,6 +56,7 @@ class TransactionListItem extends ConsumerWidget {
       this.onTap,
       this.onCategoryTap,
       this.categoryName,
+      this.ledgerName,
       this.onDelete,
       this.accountName,
       this.happenedAt,
@@ -62,6 +68,8 @@ class TransactionListItem extends ConsumerWidget {
       this.onTagTap,
       this.attachmentCount = 0,
       this.onAttachmentTap,
+      this.excludeFromStats = false,
+      this.excludeFromBudget = false,
   });
 
 
@@ -75,7 +83,32 @@ class TransactionListItem extends ConsumerWidget {
         happenedAt != null &&
         (happenedAt!.hour != 0 || happenedAt!.minute != 0 || happenedAt!.second != 0);
 
-    return showTime || accountName != null || attachmentCount > 0;
+    return showTime ||
+        accountName != null ||
+        attachmentCount > 0 ||
+        excludeFromStats ||
+        excludeFromBudget;
+  }
+
+  /// 「不计收支 / 不计预算」标记的小 pill（中性灰底，de-emphasis）
+  /// 视觉对齐 TagChip(small)：pill 圆角 + 低透明度填充 + fontSize 11
+  Widget _flagChip(BuildContext context, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: BeeTokens.isDark(context)
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.black.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          color: BeeTokens.textTertiary(context),
+        ),
+      ),
+    );
   }
 
   /// 构建次要信息小部件（时间 · 账户 + 附件图标）
@@ -136,20 +169,47 @@ class TransactionListItem extends ConsumerWidget {
       return widget;
     }
 
-    // 如果只有附件，没有其他信息
-    if (parts.isEmpty && attachmentCount > 0) {
-      return buildAttachmentWidget();
+    // 「不计收支 / 不计预算」标签:第二行末尾的次要标签，改为与标签 chip 一致的
+    // 中性 pill 样式（de-emphasis，沿用 TagChip 的中性灰底 + pill 圆角）
+    final flagTags = <Widget>[
+      if (excludeFromStats)
+        _flagChip(context, AppLocalizations.of(context).txFlagExcludedTag),
+      if (excludeFromBudget)
+        _flagChip(context, AppLocalizations.of(context).txFlagBudgetExcludedTag),
+    ];
+
+    // 如果只有附件 / 标签，没有时间·账户文字
+    if (parts.isEmpty) {
+      final children = <Widget>[
+        if (attachmentCount > 0) buildAttachmentWidget(),
+        ...flagTags,
+      ];
+      // 用 Wrap 避免次要行溢出（标签可能与附件并排）
+      return Wrap(
+        spacing: 6,
+        runSpacing: 2,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: children,
+      );
     }
 
-    // 有其他信息时
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    // 有时间·账户文字时:文字 + 附件保持原有 ' · ' 风格，标签紧随其后
+    return Wrap(
+      spacing: 6,
+      runSpacing: 2,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Text(parts.join(' · '), style: textStyle),
-        if (attachmentCount > 0) ...[
-          Text(' · ', style: textStyle),
-          buildAttachmentWidget(),
-        ],
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(parts.join(' · '), style: textStyle),
+            if (attachmentCount > 0) ...[
+              Text(' · ', style: textStyle),
+              buildAttachmentWidget(),
+            ],
+          ],
+        ),
+        ...flagTags,
       ],
     );
   }
@@ -200,26 +260,49 @@ class TransactionListItem extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 第一行：分类名称（始终显示）
-                    Text(
-                      categoryName ?? title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: BeeTextTokens.title(context),
-                    ),
-                    // 第二行：备注（当title与categoryName不同时显示）
-                    if (categoryName != null && categoryName != title)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: BeeTokens.textSecondary(context),
+                    // 第一行：分类名（常驻）+ 备注接在后面（括号、次要色、整体单行省略，对齐 web 端）
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text.rich(
+                            TextSpan(
+                              text: categoryName ?? title,
+                              style: BeeTextTokens.title(context),
+                              children: [
+                                if (categoryName != null && title.isNotEmpty && title != categoryName)
+                                  TextSpan(
+                                    text: '  ($title)',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: BeeTokens.textSecondary(context),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      ),
+                        // 全部账本模式：展示账本名标签（参考账户详情页）
+                        if (ledgerName != null && ledgerName!.isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: ref.watch(primaryColorProvider).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              ledgerName!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: ref.watch(primaryColorProvider),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                     // 第三行：时间 · 账户 · 附件
                     if (_hasSecondaryInfo(ref))
                       Padding(

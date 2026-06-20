@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -78,46 +79,83 @@ class AttachmentService {
   }
 
   /// 保存附件
-  /// 将图片压缩后保存到附件目录，并在数据库中创建记录
+  ///
+  /// 将图片压缩后保存到附件目录，并在数据库中创建记录。
+  ///
+  /// [urgent] 紧急模式:跳过 `FlutterImageCompress`,直接 sync 文件复制。
+  /// 用于 iOS 后台 launch 场景 —— `FlutterImageCompress` 是 platform channel,
+  /// 一旦 iOS 把 app 推到 background,channel 调用会被冻结,attachment 永远
+  /// 保存不完。`File.copySync()` 是纯 Dart sync 调用,几十 ms 内必返回,不会
+  /// 卡在 platform channel 上。代价是单张图占空间多(原图通常 2-3MB,压缩后
+  /// 200-500KB),自动记账场景一般可接受。
   Future<TransactionAttachment?> saveAttachment({
     required int transactionId,
     required File sourceFile,
     required int index,
+    bool urgent = false,
   }) async {
     try {
       final dir = await getAttachmentDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
       final ext = path.extension(sourceFile.path).toLowerCase();
       final finalExt = ext.isEmpty ? '.jpg' : ext;
-      final fileName = 'tx_${transactionId}_${timestamp}_$index$finalExt';
-      final destPath = '${dir.path}/$fileName';
 
-      // 压缩图片并保存
-      final compressedFile = await _compressImage(sourceFile, destPath);
-      if (compressedFile == null) {
-        logger.error('AttachmentService', '图片压缩失败');
-        return null;
+      // 按内容 sha256 命名:多笔/多次记账用到同一张图时复用同一物理文件,
+      // 不再每笔复制一份(配合删除处的引用计数,避免误删共享文件)。
+      final String fileName;
+      final File savedFile;
+      int? width;
+      int? height;
+      final int fileSize;
+      if (urgent) {
+        // 跳过压缩,sync copy。iOS background launch 状态下唯一可靠的写法。
+        // 同时跳过 _getImageInfo:它走 ui.instantiateImageCodec 也是 platform
+        // channel,后台冻结时也卡。width/height 留 null 不影响主功能。
+        final bytes = sourceFile.readAsBytesSync();
+        fileName = 'sha_${sha256.convert(bytes)}$finalExt';
+        final destPath = '${dir.path}/$fileName';
+        savedFile = File(destPath);
+        if (!savedFile.existsSync()) {
+          sourceFile.copySync(destPath);
+        }
+        fileSize = savedFile.lengthSync();
+      } else {
+        // 先压缩到临时文件,再按压缩后内容 sha256 命名(同图去重)
+        final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+        final tempPath = '${dir.path}/_tmp_${timestamp}_$index$finalExt';
+        final compressedFile = await _compressImage(sourceFile, tempPath);
+        if (compressedFile == null) {
+          logger.error('AttachmentService', '图片压缩失败');
+          return null;
+        }
+        final bytes = await compressedFile.readAsBytes();
+        fileName = 'sha_${sha256.convert(bytes)}$finalExt';
+        final destPath = '${dir.path}/$fileName';
+        if (await File(destPath).exists()) {
+          await compressedFile.delete();
+        } else {
+          await compressedFile.rename(destPath);
+        }
+        savedFile = File(destPath);
+        final imageInfo = await _getImageInfo(savedFile.path);
+        width = imageInfo?.width;
+        height = imageInfo?.height;
+        fileSize = await savedFile.length();
       }
 
-      // 获取图片尺寸
-      final imageInfo = await _getImageInfo(compressedFile.path);
-
-      // 获取文件大小
-      final fileSize = await compressedFile.length();
-
-      // 保存到数据库
+      // 保存到数据库(Drift FFI,纯 Dart,不走 platform channel,不受冻结影响)
       final repo = ref.read(repositoryProvider);
       final id = await repo.createAttachment(
         transactionId: transactionId,
         fileName: fileName,
         originalName: path.basename(sourceFile.path),
         fileSize: fileSize,
-        width: imageInfo?.width,
-        height: imageInfo?.height,
+        width: width,
+        height: height,
         sortOrder: index,
       );
 
-      logger.info('AttachmentService', '附件保存成功: $fileName');
+      logger.info('AttachmentService',
+          '附件保存成功${urgent ? "(urgent/sync copy)" : ""}: $fileName');
       return repo.getAttachmentById(id);
     } catch (e, stackTrace) {
       logger.error('AttachmentService', '保存附件失败', e, stackTrace);
@@ -152,23 +190,37 @@ class AttachmentService {
       final attachment = await repo.getAttachmentById(attachmentId);
 
       if (attachment != null) {
-        // 删除原图文件
-        final dir = await getAttachmentDirectory();
-        final file = File('${dir.path}/${attachment.fileName}');
-        if (await file.exists()) {
-          await file.delete();
-          logger.debug('AttachmentService', '已删除原图: ${attachment.fileName}');
-        }
-
-        // 删除缩略图
-        await _deleteThumbnail(attachment.fileName);
-
-        // 删除数据库记录
+        // 先删数据库记录,再按引用计数删物理文件(多笔/多次共享同一文件时,
+        // 仅当没有其他行引用该 fileName 才删物理文件)
         await repo.deleteAttachment(attachmentId);
+        await _deletePhysicalFileIfUnreferenced(attachment.fileName);
         logger.info('AttachmentService', '附件删除成功: ${attachment.fileName}');
       }
     } catch (e, stackTrace) {
       logger.error('AttachmentService', '删除附件失败', e, stackTrace);
+    }
+  }
+
+  /// 引用计数删物理文件:仅当没有其他 transaction_attachments 行引用该 fileName
+  /// 时才删物理文件 + 缩略图。多笔/多次共享同一张图时避免误删。
+  Future<void> _deletePhysicalFileIfUnreferenced(String fileName) async {
+    final repo = ref.read(repositoryProvider);
+    final refCount = await repo.countAttachmentsByFileName(fileName);
+    if (refCount > 0) return; // 仍有其他行引用,保留物理文件
+    final dir = await getAttachmentDirectory();
+    final file = File('${dir.path}/$fileName');
+    if (await file.exists()) {
+      await file.delete();
+      logger.debug('AttachmentService', '已删除原图: $fileName');
+    }
+    await _deleteThumbnail(fileName);
+  }
+
+  /// 对一组 fileName 逐个按引用计数删物理文件(清空/删账本后,精准清理该账本
+  /// 关联的附件文件;其他账本/交易仍引用同一 fileName 的不会被删)。
+  Future<void> deletePhysicalFilesIfUnreferenced(Iterable<String> fileNames) async {
+    for (final fileName in fileNames) {
+      await _deletePhysicalFileIfUnreferenced(fileName);
     }
   }
 
@@ -177,21 +229,13 @@ class AttachmentService {
     try {
       final repo = ref.read(repositoryProvider);
       final attachments = await repo.getAttachmentsByTransaction(transactionId);
+      final fileNames = attachments.map((a) => a.fileName).toSet();
 
-      for (final attachment in attachments) {
-        // 删除原图文件
-        final dir = await getAttachmentDirectory();
-        final file = File('${dir.path}/${attachment.fileName}');
-        if (await file.exists()) {
-          await file.delete();
-        }
-
-        // 删除缩略图
-        await _deleteThumbnail(attachment.fileName);
-      }
-
-      // 删除所有数据库记录
+      // 先删数据库记录,再逐个按引用计数删物理文件
       await repo.deleteAttachmentsByTransaction(transactionId);
+      for (final fileName in fileNames) {
+        await _deletePhysicalFileIfUnreferenced(fileName);
+      }
       logger.info('AttachmentService', '已删除交易 $transactionId 的所有附件');
     } catch (e, stackTrace) {
       logger.error('AttachmentService', '删除交易附件失败', e, stackTrace);

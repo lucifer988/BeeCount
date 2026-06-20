@@ -1,10 +1,17 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:drift/drift.dart' as d;
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../db.dart';
 import '../../category_node.dart';
 import '../../../services/system/logger_service.dart';
+import '../../../utils/shared_ledger_picker_filter.dart';
 import '../category_repository.dart';
+import '../exceptions.dart';
 
 /// 本地分类Repository实现
 /// 基于 Drift 数据库实现
@@ -20,14 +27,33 @@ class LocalCategoryRepository implements CategoryRepository {
     required String kind,
     String? icon,
     int? sortOrder,
+    int level = 1,
+    int? parentId,
+    String? syncId,
   }) async {
+    // 撞同名抛 DuplicateNameException((name,kind) 联合唯一,跨 kind 可同名)。caller 显式 handle:
+    //   - UI 主动建 → 先过 isCategoryNameDuplicate 警告;真冲突 try/catch 弹 toast
+    //   - import / 自动记账等静默路径 → 改用 upsertCategory(get-or-create)
+    // 静默复用会把收入 tx 错挂到 expense 分类或吞掉 caller 传的 icon/sortOrder。
+    final existing = await (db.select(db.categories)
+          ..where((c) => c.name.equals(name) & c.kind.equals(kind)))
+        .get();
+    if (existing.isNotEmpty) {
+      throw DuplicateNameException(
+        entityType: 'category',
+        name: name,
+        existingId: existing.first.id,
+      );
+    }
     return await db.into(db.categories).insert(
       CategoriesCompanion.insert(
         name: name,
         kind: kind,
         icon: d.Value(icon),
         sortOrder: d.Value(sortOrder ?? 0),
-        syncId: d.Value(_uuid.v4()),
+        level: d.Value(level),
+        parentId: d.Value(parentId),
+        syncId: d.Value(syncId ?? _uuid.v4()),
       ),
     );
   }
@@ -39,7 +65,18 @@ class LocalCategoryRepository implements CategoryRepository {
     required String kind,
     String? icon,
     int? sortOrder,
+    String? syncId,
   }) async {
+    final existing = await (db.select(db.categories)
+          ..where((c) => c.name.equals(name) & c.kind.equals(kind)))
+        .get();
+    if (existing.isNotEmpty) {
+      throw DuplicateNameException(
+        entityType: 'category',
+        name: name,
+        existingId: existing.first.id,
+      );
+    }
     return await db.into(db.categories).insert(
       CategoriesCompanion.insert(
         name: name,
@@ -48,7 +85,7 @@ class LocalCategoryRepository implements CategoryRepository {
         parentId: d.Value(parentId),
         level: d.Value(2),
         sortOrder: d.Value(sortOrder ?? 0),
-        syncId: d.Value(_uuid.v4()),
+        syncId: d.Value(syncId ?? _uuid.v4()),
       ),
     );
   }
@@ -76,32 +113,108 @@ class LocalCategoryRepository implements CategoryRepository {
 
   @override
   Future<void> deleteCategory(int id) async {
-    // 先删除该分类下的所有子分类
+    // 先收集要删的分类(自身 + 直接子分类)的自定义图标路径,删完后清理
+    // 本地磁盘文件 —— 以前 deleteCategory 只删 categories 行,
+    // customIconPath 指向的本地 PNG 留在 Application Documents/custom_icons/
+    // 里,长期使用会堆积孤立图标文件。云端 attachment_files 的清理由服务端
+    // sync push handler 兜底(见 src/projection.py gc_orphan_attachments)。
+    final iconPaths = await _collectIconPathsForIds([id], includeChildren: true);
+
     await (db.delete(db.categories)..where((c) => c.parentId.equals(id))).go();
-    // 再删除该分类本身
     await (db.delete(db.categories)..where((c) => c.id.equals(id))).go();
+
+    if (iconPaths.isNotEmpty) {
+      await _deleteLocalIconFiles(iconPaths);
+    }
   }
 
   @override
   Future<void> deleteCategoriesByIds(List<int> ids) async {
     if (ids.isEmpty) return;
-    // 先删除这些分类下的所有子分类
+    final iconPaths = await _collectIconPathsForIds(ids, includeChildren: true);
+
     await (db.delete(db.categories)..where((c) => c.parentId.isIn(ids))).go();
-    // 再删除这些分类本身
     await (db.delete(db.categories)..where((c) => c.id.isIn(ids))).go();
+
+    if (iconPaths.isNotEmpty) {
+      await _deleteLocalIconFiles(iconPaths);
+    }
+  }
+
+  /// 查给定分类(含其直接子分类)的 customIconPath 列表 —— 在行被 DELETE
+  /// **之前**调,删后就没法查了。
+  Future<List<String>> _collectIconPathsForIds(
+    List<int> ids, {
+    required bool includeChildren,
+  }) async {
+    if (ids.isEmpty) return const [];
+    final paths = <String>[];
+    final selfRows = await (db.select(db.categories)
+          ..where((c) => c.id.isIn(ids)))
+        .get();
+    for (final row in selfRows) {
+      final p = row.customIconPath;
+      if (p != null && p.trim().isNotEmpty) paths.add(p);
+    }
+    if (includeChildren) {
+      final childRows = await (db.select(db.categories)
+            ..where((c) => c.parentId.isIn(ids)))
+          .get();
+      for (final row in childRows) {
+        final p = row.customIconPath;
+        if (p != null && p.trim().isNotEmpty) paths.add(p);
+      }
+    }
+    return paths;
+  }
+
+  /// 清本地 custom_icons/ 目录下的图标文件。失败只 log —— 磁盘残留下次 GC
+  /// 脚本能扫出来,不 block 分类删除事务。
+  Future<void> _deleteLocalIconFiles(List<String> relativePaths) async {
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      final iconDir = Directory('${appDir.path}/custom_icons');
+      var deleted = 0;
+      for (final rel in relativePaths) {
+        final fileName = p.basename(rel);
+        final file = File('${iconDir.path}/$fileName');
+        if (await file.exists()) {
+          try {
+            await file.delete();
+            deleted++;
+          } catch (e) {
+            logger.warning(
+                'LocalCategoryRepository', '删除图标失败: $fileName, error=$e');
+          }
+        }
+      }
+      if (deleted > 0) {
+        logger.info('LocalCategoryRepository', '分类删除连带清理 $deleted 个自定义图标');
+      }
+    } catch (e, st) {
+      logger.error('LocalCategoryRepository', '清理分类自定义图标异常', e, st);
+    }
   }
 
   @override
   Future<int> upsertCategory({
     required String name,
     required String kind,
+    String? icon,
+    int? sortOrder,
   }) async {
+    // (name,kind) 联合唯一:按 (name,kind) 找;有则复用,无则用给定 icon/sortOrder 建。
     final existing = await (db.select(db.categories)
           ..where((c) => c.name.equals(name) & c.kind.equals(kind)))
-        .getSingleOrNull();
-    if (existing != null) return existing.id;
+        .get();
+    if (existing.isNotEmpty) return existing.first.id;
     return db.into(db.categories).insert(CategoriesCompanion.insert(
-        name: name, kind: kind, icon: const d.Value(null), syncId: d.Value(_uuid.v4())));
+      name: name,
+      kind: kind,
+      icon: d.Value(icon),
+      sortOrder: d.Value(sortOrder ?? 0),
+      syncId: d.Value(_uuid.v4()),
+    ));
   }
 
   @override
@@ -139,9 +252,11 @@ class LocalCategoryRepository implements CategoryRepository {
   @override
   Future<bool> isCategoryNameDuplicate({
     required String name,
+    required String kind,
     int? excludeId,
   }) async {
-    var expression = db.categories.name.equals(name);
+    var expression =
+        db.categories.name.equals(name) & db.categories.kind.equals(kind);
 
     if (excludeId != null) {
       expression = expression & db.categories.id.equals(excludeId).not();
@@ -451,13 +566,75 @@ class LocalCategoryRepository implements CategoryRepository {
 
   @override
   Stream<Category?> watchCategory(int categoryId) {
+    // §7 共享账本:负 id 是 SharedLedgerCategories 的 synthetic id
+    // (syntheticIdForSyncId 派生)。分类详情页传过来时,要去 shared 表反查
+    // 转 synthetic Category 返回,跟 picker / 洞察 路径一致。
+    if (categoryId < 0) {
+      return _watchSharedCategoryBySyntheticId(categoryId);
+    }
     return (db.select(db.categories)
       ..where((c) => c.id.equals(categoryId))
     ).watchSingleOrNull();
   }
 
+  /// SharedLedgerCategories 表变化时 re-emit。用 tableUpdates 监听 + 每次
+  /// 重查找匹配的 syncId(synthetic id 是 hashCode 派生,反查只能扫表)。
+  Stream<Category?> _watchSharedCategoryBySyntheticId(int syntheticId) {
+    final ctrl = StreamController<Category?>();
+    StreamSubscription? sub;
+
+    Future<void> emit() async {
+      final rows = await db.select(db.sharedLedgerCategories).get();
+      for (final s in rows) {
+        if (syntheticIdForSyncId(s.syncId) == syntheticId) {
+          if (!ctrl.isClosed) {
+            // 跟 statistics / picker / synthetic builder 保持一致:有 parentSyncId
+            // 就转 synthetic 父 id 写入 parentId,L2 → L1 链路可正确导航。
+            final pSyncId = s.parentSyncId;
+            final parentSyntheticId = (pSyncId != null && pSyncId.isNotEmpty)
+                ? syntheticIdForSyncId(pSyncId)
+                : null;
+            ctrl.add(Category(
+              id: syntheticId,
+              name: s.name,
+              kind: s.kind,
+              icon: s.icon,
+              sortOrder: s.sortOrder,
+              parentId: parentSyntheticId,
+              level: s.level,
+              iconType: s.iconType,
+              customIconPath:
+                  s.iconType == 'custom' && s.iconCloudSha256 != null
+                      ? 'custom_icons/shared_${s.iconCloudSha256}.png'
+                      : null,
+              communityIconId: null,
+              syncId: s.syncId,
+            ));
+          }
+          return;
+        }
+      }
+      if (!ctrl.isClosed) ctrl.add(null);
+    }
+
+    ctrl.onListen = () {
+      emit();
+      sub = db
+          .tableUpdates(d.TableUpdateQuery.onTable(db.sharedLedgerCategories))
+          .listen((_) => emit());
+    };
+    ctrl.onCancel = () async {
+      await sub?.cancel();
+    };
+    return ctrl.stream;
+  }
+
   @override
   Stream<List<Transaction>> watchTransactionsByCategory(int categoryId, {int? ledgerId}) {
+    // §7 共享账本:负 id 表 SharedLedger 分类 — 走 categorySyncIdOverride 过滤。
+    if (categoryId < 0) {
+      return _watchTxByCategorySyntheticId(categoryId, ledgerId);
+    }
     final query = db.select(db.transactions)
       ..where((t) => t.categoryId.equals(categoryId));
 
@@ -473,6 +650,56 @@ class LocalCategoryRepository implements CategoryRepository {
     ]);
 
     return query.watch();
+  }
+
+  Stream<List<Transaction>> _watchTxByCategorySyntheticId(
+      int syntheticId, int? ledgerId) {
+    final ctrl = StreamController<List<Transaction>>();
+    StreamSubscription? sub;
+    String? matchedSyncId;
+
+    Future<void> resolveSyncId() async {
+      if (matchedSyncId != null) return;
+      final rows = await db.select(db.sharedLedgerCategories).get();
+      for (final s in rows) {
+        if (syntheticIdForSyncId(s.syncId) == syntheticId) {
+          matchedSyncId = s.syncId;
+          return;
+        }
+      }
+    }
+
+    Future<void> emit() async {
+      await resolveSyncId();
+      if (matchedSyncId == null) {
+        if (!ctrl.isClosed) ctrl.add(const []);
+        return;
+      }
+      final q = db.select(db.transactions)
+        ..where((t) => t.categorySyncIdOverride.equals(matchedSyncId!))
+        ..orderBy([
+          (t) => d.OrderingTerm(
+              expression: t.happenedAt, mode: d.OrderingMode.desc),
+        ]);
+      if (ledgerId != null) {
+        q.where((t) => t.ledgerId.equals(ledgerId));
+      }
+      final list = await q.get();
+      if (!ctrl.isClosed) ctrl.add(list);
+    }
+
+    ctrl.onListen = () {
+      emit();
+      // 监听 tx 表变化(新增/删除 tx)+ SharedLedgerCategories(分类被删/重命名)
+      sub = db.tableUpdates(d.TableUpdateQuery.onAllTables([
+        db.transactions,
+        db.sharedLedgerCategories,
+      ])).listen((_) => emit());
+    };
+    ctrl.onCancel = () async {
+      await sub?.cancel();
+    };
+    return ctrl.stream;
   }
 
   @override
@@ -581,6 +808,39 @@ class LocalCategoryRepository implements CategoryRepository {
   }
 
   @override
+  Future<List<Category>> getAllCategoriesIncludingShared() async {
+    final result = [...await getAllCategories()];
+    // §7 共享账本:并入 SharedLedgerCategories 的 synthetic 分类(按 synthetic id 去重，
+    // 同一 owner 分类可能镜像到多个账本)。供标签详情等跨账本列表按 categoryId 映射。
+    final seen = <int>{};
+    final shared = await db.select(db.sharedLedgerCategories).get();
+    for (final s in shared) {
+      final synthId = syntheticIdForSyncId(s.syncId);
+      if (!seen.add(synthId)) continue;
+      final pSyncId = s.parentSyncId;
+      final parentSyntheticId = (pSyncId != null && pSyncId.isNotEmpty)
+          ? syntheticIdForSyncId(pSyncId)
+          : null;
+      result.add(Category(
+        id: synthId,
+        name: s.name,
+        kind: s.kind,
+        icon: s.icon,
+        sortOrder: s.sortOrder,
+        parentId: parentSyntheticId,
+        level: s.level,
+        iconType: s.iconType,
+        customIconPath: s.iconType == 'custom' && s.iconCloudSha256 != null
+            ? 'custom_icons/shared_${s.iconCloudSha256}.png'
+            : null,
+        communityIconId: null,
+        syncId: s.syncId,
+      ));
+    }
+    return result;
+  }
+
+  @override
   Future<void> batchInsertCategories(List<CategoriesCompanion> categories) async {
     await db.batch((batch) {
       batch.insertAll(db.categories, categories);
@@ -638,13 +898,16 @@ class LocalCategoryRepository implements CategoryRepository {
 
   @override
   Future<Category> getTransferCategory() async {
-    // 查找现有的转账分类
-    final existing = await (db.select(db.categories)
-          ..where((c) => c.kind.equals('transfer')))
-        .getSingleOrNull();
+    // 历史上少数用户 DB 里出现过多条 kind=transfer 的脏数据(早期 seed
+    // 多次跑 / 云同步重复 pull / 用户手动改了 kind)。原来用
+    // .getSingleOrNull() 直接抛 "Bad state: Too many elements" 让上层 future
+    // 永不完成 → UI 卡死(编辑转账时复现)。这里改成取 id 最小的那条,
+    // 不再因多条而崩。脏数据合并自愈在上层 LocalRepository 里做(那层
+    // 持有 ChangeTracker,能把合并产生的变更同步到云端)。
+    final all = await getAllTransferCategories();
 
-    if (existing != null) {
-      return existing;
+    if (all.isNotEmpty) {
+      return all.first;
     }
 
     // 不存在则创建（理论上seed时已创建，这里是兜底逻辑）
@@ -656,10 +919,23 @@ class LocalCategoryRepository implements CategoryRepository {
         icon: const d.Value('swap_horiz'),
         sortOrder: const d.Value(-1),
         level: const d.Value(1),
+        syncId: d.Value(_uuid.v4()),
       ),
     );
 
     final created = await getCategoryById(id);
     return created!;
+  }
+
+  /// 列出所有 kind=transfer 的分类,按 id 升序。
+  ///
+  /// 干净数据下应该恰好 1 条;>1 条 = 历史脏数据,由 LocalRepository
+  /// wrapper 在调用 getTransferCategory 时被动合并(详见
+  /// LocalRepository.getTransferCategory)。
+  Future<List<Category>> getAllTransferCategories() async {
+    return await (db.select(db.categories)
+          ..where((c) => c.kind.equals('transfer'))
+          ..orderBy([(c) => d.OrderingTerm(expression: c.id)]))
+        .get();
   }
 }

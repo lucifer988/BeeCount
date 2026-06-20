@@ -155,6 +155,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonOther => '其他';
 
   @override
+  String get commonYesterday => '昨天';
+
+  @override
   String get commonSearch => '搜索';
 
   @override
@@ -525,6 +528,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ledgersCurrency => '币种';
 
   @override
+  String get ledgersMonthStartDay => '每月起始日';
+
+  @override
+  String get ledgersMonthStartDayHint => '统计与预算按该日作为每月周期起点（1-28）';
+
+  @override
+  String get ledgersMonthStartDayNatural => '1日（自然月）';
+
+  @override
+  String ledgersMonthStartDayValue(int day) {
+    return '每月$day日';
+  }
+
+  @override
   String get ledgersSelectCurrency => '选择币种';
 
   @override
@@ -844,7 +861,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mineUpdate => '检查更新';
 
   @override
-  String get mineLanguageSettings => '语言设置';
+  String get mineLanguageSettings => '语言';
 
   @override
   String get languageTitle => '语言设置';
@@ -866,6 +883,89 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mineSlogan => '蜜蜂记账，一笔一蜜';
+
+  @override
+  String get mineDisplayNameEditTitle => '设置昵称';
+
+  @override
+  String get mineDisplayNameHint => '输入昵称';
+
+  @override
+  String get mineDisplayNameSaved => '昵称已更新';
+
+  @override
+  String get mineGreetingMorning => '早上好';
+
+  @override
+  String get mineGreetingNoon => '中午好';
+
+  @override
+  String get mineGreetingAfternoon => '下午好';
+
+  @override
+  String get mineGreetingEvening => '晚上好';
+
+  @override
+  String get mineGreetingNight => '夜深了';
+
+  @override
+  String mineGreetingNamed(String greeting, String name) {
+    return '$greeting，$name';
+  }
+
+  @override
+  String get mineProfileEditTitle => '编辑资料';
+
+  @override
+  String get headerSkinTitle => '皮肤';
+
+  @override
+  String get headerSkinSubtitle => '跟随主题色,叠在头部之上';
+
+  @override
+  String get headerSkinNone => '纯色';
+
+  @override
+  String get headerSkinAurora => '极光';
+
+  @override
+  String get headerSkinMountains => '山峦';
+
+  @override
+  String get headerSkinBokeh => '光斑';
+
+  @override
+  String get headerSkinWaves => '波浪';
+
+  @override
+  String get headerSkinSunset => '日落';
+
+  @override
+  String get headerSkinClouds => '云朵';
+
+  @override
+  String get headerSkinExample => '示例';
+
+  @override
+  String get headerSkinHoneycomb => '蜂巢';
+
+  @override
+  String get headerSkinStarry => '星河';
+
+  @override
+  String get headerSkinStripes => '斜纹';
+
+  @override
+  String get headerSkinSkyline => '城市';
+
+  @override
+  String get headerSkinSakura => '樱花';
+
+  @override
+  String get headerSkinMeteor => '流星';
+
+  @override
+  String get headerSkinMemphis => '孟菲斯';
 
   @override
   String get mineAvatarTitle => '头像设置';
@@ -1439,6 +1539,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mineHelp => '使用帮助';
 
   @override
+  String get helpCenterOpenInBrowser => '在浏览器中打开';
+
+  @override
+  String get helpCenterLoadFailed => '加载失败，请检查网络';
+
+  @override
+  String get helpCenterRetry => '重试';
+
+  @override
   String get mineHelpSubtitle => '查看使用文档和常见问题';
 
   @override
@@ -1728,7 +1837,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryExpenseBeverage => '饮品-奶茶-咖啡-果汁-汽水-矿泉水';
 
   @override
-  String get categoryExpensePastry => '糕点-蛋糕-面包-甜点-饼干';
+  String get categoryExpensePastry => '糕点-蛋糕-面包-甜点-曲奇';
 
   @override
   String get categoryExpenseCooking => '做饭食材-蔬菜-肉类-水产-调料-粮油';
@@ -1746,7 +1855,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryExpenseCar => '汽车-汽车保养-汽车维修-汽车保险-洗车-违章罚款';
 
   @override
-  String get categoryExpenseClothing => '服饰-上衣-裤子-裙子-鞋子-配饰';
+  String get categoryExpenseClothing => '服饰-上衣-裤子-裙子-鞋子-服饰配件';
 
   @override
   String get categoryExpenseDailyGoods => '日用品-洗护用品-纸品-清洁用品-厨房用品';
@@ -1791,7 +1900,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryIncomeRedPacket => '红包-节日红包-生日红包-随礼回礼';
 
   @override
-  String get categoryIncomeBonus => '奖金-年终奖-季度奖-项目奖金-其他奖金';
+  String get categoryIncomeBonus => '奖金-年度奖金-季度奖-项目奖金-其他奖金';
 
   @override
   String get categoryIncomeReimbursement => '报销-差旅报销-餐费报销-其他报销';
@@ -1800,7 +1909,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryIncomePartTime => '兼职-兼职收入-外快';
 
   @override
-  String get categoryIncomeGift => '结婚礼金-生日礼金-其他礼金';
+  String get categoryIncomeGift => '礼金-结婚礼金-生日礼金-其他礼金';
 
   @override
   String get categoryIncomeInterest => '利息-银行利息-其他利息';
@@ -1809,7 +1918,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryIncomeRefund => '退款-购物退款-服务退款-其他退款';
 
   @override
-  String get categoryIncomeInvestIncome => '投资收益-股票收益-基金收益-其他投资收益';
+  String get categoryIncomeInvestIncome => '投资收益-股票收益-基金投资-其他投资收益';
 
   @override
   String get categoryIncomeSecondHand => '二手交易-闲置物品-二手商品';
@@ -1824,7 +1933,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryIncomeProvidentFund => '公积金-公积金提取-公积金利息';
 
   @override
-  String get personalizeTitle => '个性化';
+  String get personalizeTitle => '主题色';
+
+  @override
+  String get personalizeSubtitle => '选择或自定义应用主题色';
 
   @override
   String get personalizeCustomColor => '选择自定义颜色';
@@ -3602,6 +3714,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get welcomeCurrencyDescription => '选择您常用的货币，之后可以随时在设置中更改';
 
   @override
+  String get welcomeCreateDefaultLedger => '创建默认账本';
+
+  @override
   String get welcomePrivacyTitle => '开源透明 · 社群驱动';
 
   @override
@@ -3794,6 +3909,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get iosAutoTutorialDesc => '查看详细配置视频教程';
 
   @override
+  String get iosAutoImportTitle => '一键获取快捷指令';
+
+  @override
+  String get iosAutoImportDesc => '点击下方按钮，自动导入已配置好的「截屏 → 自动记账」快捷指令，无需手动添加“截屏”操作和连接参数。导入后建议在「轻点背面」中绑定它。';
+
+  @override
+  String get iosAutoImportButton => '获取快捷指令';
+
+  @override
+  String get iosAutoImportFailed => '无法打开快捷指令链接，请检查网络后重试';
+
+  @override
+  String get iosAutoManualConfigTitle => '手动配置（高级）';
+
+  @override
+  String get iosAutoManualConfigDesc => '若一键导入不可用，可按以下步骤手动创建快捷指令。';
+
+  @override
   String get aiSettingsTitle => 'AI小助手';
 
   @override
@@ -3803,7 +3936,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiEnableTitle => '启用AI小助手';
 
   @override
-  String get aiEnableSubtitle => '使用AI增强OCR识别准确度，提取金额、商家、时间等信息，并支持自然语言对话';
+  String get aiEnableSubtitle => '使用 AI 视觉识别账单截图,提取金额、商家、时间等信息,并支持自然语言对话';
 
   @override
   String get aiEnableToastOn => 'AI小助手已启用';
@@ -3865,19 +3998,107 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatGoToSettings => '去设置';
 
   @override
-  String get aiLocalModelTitle => '本地模型';
-
-  @override
-  String get aiLocalModelTraining => '训练中';
-
-  @override
-  String get aiLocalModelUnavailable => '本地模型训练中，暂不可用';
-
-  @override
   String get aiOcrRecognizing => '正在识别账单...';
 
   @override
   String get aiOcrNoAmount => '未识别到有效金额，请手动记账';
+
+  @override
+  String get aiNotConfiguredHint => '未配置 AI 服务，请前往「我的 → AI 设置」配置';
+
+  @override
+  String get aiOcrCheckLog => '识别失败，请查看日志了解详情';
+
+  @override
+  String get aiOcrNoBill => '未识别到账单信息，请确认图片是账单后重试';
+
+  @override
+  String get aiNotConfiguredNotificationTitle => '❌ 无法识别截图';
+
+  @override
+  String get aiNotConfiguredNotificationBody => '未配置 AI 服务，点击前往设置';
+
+  @override
+  String get autoBillingNotifyDetectedTitle => '✅ 检测到截图';
+
+  @override
+  String get autoBillingNotifyWaitingFileBody => '正在等待文件写入...';
+
+  @override
+  String get autoBillingNotifyRecognizingScreenshotTitle => '正在识别截图...';
+
+  @override
+  String get autoBillingNotifyVisionAnalyzingBody => '正在调用 AI 视觉分析支付信息，请稍候';
+
+  @override
+  String get autoBillingNotifyRecognizingTextTitle => '⏳ 正在识别';
+
+  @override
+  String get autoBillingNotifyTextAnalyzingBody => '正在调用 AI 解析支付信息...';
+
+  @override
+  String get autoBillingNotifyRecognizeFailedTitle => '❌ 识别失败';
+
+  @override
+  String get autoBillingNotifyRecognizeFailedBody => '无法从截图提取账单信息，请检查 AI 配置或图片';
+
+  @override
+  String get autoBillingNotifyNoBillTitle => '未识别到账单';
+
+  @override
+  String get autoBillingNotifyNoBillBody => '这张截图未识别到账单信息，可能不是账单';
+
+  @override
+  String get autoBillingNotifyFileUnavailableTitle => '识别失败';
+
+  @override
+  String get autoBillingNotifyFileUnavailableBody => '截图文件不可用';
+
+  @override
+  String get autoBillingNotifyNoLedgerTitle => '❌ 自动记账失败';
+
+  @override
+  String get autoBillingNotifyNoLedgerBody => '无可用账本，请先创建账本';
+
+  @override
+  String get autoBillingNotifyNoAmountBody => '未能识别出金额信息';
+
+  @override
+  String get autoBillingNotifyCreateFailedTitle => '❌ 创建失败';
+
+  @override
+  String get autoBillingNotifyCreateFailedBody => '无法创建交易记录';
+
+  @override
+  String get autoBillingNotifyProcessFailedTitle => '❌ 处理失败';
+
+  @override
+  String autoBillingNotifyProcessFailedBody(String error) {
+    return '错误：$error';
+  }
+
+  @override
+  String autoBillingNotifySuccessSingleTitle(String amount) {
+    return '✅ 自动记账成功 ¥$amount';
+  }
+
+  @override
+  String autoBillingNotifySuccessMultiTitle(int count) {
+    return '✅ 自动记账成功 $count 笔';
+  }
+
+  @override
+  String autoBillingNotifySuccessMultiBody(String amount) {
+    return '合计 ¥$amount';
+  }
+
+  @override
+  String autoBillingNotifySuccessSingleBodyNote(String note) {
+    return '备注：$note';
+  }
+
+  @override
+  String get autoBillingNotifySuccessSingleBodyDefault => '已自动创建记录';
 
   @override
   String get aiOcrNoLedger => '未找到账本';
@@ -3956,7 +4177,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cloudTutorialFeature3 => '👥 多用户独立:一个服务器可以多人注册,各自数据完全隔离';
 
   @override
-  String get cloudTutorialFeature4 => '🔜 规划中:共享账本(邀请家人 / 团队一起记同一本)';
+  String get cloudTutorialFeature4 => '🤝 共享账本:邀请家人 / 团队一起记同一本,实时秒级同步';
 
   @override
   String get cloudTutorialGotIt => '我知道了';
@@ -4000,7 +4221,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get smartBilling => '智能记账';
 
   @override
-  String get smartBillingDesc => 'AI小助手、OCR扫描、自动记账';
+  String get smartBillingDesc => 'AI 助手、智能识别、自动记账';
 
   @override
   String get smartBillingPageTitle => '智能记账';
@@ -4018,10 +4239,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get smartBillingImageBillingDesc => '从相册选择支付截图进行识别';
 
   @override
-  String get smartBillingImageBillingGuide => '在首页长按底部中间的 + 按钮，选择「相册」即可使用图片记账功能。配置AI后可智能识别账单信息，未配置时仍可通过OCR识别文字。';
+  String get smartBillingImageBillingGuide => '在首页长按底部中间的 + 按钮,选择「相册」即可使用图片记账功能。需先在「我的 → AI 设置」配置 AI 服务,AI 视觉模型会自动识别金额、商家、时间等账单信息。';
 
   @override
-  String get smartBillingAIOptional => 'AI 识别为可选功能，配置后可提高识别准确度';
+  String get smartBillingVisionAIRequired => '图片识别必须配置 AI 视觉服务，请先在「我的 → AI 设置」中配置';
 
   @override
   String get smartBillingCameraBilling => '拍照记账';
@@ -4030,7 +4251,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get smartBillingCameraBillingDesc => '拍摄支付截图进行识别';
 
   @override
-  String get smartBillingCameraBillingGuide => '在首页长按底部中间的 + 按钮，选择「拍照」即可使用拍照记账功能。配置AI后可智能识别账单信息，未配置时仍可通过OCR识别文字。';
+  String get smartBillingCameraBillingGuide => '在首页长按底部中间的 + 按钮,选择「拍照」即可使用拍照记账功能。需先在「我的 → AI 设置」配置 AI 服务,AI 视觉模型会自动识别金额、商家、时间等账单信息。';
 
   @override
   String get smartBillingVoiceBilling => '语音记账';
@@ -4042,7 +4263,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get smartBillingVoiceBillingGuide => '在首页长按底部中间的 + 按钮，选择「语音」即可使用语音记账功能。语音记账需要通过AI将语音转为文字并提取账单信息。';
 
   @override
-  String get smartBillingAIRequired => '语音记账必须配置 AI（智谱 GLM API），请先在上方配置 AI 设置';
+  String get smartBillingAIRequired => '语音记账必须配置 AI 语音识别服务，请先在「我的 → AI 设置」中配置';
 
   @override
   String get smartBillingAutoTags => '自动关联标签';
@@ -4057,7 +4278,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get smartBillingAutoAttachmentDesc => '图片/拍照记账时自动将原图添加为附件';
 
   @override
-  String get autoScreenshotBillingIosDesc => '通过快捷指令实现截图自动识别记账';
+  String get autoScreenshotBillingIosTitle => '自动记账';
+
+  @override
+  String get autoScreenshotBillingIosDesc => '通过快捷指令自动识别支付信息记账';
+
+  @override
+  String get shareBilling => '分享记账';
+
+  @override
+  String get shareBillingDesc => '从支付宝/微信分享支付截图即可记账';
+
+  @override
+  String get shareBillingGuide => '在支付宝、微信、相册等应用中看到支付截图时，点击「分享」并选择「蜜蜂记账」，即可自动识别金额、商家、时间等信息并记账，无需先保存截图。';
+
+  @override
+  String get shareBillingActionHint => '分享后会在后台自动识别记账，无需手动打开蜜蜂记账';
 
   @override
   String get automation => '自动化';
@@ -4072,16 +4308,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get automationPageSubtitle => '周期记账和提醒设置';
 
   @override
-  String get appearanceSettings => '外观设置';
+  String get appearanceSettings => '个性化设置';
 
   @override
-  String get appearanceSettingsDesc => '主题、字体、语言设置';
+  String get appearanceSettingsDesc => '主题、字体、语言、应用锁等';
 
   @override
-  String get appearanceSettingsPageTitle => '外观设置';
+  String get appearanceSettingsPageTitle => '个性化设置';
 
   @override
-  String get appearanceSettingsPageSubtitle => '个性化外观和显示';
+  String get appearanceSettingsPageSubtitle => '外观、显示、安全等应用偏好';
 
   @override
   String get about => '关于';
@@ -4132,10 +4368,62 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aboutRelatedProducts => '更多产品';
 
   @override
+  String get aboutBeeAssets => '蜜蜂家当 BeeAssets';
+
+  @override
+  String get aboutBeeAssetsSubtitle => '可视化你的全部资产配置';
+
+  @override
+  String get aboutBeeAssetsIntro => '蜜蜂记账侧重日常流水,蜜蜂家当是它的姐妹产品,专注资产配置可视化:跨账户净资产趋势、房产 / 投资 / 加密资产分类、收益率与持仓时长、配置占比一目了然。';
+
+  @override
   String get aboutBeeDNS => '蜜蜂域名 BeeDNS';
 
   @override
   String get aboutBeeDNSSubtitle => '简洁高效的 DNS 管理工具';
+
+  @override
+  String get aboutBeeDNSIntro => '如果你的域名分散在 Cloudflare 和阿里云,蜜蜂域名把它们聚合在一处管理:批量改记录、A/AAAA 切换、解析迁移、子域名批量管理 — 不用在两家控制台来回切。';
+
+  @override
+  String get productPromoAndroidTitle => '申请加入内测';
+
+  @override
+  String get productPromoAndroidMessage => '这款 App 还在 Google Play 内测阶段,需要邀请才能下载。\n\n申请方式:发邮件给我们,告诉我们你的 Google 账号邮箱(必填),以及简单说明使用场景(可选)。我们会在 1-3 天内回复并加你到内测白名单。';
+
+  @override
+  String get productPromoOpenStore => '前往应用商店';
+
+  @override
+  String get productPromoTestFlight => 'TestFlight 内测';
+
+  @override
+  String get productPromoLearnMore => 'Pro';
+
+  @override
+  String get productPromoEmailLabel => '申请邮箱(点击复制)';
+
+  @override
+  String get productPromoCopiedToast => '邮箱已复制到剪贴板';
+
+  @override
+  String get productPromoMailUnavailable => '未检测到邮件应用,邮箱已复制到剪贴板,请打开任意邮件应用粘贴发送';
+
+  @override
+  String get productPromoEmailButton => '发送邮件';
+
+  @override
+  String get productPromoWebsiteButton => '前往官网';
+
+  @override
+  String productPromoEmailSubject(String productName) {
+    return '申请内测 - $productName';
+  }
+
+  @override
+  String productPromoEmailBody(String productName) {
+    return '你好,\n\n我希望加入「$productName」的 Google Play 内测,我的 Google 账号邮箱是:\n\n(请填写你的 Gmail / Google 账号邮箱)\n\n谢谢!';
+  }
 
   @override
   String get logCenterTitle => '日志中心';
@@ -4788,7 +5076,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiPromptVarCurrentDate => '当前日期，如\"2025-01-15\"';
 
   @override
-  String get aiPromptVarOcrText => '用户输入或OCR识别的文本内容';
+  String get aiPromptVarOcrText => '用户输入的文本内容';
 
   @override
   String get aiPromptVarCategories => '支出和收入分类列表';
@@ -4814,22 +5102,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get aiUsingVisionDesc => '启用图像识别，以获得更高的识别精度';
-
-  @override
-  String get aiUnUsingVisionDesc => '已关闭图片识别，仅使用OCR文本';
-
-  @override
-  String get aiUploadImage => '上传图片到AI';
-
-  @override
-  String get aiUseVisionDesc => '使用视觉模型，识别更准确';
-
-  @override
-  String get aiUnUseVisionDesc => '仅使用文本模型分析OCR结果';
-
-  @override
-  String get aiCustomBaseUrlHelper => 'OpenAI兼容的API地址，如 https://api.openai.com/v1';
+  String get aiCustomBaseUrlHelper => '标准聊天补全API地址，例如 https://api.example.com/v1';
 
   @override
   String get aiTextModelTitle => '文本模型';
@@ -5408,6 +5681,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get calendarNoTransactions => '当天无交易';
 
   @override
+  String get calendarAddTransaction => '在该日记账';
+
+  @override
+  String get calendarAddTransactionTooltip => '添加该日记账';
+
+  @override
   String get commonUncategorized => '未分类';
 
   @override
@@ -5711,6 +5990,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get creditCardSettings => '信用卡设置';
 
   @override
+  String get accountTabValuation => '估值账户';
+
+  @override
+  String get creditCardDaysRequired => '请选择账单日和还款日';
+
+  @override
   String get creditLimit => '信用额度';
 
   @override
@@ -5996,6 +6281,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncHealthRowAttachment => '附件';
 
   @override
+  String get syncHealthRowCategoryIcon => '分类图标';
+
+  @override
   String get syncHealthRowBudget => '预算';
 
   @override
@@ -6019,6 +6307,488 @@ class AppLocalizationsZh extends AppLocalizations {
   String syncHealthValueRemoteMissing(int local) {
     return '本地 $local · 云端 —';
   }
+
+  @override
+  String get twofaChallengeTitle => '二次验证';
+
+  @override
+  String get twofaMethodTotp => '动态码';
+
+  @override
+  String get twofaMethodRecovery => '恢复码';
+
+  @override
+  String get twofaTotpHint => '请输入 authenticator app(Google Authenticator / 1Password / Authy 等)上的 6 位动态码。';
+
+  @override
+  String get twofaRecoveryHint => '请输入启用 2FA 时保存的恢复码(如 abcd-efgh),每个码只能使用一次。';
+
+  @override
+  String get twofaTotpInputPlaceholder => '输入 6 位动态码';
+
+  @override
+  String get twofaRecoveryInputPlaceholder => '输入恢复码';
+
+  @override
+  String twofaCountdown(String time) {
+    return '剩余时间 $time';
+  }
+
+  @override
+  String get twofaVerifyButton => '验证';
+
+  @override
+  String get twofaStatusTitle => '二次验证';
+
+  @override
+  String get twofaStatusEnabled => '已启用 ✓';
+
+  @override
+  String get twofaStatusDisabled => '未启用';
+
+  @override
+  String twofaStatusEnabledAt(String date) {
+    return '启用于 $date';
+  }
+
+  @override
+  String get twofaStatusManageHint => '请前往 Web 端管理(启用 / 禁用 / 重新生成恢复码)';
+
+  @override
+  String get twofaStatusOpenWeb => '前往 Web 端启用 →';
+
+  @override
+  String get sharedRoleOwner => '所有者';
+
+  @override
+  String get sharedRoleEditor => '编辑者';
+
+  @override
+  String get sharedRoleViewer => '查看者';
+
+  @override
+  String get commonCopied => '已复制';
+
+  @override
+  String get commonRemove => '移除';
+
+  @override
+  String get sharedJoinPageTitle => '加入共享账本';
+
+  @override
+  String get sharedJoinPageSubtitle => '输入邀请码或点击对方分享的链接';
+
+  @override
+  String get sharedJoinEnterCode => '输入邀请码';
+
+  @override
+  String get sharedJoinEnterCodeHint => '邀请码 6 位,全大写字母数字。也可直接点击邀请方分享的短链跳过此步。';
+
+  @override
+  String get sharedJoinPreviewButton => '验证邀请码';
+
+  @override
+  String get sharedJoinAcceptButton => '加入账本';
+
+  @override
+  String sharedJoinInvitedBy(String name) {
+    return '$name 邀请你加入';
+  }
+
+  @override
+  String sharedJoinRoleLine(String role) {
+    return '角色:$role';
+  }
+
+  @override
+  String sharedJoinExpiresInMinutes(int n) {
+    return '有效期还剩 $n 分钟';
+  }
+
+  @override
+  String sharedJoinExpiresInHours(int n) {
+    return '有效期还剩 $n 小时';
+  }
+
+  @override
+  String sharedJoinExpiresInDays(int n) {
+    return '有效期还剩 $n 天';
+  }
+
+  @override
+  String sharedJoinSuccess(String name) {
+    return '已加入「$name」';
+  }
+
+  @override
+  String get sharedJoinCodeFormatError => '邀请码格式不对,请输入 6 位字母数字';
+
+  @override
+  String get sharedJoinInvalidOrExpired => '邀请码无效或已过期,请向邀请人索取新码';
+
+  @override
+  String get sharedJoinAlreadyMember => '你已经是该账本成员';
+
+  @override
+  String get sharedJoinMemberLimit => '该账本成员已满,请联系账本所有者';
+
+  @override
+  String get sharedInvitePageTitle => '邀请新成员';
+
+  @override
+  String get sharedInviteFormRole => '角色';
+
+  @override
+  String get sharedInviteFormExpiry => '有效期';
+
+  @override
+  String sharedInviteExpiryHours(int n) {
+    return '$n 小时';
+  }
+
+  @override
+  String sharedInviteExpiryDays(int n) {
+    return '$n 天';
+  }
+
+  @override
+  String get sharedInviteGenerate => '生成邀请码';
+
+  @override
+  String get sharedInviteGenerateAnother => '生成另一个邀请码';
+
+  @override
+  String get sharedInviteCopyCode => '复制邀请码';
+
+  @override
+  String get sharedInviteCopyLink => '复制链接';
+
+  @override
+  String get sharedInviteShareLink => '分享给好友';
+
+  @override
+  String sharedInviteExpiresAt(String dt) {
+    return '邀请将在 $dt 失效';
+  }
+
+  @override
+  String get sharedInviteWarning => '⚠️ 不要把邀请码发到公开群 / 朋友圈。拿到码的任何人都可加入账本;泄露后请到成员管理页撤销并重新生成。';
+
+  @override
+  String get sharedInviteInstruction => '把邀请码或短链发给对方。对方装上 BeeCount 后,点击链接或在「我的 → 加入共享账本」输入码即可加入。';
+
+  @override
+  String sharedInviteShareText(String ledger, String code, String url) {
+    return '邀请你加入 BeeCount 共享账本「$ledger」\n\n邀请码:$code\n链接:$url\n\n点击链接或在 BeeCount → 我的 → 加入共享账本输入此码即可。';
+  }
+
+  @override
+  String get sharedMembersPageTitle => '成员管理';
+
+  @override
+  String get sharedMembersYou => '你';
+
+  @override
+  String get sharedMembersInviteCta => '邀请新成员';
+
+  @override
+  String get sharedMembersLeaveCta => '退出账本';
+
+  @override
+  String get sharedMembersLeaveTitle => '退出账本';
+
+  @override
+  String sharedMembersLeaveConfirm(String name) {
+    return '退出「$name」后将无法再访问其中的交易。确定继续吗?';
+  }
+
+  @override
+  String get sharedMembersLeaveDone => '已退出账本';
+
+  @override
+  String get sharedMembersRemoveTitle => '移除成员';
+
+  @override
+  String get sharedMembersRemoveCta => '移除该成员';
+
+  @override
+  String sharedMembersRemoveConfirm(String name) {
+    return '确定移除 $name?ta 将立即失去对该账本的访问。';
+  }
+
+  @override
+  String get sharedMembersRemoved => '已移除成员';
+
+  @override
+  String get sharedMembersTransferTitle => '转让所有权';
+
+  @override
+  String get sharedMembersTransferTo => '转让给该成员';
+
+  @override
+  String sharedMembersTransferConfirm(String name) {
+    return '把账本所有权转给 $name?你将变为编辑者,无法再邀请人 / 改账本名 / 删账本。';
+  }
+
+  @override
+  String get sharedMembersTransferConfirmCta => '确认转让';
+
+  @override
+  String get sharedMembersTransferDone => '已转让所有权';
+
+  @override
+  String sharedTxRecordedBy(String name) {
+    return '$name 记的';
+  }
+
+  @override
+  String sharedTxCreatedBy(String name) {
+    return '$name 创建';
+  }
+
+  @override
+  String sharedTxEditedBy(String name) {
+    return '$name 最后编辑';
+  }
+
+  @override
+  String sharedTxCreatedAndEditedBy(String name) {
+    return '$name 创建并编辑';
+  }
+
+  @override
+  String get sharedRequiresCloudSync => '请先启用云同步';
+
+  @override
+  String get sharedMembersStatsTitle => '成员收支';
+
+  @override
+  String get sharedMembersStatsEmpty => '本期暂无记账';
+
+  @override
+  String get sharedMembersStatsLoading => '加载中…';
+
+  @override
+  String get sharedMembersStatsIncome => '总收入';
+
+  @override
+  String get sharedMembersStatsExpense => '总支出';
+
+  @override
+  String sharedMembersStatsTxCount(int count) {
+    return '$count笔';
+  }
+
+  @override
+  String get maintenanceOrphanCleanupTitle => '数据清理';
+
+  @override
+  String get maintenanceOrphanCleanupSubtitle => '检查并清理本地孤儿数据';
+
+  @override
+  String get maintenanceOrphanRescan => '重新扫描';
+
+  @override
+  String get maintenanceOrphanEmpty => '本地数据干净,未发现孤儿数据';
+
+  @override
+  String get maintenanceOrphanGroupDb => '数据库孤儿';
+
+  @override
+  String get maintenanceOrphanGroupFile => '磁盘文件孤儿';
+
+  @override
+  String get maintenanceOrphanGroupSync => '同步状态孤儿';
+
+  @override
+  String maintenanceOrphanSummary(int count) {
+    return '发现 $count 项异常';
+  }
+
+  @override
+  String maintenanceOrphanSummarySize(String size) {
+    return '可释放空间约 $size';
+  }
+
+  @override
+  String get maintenanceOrphanSelectAll => '全选';
+
+  @override
+  String get maintenanceOrphanDeselectAll => '取消全选';
+
+  @override
+  String get maintenanceOrphanDeleteOne => '删除此项';
+
+  @override
+  String maintenanceOrphanSelectedHint(int count) {
+    return '已选 $count 项';
+  }
+
+  @override
+  String get maintenanceOrphanCleanSelected => '清理已选';
+
+  @override
+  String get maintenanceOrphanConfirmTitle => '确认清理';
+
+  @override
+  String maintenanceOrphanConfirmDeleteOne(String title) {
+    return '确定清理「$title」吗？操作不可撤销。';
+  }
+
+  @override
+  String maintenanceOrphanConfirmDeleteBatch(int count) {
+    return '确定清理选中的 $count 项吗？操作不可撤销。';
+  }
+
+  @override
+  String maintenanceOrphanCleanSuccess(int count) {
+    return '已清理 $count 项';
+  }
+
+  @override
+  String maintenanceOrphanCleanPartial(int ok, int fail) {
+    return '成功 $ok 项,失败 $fail 项';
+  }
+
+  @override
+  String get syncProgressTitle => '正在同步';
+
+  @override
+  String syncProgressCount(int applied, int total) {
+    return '$applied / $total 条';
+  }
+
+  @override
+  String get exchangeRatePageTitle => '汇率管理';
+
+  @override
+  String get exchangeRateEntrySubtitle => '自动获取汇率，支持手动修正';
+
+  @override
+  String get baseCurrencyLabel => '主币种';
+
+  @override
+  String get rateSourceAuto => '自动';
+
+  @override
+  String get rateSourceManual => '手动';
+
+  @override
+  String rateUpdatedAt(String date) {
+    return '$date 更新';
+  }
+
+  @override
+  String get rateNotFetched => '未获取';
+
+  @override
+  String get rateTapToSet => '点击手动设置';
+
+  @override
+  String get rateEditTitle => '编辑汇率';
+
+  @override
+  String rateInverseHint(String base, String rate, String quote) {
+    return '反向参考:1 $base ≈ $rate $quote';
+  }
+
+  @override
+  String get rateResetToAuto => '恢复自动';
+
+  @override
+  String get rateRefreshSuccess => '汇率已更新';
+
+  @override
+  String get rateRefreshFailed => '获取失败,可手动设置汇率';
+
+  @override
+  String get ratesEmptyHint => '给账户设置不同币种后,这里会出现可管理的汇率';
+
+  @override
+  String get rateDisclaimer => '数据来源:开源汇率数据,每日更新;折算仅供参考,可能与银行实际牌价有差异。';
+
+  @override
+  String convertedNetWorth(String currency) {
+    return '净资产(折$currency)';
+  }
+
+  @override
+  String convertedFootnote(String date) {
+    return '按 $date 汇率折算,点击管理汇率';
+  }
+
+  @override
+  String convertedPartialWarning(String currencies) {
+    return '$currencies 未折算,点击设置汇率';
+  }
+
+  @override
+  String get unconvertedBadge => '未折算';
+
+  @override
+  String get commonDetail => '详情';
+
+  @override
+  String get conversionDetailTitle => '折算详情';
+
+  @override
+  String get assetConversionToggle => '按主币种折算';
+
+  @override
+  String rateManualApplied(int count) {
+    return '已应用 $count 条手动汇率';
+  }
+
+  @override
+  String get netWorthTrendTitle => '净值趋势';
+
+  @override
+  String get netWorthTrend3M => '3个月';
+
+  @override
+  String get netWorthTrend6M => '6个月';
+
+  @override
+  String get netWorthTrend12M => '12个月';
+
+  @override
+  String get netWorthTrendAll => '全部';
+
+  @override
+  String get netWorthTrendLineNet => '净资产';
+
+  @override
+  String get netWorthTrendLineAssets => '总资产';
+
+  @override
+  String get netWorthTrendLineLiabilities => '总负债';
+
+  @override
+  String get netWorthTrendMultiCurrencyNote => '历史净值为各币种原值相加,未折算';
+
+  @override
+  String get txFlagExcludeFromStats => '不计入收支';
+
+  @override
+  String get txFlagExcludeFromBudget => '不计入预算';
+
+  @override
+  String get txFlagMoreOptions => '更多选项';
+
+  @override
+  String get txFlagDialogTitle => '账单标记';
+
+  @override
+  String get txFlagExcludeFromStatsHint => '不计入收支统计,但仍计入账户余额';
+
+  @override
+  String get txFlagExcludeFromBudgetHint => '不占用预算额度';
+
+  @override
+  String get txFlagExcludedTag => '不计收支';
+
+  @override
+  String get txFlagBudgetExcludedTag => '不计预算';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -6169,6 +6939,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get commonOther => '其他';
+
+  @override
+  String get commonYesterday => '昨天';
 
   @override
   String get commonSearch => '搜尋';
@@ -6541,6 +7314,20 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get ledgersCurrency => '幣種';
 
   @override
+  String get ledgersMonthStartDay => '每月起始日';
+
+  @override
+  String get ledgersMonthStartDayHint => '統計與預算按該日作為每月週期起點（1-28）';
+
+  @override
+  String get ledgersMonthStartDayNatural => '1日（自然月）';
+
+  @override
+  String ledgersMonthStartDayValue(int day) {
+    return '每月$day日';
+  }
+
+  @override
   String get ledgersSelectCurrency => '選擇幣種';
 
   @override
@@ -6860,7 +7647,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get mineUpdate => '檢查更新';
 
   @override
-  String get mineLanguageSettings => '語言設定';
+  String get mineLanguageSettings => '語言';
 
   @override
   String get languageTitle => '語言設定';
@@ -6882,6 +7669,89 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get mineSlogan => '蜜蜂記帳，一筆一蜜';
+
+  @override
+  String get mineDisplayNameEditTitle => '設定暱稱';
+
+  @override
+  String get mineDisplayNameHint => '輸入暱稱';
+
+  @override
+  String get mineDisplayNameSaved => '暱稱已更新';
+
+  @override
+  String get mineGreetingMorning => '早安';
+
+  @override
+  String get mineGreetingNoon => '中午好';
+
+  @override
+  String get mineGreetingAfternoon => '午安';
+
+  @override
+  String get mineGreetingEvening => '晚安';
+
+  @override
+  String get mineGreetingNight => '夜深了';
+
+  @override
+  String mineGreetingNamed(String greeting, String name) {
+    return '$greeting，$name';
+  }
+
+  @override
+  String get mineProfileEditTitle => '編輯資料';
+
+  @override
+  String get headerSkinTitle => '皮膚';
+
+  @override
+  String get headerSkinSubtitle => '跟隨主題色,疊在頁首之上';
+
+  @override
+  String get headerSkinNone => '純色';
+
+  @override
+  String get headerSkinAurora => '極光';
+
+  @override
+  String get headerSkinMountains => '山巒';
+
+  @override
+  String get headerSkinBokeh => '光斑';
+
+  @override
+  String get headerSkinWaves => '波浪';
+
+  @override
+  String get headerSkinSunset => '日落';
+
+  @override
+  String get headerSkinClouds => '雲朵';
+
+  @override
+  String get headerSkinExample => '示例';
+
+  @override
+  String get headerSkinHoneycomb => '蜂巢';
+
+  @override
+  String get headerSkinStarry => '星河';
+
+  @override
+  String get headerSkinStripes => '斜紋';
+
+  @override
+  String get headerSkinSkyline => '城市';
+
+  @override
+  String get headerSkinSakura => '櫻花';
+
+  @override
+  String get headerSkinMeteor => '流星';
+
+  @override
+  String get headerSkinMemphis => '孟菲斯';
 
   @override
   String get mineAvatarTitle => '頭像設定';
@@ -7455,6 +8325,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get mineHelp => '使用說明';
 
   @override
+  String get helpCenterOpenInBrowser => '在瀏覽器中開啟';
+
+  @override
+  String get helpCenterLoadFailed => '載入失敗，請檢查網路';
+
+  @override
+  String get helpCenterRetry => '重試';
+
+  @override
   String get mineHelpSubtitle => '查看使用文件和常見問題';
 
   @override
@@ -7744,7 +8623,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get categoryExpenseBeverage => '飲品-奶茶-咖啡-果汁-汽水-礦泉水';
 
   @override
-  String get categoryExpensePastry => '糕點-蛋糕-麵包-甜點-餅乾';
+  String get categoryExpensePastry => '糕點-蛋糕-麵包-甜點-曲奇';
 
   @override
   String get categoryExpenseCooking => '做飯食材-蔬菜-肉類-水產-調料-糧油';
@@ -7762,7 +8641,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get categoryExpenseCar => '汽車-汽車保養-汽車維修-汽車保險-洗車-違章罰款';
 
   @override
-  String get categoryExpenseClothing => '服飾-上衣-褲子-裙子-鞋子-配飾';
+  String get categoryExpenseClothing => '服飾-上衣-褲子-裙子-鞋子-服飾配件';
 
   @override
   String get categoryExpenseDailyGoods => '日用品-洗護用品-紙品-清潔用品-廚房用品';
@@ -7777,7 +8656,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get categoryExpenseEntertainment => '娛樂-電影-KTV-遊樂場-酒吧-其他娛樂';
 
   @override
-  String get categoryExpenseGame => '遊戲儲值-遊戲裝備-遊戲會員';
+  String get categoryExpenseGame => '遊戲-遊戲儲值-遊戲裝備-遊戲會員';
 
   @override
   String get categoryExpenseHealthProducts => '保健品-維生素-保健食品-營養品';
@@ -7792,7 +8671,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get categoryExpenseHousing => '住房-房租-物業費-房貸-裝修';
 
   @override
-  String get categoryExpenseHome => '傢俱-家電-裝飾品-床上用品';
+  String get categoryExpenseHome => '居家-傢俱-家電-裝飾品-床上用品';
 
   @override
   String get categoryExpenseBeauty => '美容-護膚品-化妝品-美容美髮-美甲';
@@ -7807,7 +8686,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get categoryIncomeRedPacket => '紅包-節日紅包-生日紅包-隨禮回禮';
 
   @override
-  String get categoryIncomeBonus => '獎金-年終獎-季度獎-項目獎金-其他獎金';
+  String get categoryIncomeBonus => '獎金-年度獎金-季度獎-項目獎金-其他獎金';
 
   @override
   String get categoryIncomeReimbursement => '報銷-差旅報銷-餐費報銷-其他報銷';
@@ -7816,7 +8695,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get categoryIncomePartTime => '兼職-兼職收入-外快';
 
   @override
-  String get categoryIncomeGift => '結婚禮金-生日禮金-其他禮金';
+  String get categoryIncomeGift => '禮金-結婚禮金-生日禮金-其他禮金';
 
   @override
   String get categoryIncomeInterest => '利息-銀行利息-其他利息';
@@ -7825,7 +8704,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get categoryIncomeRefund => '退款-購物退款-服務退款-其他退款';
 
   @override
-  String get categoryIncomeInvestIncome => '投資收益-股票收益-基金收益-其他投資收益';
+  String get categoryIncomeInvestIncome => '投資收益-股票收益-基金投資-其他投資收益';
 
   @override
   String get categoryIncomeSecondHand => '二手交易-閒置物品-二手商品';
@@ -7840,7 +8719,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get categoryIncomeProvidentFund => '公積金-公積金提取-公積金利息';
 
   @override
-  String get personalizeTitle => '個性裝扮';
+  String get personalizeTitle => '主題色';
+
+  @override
+  String get personalizeSubtitle => '選擇或自訂應用主題色';
 
   @override
   String get personalizeCustomColor => '選擇自訂顏色';
@@ -9618,6 +10500,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get welcomeCurrencyDescription => '選擇您常用的貨幣，之後可以隨時在設定中更改';
 
   @override
+  String get welcomeCreateDefaultLedger => '建立預設帳本';
+
+  @override
   String get welcomePrivacyTitle => '開源透明 · 社群驅動';
 
   @override
@@ -9810,6 +10695,24 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get iosAutoTutorialDesc => '查看詳細設定影片教學';
 
   @override
+  String get iosAutoImportTitle => '一鍵取得捷徑';
+
+  @override
+  String get iosAutoImportDesc => '點擊下方按鈕，自動匯入已設定好的「截圖 → 自動記帳」捷徑，無需手動新增“截圖”操作和連接參數。匯入後建議在「輕點背面」中綁定它。';
+
+  @override
+  String get iosAutoImportButton => '取得捷徑';
+
+  @override
+  String get iosAutoImportFailed => '無法開啟捷徑連結，請檢查網路後重試';
+
+  @override
+  String get iosAutoManualConfigTitle => '手動設定（進階）';
+
+  @override
+  String get iosAutoManualConfigDesc => '若一鍵匯入無法使用，可依照以下步驟手動建立捷徑。';
+
+  @override
   String get aiSettingsTitle => 'AI 小助手';
 
   @override
@@ -9819,7 +10722,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get aiEnableTitle => '啟用 AI 小助手';
 
   @override
-  String get aiEnableSubtitle => '使用 AI 增強 OCR 識別準確度，提取金額、商家、時間等資訊，並支援自然語言對話';
+  String get aiEnableSubtitle => '使用 AI 視覺識別帳單截圖,提取金額、商家、時間等資訊,並支援自然語言對話';
 
   @override
   String get aiEnableToastOn => 'AI 小助手已啟用';
@@ -9881,19 +10784,107 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get aiChatGoToSettings => '前往設定';
 
   @override
-  String get aiLocalModelTitle => '本機模型';
-
-  @override
-  String get aiLocalModelTraining => '訓練中';
-
-  @override
-  String get aiLocalModelUnavailable => '本機模型訓練中，暫不可用';
-
-  @override
   String get aiOcrRecognizing => '正在識別帳單...';
 
   @override
   String get aiOcrNoAmount => '未識別到有效金額，請手動記帳';
+
+  @override
+  String get aiNotConfiguredHint => '未配置 AI 服務，請前往「我的 → AI 設定」配置';
+
+  @override
+  String get aiOcrCheckLog => '識別失敗，請查看日誌瞭解詳情';
+
+  @override
+  String get aiOcrNoBill => '未識別到帳單資訊，請確認圖片是帳單後重試';
+
+  @override
+  String get aiNotConfiguredNotificationTitle => '❌ 無法識別截圖';
+
+  @override
+  String get aiNotConfiguredNotificationBody => '未配置 AI 服務，點選前往設定';
+
+  @override
+  String get autoBillingNotifyDetectedTitle => '✅ 偵測到截圖';
+
+  @override
+  String get autoBillingNotifyWaitingFileBody => '正在等待檔案寫入...';
+
+  @override
+  String get autoBillingNotifyRecognizingScreenshotTitle => '正在識別截圖...';
+
+  @override
+  String get autoBillingNotifyVisionAnalyzingBody => '正在呼叫 AI 視覺分析支付資訊，請稍候';
+
+  @override
+  String get autoBillingNotifyRecognizingTextTitle => '⏳ 正在識別';
+
+  @override
+  String get autoBillingNotifyTextAnalyzingBody => '正在呼叫 AI 解析支付資訊...';
+
+  @override
+  String get autoBillingNotifyRecognizeFailedTitle => '❌ 識別失敗';
+
+  @override
+  String get autoBillingNotifyRecognizeFailedBody => '無法從截圖提取帳單資訊，請檢查 AI 配置或圖片';
+
+  @override
+  String get autoBillingNotifyNoBillTitle => '未識別到帳單';
+
+  @override
+  String get autoBillingNotifyNoBillBody => '這張截圖未識別到帳單資訊，可能不是帳單';
+
+  @override
+  String get autoBillingNotifyFileUnavailableTitle => '識別失敗';
+
+  @override
+  String get autoBillingNotifyFileUnavailableBody => '截圖檔案不可用';
+
+  @override
+  String get autoBillingNotifyNoLedgerTitle => '❌ 自動記帳失敗';
+
+  @override
+  String get autoBillingNotifyNoLedgerBody => '無可用帳本，請先建立帳本';
+
+  @override
+  String get autoBillingNotifyNoAmountBody => '未能識別出金額資訊';
+
+  @override
+  String get autoBillingNotifyCreateFailedTitle => '❌ 建立失敗';
+
+  @override
+  String get autoBillingNotifyCreateFailedBody => '無法建立交易記錄';
+
+  @override
+  String get autoBillingNotifyProcessFailedTitle => '❌ 處理失敗';
+
+  @override
+  String autoBillingNotifyProcessFailedBody(String error) {
+    return '錯誤：$error';
+  }
+
+  @override
+  String autoBillingNotifySuccessSingleTitle(String amount) {
+    return '✅ 自動記帳成功 ¥$amount';
+  }
+
+  @override
+  String autoBillingNotifySuccessMultiTitle(int count) {
+    return '✅ 自動記帳成功 $count 筆';
+  }
+
+  @override
+  String autoBillingNotifySuccessMultiBody(String amount) {
+    return '合計 ¥$amount';
+  }
+
+  @override
+  String autoBillingNotifySuccessSingleBodyNote(String note) {
+    return '備註：$note';
+  }
+
+  @override
+  String get autoBillingNotifySuccessSingleBodyDefault => '已自動建立記錄';
 
   @override
   String get aiOcrNoLedger => '未找到帳本';
@@ -9972,7 +10963,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get cloudTutorialFeature3 => '👥 多用戶獨立:一個伺服器可多人註冊,各自資料完全隔離';
 
   @override
-  String get cloudTutorialFeature4 => '🔜 規劃中:共享帳本(邀請家人 / 團隊一起記同一本)';
+  String get cloudTutorialFeature4 => '🤝 共享帳本:邀請家人 / 團隊一起記同一本,即時秒級同步';
 
   @override
   String get cloudTutorialGotIt => '我知道了';
@@ -10016,7 +11007,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get smartBilling => '智慧記帳';
 
   @override
-  String get smartBillingDesc => 'AI 小助手、OCR掃描、自動記帳';
+  String get smartBillingDesc => 'AI 助手、智慧識別、自動記帳';
 
   @override
   String get smartBillingPageTitle => '智慧記帳';
@@ -10034,10 +11025,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get smartBillingImageBillingDesc => '從相簿選擇支付截圖進行識別';
 
   @override
-  String get smartBillingImageBillingGuide => '在首頁長按底部中間的 + 按鈕，選擇「相簿」即可使用圖片記帳功能。配置AI後可智慧識別帳單資訊，未配置時仍可透過OCR識別文字。';
+  String get smartBillingImageBillingGuide => '在首頁長按底部中間的 + 按鈕,選擇「相簿」即可使用圖片記帳功能。需先在「我的 → AI 設定」配置 AI 服務,AI 視覺模型會自動識別金額、商家、時間等帳單資訊。';
 
   @override
-  String get smartBillingAIOptional => 'AI 識別為可選功能，配置後可提高識別準確度';
+  String get smartBillingVisionAIRequired => '圖片辨識必須配置 AI 視覺服務，請先在「我的 → AI 設定」中配置';
 
   @override
   String get smartBillingCameraBilling => '拍照記帳';
@@ -10046,7 +11037,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get smartBillingCameraBillingDesc => '拍攝支付截圖進行識別';
 
   @override
-  String get smartBillingCameraBillingGuide => '在首頁長按底部中間的 + 按鈕，選擇「拍照」即可使用拍照記帳功能。配置AI後可智慧識別帳單資訊，未配置時仍可透過OCR識別文字。';
+  String get smartBillingCameraBillingGuide => '在首頁長按底部中間的 + 按鈕,選擇「拍照」即可使用拍照記帳功能。需先在「我的 → AI 設定」配置 AI 服務,AI 視覺模型會自動識別金額、商家、時間等帳單資訊。';
 
   @override
   String get smartBillingVoiceBilling => '語音記帳';
@@ -10058,7 +11049,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get smartBillingVoiceBillingGuide => '在首頁長按底部中間的 + 按鈕，選擇「語音」即可使用語音記帳功能。語音記帳需要透過AI將語音轉為文字並提取帳單資訊。';
 
   @override
-  String get smartBillingAIRequired => '語音記帳必須配置 AI（智譜 GLM API），請先在上方配置 AI 設定';
+  String get smartBillingAIRequired => '語音記帳必須配置 AI 語音辨識服務，請先在「我的 → AI 設定」中配置';
 
   @override
   String get smartBillingAutoTags => '自動關聯標籤';
@@ -10073,7 +11064,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get smartBillingAutoAttachmentDesc => '圖片/拍照記帳時自動將原圖新增為附件';
 
   @override
-  String get autoScreenshotBillingIosDesc => '透過快捷指令實現截圖自動識別記帳';
+  String get autoScreenshotBillingIosTitle => '自動記帳';
+
+  @override
+  String get autoScreenshotBillingIosDesc => '透過快捷指令自動識別支付資訊記帳';
+
+  @override
+  String get shareBilling => '分享記帳';
+
+  @override
+  String get shareBillingDesc => '從支付寶/微信分享支付截圖即可記帳';
+
+  @override
+  String get shareBillingGuide => '在支付寶、微信、相簿等應用中看到支付截圖時，點擊「分享」並選擇「蜜蜂記帳」，即可自動識別金額、商家、時間等資訊並記帳，無需先儲存截圖。';
+
+  @override
+  String get shareBillingActionHint => '分享後會在背景自動識別記帳，無需手動開啟蜜蜂記帳';
 
   @override
   String get automation => '自動化';
@@ -10088,16 +11094,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get automationPageSubtitle => '週期記帳和提醒設定';
 
   @override
-  String get appearanceSettings => '外觀設定';
+  String get appearanceSettings => '個性化設定';
 
   @override
-  String get appearanceSettingsDesc => '主題、字體、語言設定';
+  String get appearanceSettingsDesc => '主題、字體、語言、應用鎖等';
 
   @override
-  String get appearanceSettingsPageTitle => '外觀設定';
+  String get appearanceSettingsPageTitle => '個性化設定';
 
   @override
-  String get appearanceSettingsPageSubtitle => '個性化外觀和顯示';
+  String get appearanceSettingsPageSubtitle => '外觀、顯示、安全等應用偏好';
 
   @override
   String get about => '關於';
@@ -10148,10 +11154,62 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get aboutRelatedProducts => '更多產品';
 
   @override
+  String get aboutBeeAssets => '蜜蜂家當 BeeAssets';
+
+  @override
+  String get aboutBeeAssetsSubtitle => '視覺化你的全部資產配置';
+
+  @override
+  String get aboutBeeAssetsIntro => '蜜蜂記帳側重日常流水,蜜蜂家當是它的姐妹產品,專注資產配置視覺化:跨帳戶淨資產趨勢、房產 / 投資 / 加密資產分類、收益率與持倉時長、配置占比一目了然。';
+
+  @override
   String get aboutBeeDNS => '蜜蜂域名 BeeDNS';
 
   @override
   String get aboutBeeDNSSubtitle => '簡潔高效的 DNS 管理工具';
+
+  @override
+  String get aboutBeeDNSIntro => '如果你的域名分散在 Cloudflare 和阿里雲,蜜蜂域名把它們聚合在一處管理:批次改記錄、A/AAAA 切換、解析遷移、子網域批次管理 — 不用在兩家控制台來回切。';
+
+  @override
+  String get productPromoAndroidTitle => '申請加入內測';
+
+  @override
+  String get productPromoAndroidMessage => '這款 App 還在 Google Play 內測階段,需要邀請才能下載。\n\n申請方式:寄信給我們,告訴我們你的 Google 帳號信箱(必填),以及簡單說明使用場景(選填)。我們會在 1-3 天內回覆並加你到內測白名單。';
+
+  @override
+  String get productPromoOpenStore => '前往應用商店';
+
+  @override
+  String get productPromoTestFlight => 'TestFlight 內測';
+
+  @override
+  String get productPromoLearnMore => 'Pro';
+
+  @override
+  String get productPromoEmailLabel => '申請信箱(點擊複製)';
+
+  @override
+  String get productPromoCopiedToast => '信箱已複製到剪貼簿';
+
+  @override
+  String get productPromoMailUnavailable => '未偵測到郵件應用,信箱已複製到剪貼簿,請開啟任意郵件應用貼上寄出';
+
+  @override
+  String get productPromoEmailButton => '寄送郵件';
+
+  @override
+  String get productPromoWebsiteButton => '前往官網';
+
+  @override
+  String productPromoEmailSubject(String productName) {
+    return '申請內測 - $productName';
+  }
+
+  @override
+  String productPromoEmailBody(String productName) {
+    return '你好,\n\n我希望加入「$productName」的 Google Play 內測,我的 Google 帳號信箱是:\n\n(請填寫你的 Gmail / Google 帳號信箱)\n\n謝謝!';
+  }
 
   @override
   String get logCenterTitle => '日誌中心';
@@ -10804,7 +11862,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get aiPromptVarCurrentDate => '目前日期，如「2025-01-15」';
 
   @override
-  String get aiPromptVarOcrText => '使用者輸入或 OCR 識別的文字內容';
+  String get aiPromptVarOcrText => '使用者輸入的文字內容';
 
   @override
   String get aiPromptVarCategories => '支出和收入分類清單';
@@ -10830,22 +11888,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get aiUsingVisionDesc => '啟用影像識別，以獲得更高的識別精度';
-
-  @override
-  String get aiUnUsingVisionDesc => '已關閉圖片識別，僅使用OCR文字';
-
-  @override
-  String get aiUploadImage => '上傳圖片到AI';
-
-  @override
-  String get aiUseVisionDesc => '使用視覺模型，辨識更準確';
-
-  @override
-  String get aiUnUseVisionDesc => '僅使用文字模型分析OCR結果';
-
-  @override
-  String get aiCustomBaseUrlHelper => 'OpenAI相容的API位址，如 https://api.openai.com/v1';
+  String get aiCustomBaseUrlHelper => '標準聊天補全API位址，例如 https://api.example.com/v1';
 
   @override
   String get aiTextModelTitle => '文字模型';
@@ -11424,6 +12467,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get calendarNoTransactions => '當天無交易';
 
   @override
+  String get calendarAddTransaction => '在該日記帳';
+
+  @override
+  String get calendarAddTransactionTooltip => '新增該日記帳';
+
+  @override
   String get commonUncategorized => '未分類';
 
   @override
@@ -11721,6 +12770,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get creditCardSettings => '信用卡設定';
 
   @override
+  String get accountTabValuation => '估值帳戶';
+
+  @override
+  String get creditCardDaysRequired => '請選擇帳單日和還款日';
+
+  @override
   String get creditLimit => '信用額度';
 
   @override
@@ -12011,4 +13066,486 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String syncHealthValueRemoteMissing(int local) {
     return '本地 $local · 雲端 —';
   }
+
+  @override
+  String get twofaChallengeTitle => '二次驗證';
+
+  @override
+  String get twofaMethodTotp => '動態碼';
+
+  @override
+  String get twofaMethodRecovery => '恢復碼';
+
+  @override
+  String get twofaTotpHint => '請輸入 authenticator app(Google Authenticator / 1Password / Authy 等)上的 6 位動態碼。';
+
+  @override
+  String get twofaRecoveryHint => '請輸入啟用 2FA 時保存的恢復碼(如 abcd-efgh),每個碼只能使用一次。';
+
+  @override
+  String get twofaTotpInputPlaceholder => '輸入 6 位動態碼';
+
+  @override
+  String get twofaRecoveryInputPlaceholder => '輸入恢復碼';
+
+  @override
+  String twofaCountdown(String time) {
+    return '剩餘時間 $time';
+  }
+
+  @override
+  String get twofaVerifyButton => '驗證';
+
+  @override
+  String get twofaStatusTitle => '二次驗證';
+
+  @override
+  String get twofaStatusEnabled => '已啟用 ✓';
+
+  @override
+  String get twofaStatusDisabled => '未啟用';
+
+  @override
+  String twofaStatusEnabledAt(String date) {
+    return '啟用於 $date';
+  }
+
+  @override
+  String get twofaStatusManageHint => '請前往 Web 端管理(啟用 / 禁用 / 重新生成恢復碼)';
+
+  @override
+  String get twofaStatusOpenWeb => '前往 Web 端啟用 →';
+
+  @override
+  String get sharedRoleOwner => '所有者';
+
+  @override
+  String get sharedRoleEditor => '編輯者';
+
+  @override
+  String get sharedRoleViewer => '查看者';
+
+  @override
+  String get commonCopied => '已複製';
+
+  @override
+  String get commonRemove => '移除';
+
+  @override
+  String get sharedJoinPageTitle => '加入共享帳本';
+
+  @override
+  String get sharedJoinPageSubtitle => '輸入邀請碼或點擊對方分享的連結';
+
+  @override
+  String get sharedJoinEnterCode => '輸入邀請碼';
+
+  @override
+  String get sharedJoinEnterCodeHint => '邀請碼 6 位,全大寫字母數字。也可直接點擊邀請方分享的短連結跳過此步。';
+
+  @override
+  String get sharedJoinPreviewButton => '驗證邀請碼';
+
+  @override
+  String get sharedJoinAcceptButton => '加入帳本';
+
+  @override
+  String sharedJoinInvitedBy(String name) {
+    return '$name 邀請你加入';
+  }
+
+  @override
+  String sharedJoinRoleLine(String role) {
+    return '角色:$role';
+  }
+
+  @override
+  String sharedJoinExpiresInMinutes(int n) {
+    return '有效期還剩 $n 分鐘';
+  }
+
+  @override
+  String sharedJoinExpiresInHours(int n) {
+    return '有效期還剩 $n 小時';
+  }
+
+  @override
+  String sharedJoinExpiresInDays(int n) {
+    return '有效期還剩 $n 天';
+  }
+
+  @override
+  String sharedJoinSuccess(String name) {
+    return '已加入「$name」';
+  }
+
+  @override
+  String get sharedJoinCodeFormatError => '邀請碼格式不對,請輸入 6 位字母數字';
+
+  @override
+  String get sharedJoinInvalidOrExpired => '邀請碼無效或已過期,請向邀請人索取新碼';
+
+  @override
+  String get sharedJoinAlreadyMember => '你已經是該帳本成員';
+
+  @override
+  String get sharedJoinMemberLimit => '該帳本成員已滿,請聯絡帳本所有者';
+
+  @override
+  String get sharedInvitePageTitle => '邀請新成員';
+
+  @override
+  String get sharedInviteFormRole => '角色';
+
+  @override
+  String get sharedInviteFormExpiry => '有效期';
+
+  @override
+  String sharedInviteExpiryHours(int n) {
+    return '$n 小時';
+  }
+
+  @override
+  String sharedInviteExpiryDays(int n) {
+    return '$n 天';
+  }
+
+  @override
+  String get sharedInviteGenerate => '生成邀請碼';
+
+  @override
+  String get sharedInviteGenerateAnother => '生成另一個邀請碼';
+
+  @override
+  String get sharedInviteCopyCode => '複製邀請碼';
+
+  @override
+  String get sharedInviteCopyLink => '複製連結';
+
+  @override
+  String get sharedInviteShareLink => '分享給好友';
+
+  @override
+  String sharedInviteExpiresAt(String dt) {
+    return '邀請將在 $dt 失效';
+  }
+
+  @override
+  String get sharedInviteWarning => '⚠️ 不要把邀請碼發到公開群 / 朋友圈。拿到碼的任何人都可加入帳本;洩漏後請到成員管理頁撤銷並重新生成。';
+
+  @override
+  String get sharedInviteInstruction => '把邀請碼或短連結發給對方。對方裝上 BeeCount 後,點擊連結或在「我的 → 加入共享帳本」輸入碼即可加入。';
+
+  @override
+  String sharedInviteShareText(String ledger, String code, String url) {
+    return '邀請你加入 BeeCount 共享帳本「$ledger」\n\n邀請碼:$code\n連結:$url\n\n點擊連結或在 BeeCount → 我的 → 加入共享帳本輸入此碼即可。';
+  }
+
+  @override
+  String get sharedMembersPageTitle => '成員管理';
+
+  @override
+  String get sharedMembersYou => '你';
+
+  @override
+  String get sharedMembersInviteCta => '邀請新成員';
+
+  @override
+  String get sharedMembersLeaveCta => '退出帳本';
+
+  @override
+  String get sharedMembersLeaveTitle => '退出帳本';
+
+  @override
+  String sharedMembersLeaveConfirm(String name) {
+    return '退出「$name」後將無法再訪問其中的交易。確定繼續嗎?';
+  }
+
+  @override
+  String get sharedMembersLeaveDone => '已退出帳本';
+
+  @override
+  String get sharedMembersRemoveTitle => '移除成員';
+
+  @override
+  String get sharedMembersRemoveCta => '移除該成員';
+
+  @override
+  String sharedMembersRemoveConfirm(String name) {
+    return '確定移除 $name?ta 將立即失去對該帳本的訪問。';
+  }
+
+  @override
+  String get sharedMembersRemoved => '已移除成員';
+
+  @override
+  String get sharedMembersTransferTitle => '轉讓所有權';
+
+  @override
+  String get sharedMembersTransferTo => '轉讓給該成員';
+
+  @override
+  String sharedMembersTransferConfirm(String name) {
+    return '把帳本所有權轉給 $name?你將變為編輯者,無法再邀請人 / 改帳本名 / 刪帳本。';
+  }
+
+  @override
+  String get sharedMembersTransferConfirmCta => '確認轉讓';
+
+  @override
+  String get sharedMembersTransferDone => '已轉讓所有權';
+
+  @override
+  String sharedTxRecordedBy(String name) {
+    return '$name 記的';
+  }
+
+  @override
+  String sharedTxCreatedBy(String name) {
+    return '$name 建立';
+  }
+
+  @override
+  String sharedTxEditedBy(String name) {
+    return '$name 最後編輯';
+  }
+
+  @override
+  String sharedTxCreatedAndEditedBy(String name) {
+    return '$name 建立並編輯';
+  }
+
+  @override
+  String get sharedRequiresCloudSync => '請先啟用雲端同步';
+
+  @override
+  String get sharedMembersStatsTitle => '成員收支';
+
+  @override
+  String get sharedMembersStatsEmpty => '本期暫無記帳';
+
+  @override
+  String get sharedMembersStatsLoading => '載入中…';
+
+  @override
+  String get sharedMembersStatsIncome => '總收入';
+
+  @override
+  String get sharedMembersStatsExpense => '總支出';
+
+  @override
+  String sharedMembersStatsTxCount(int count) {
+    return '$count筆';
+  }
+
+  @override
+  String get maintenanceOrphanCleanupTitle => '資料清理';
+
+  @override
+  String get maintenanceOrphanCleanupSubtitle => '檢查並清理本地孤兒資料';
+
+  @override
+  String get maintenanceOrphanRescan => '重新掃描';
+
+  @override
+  String get maintenanceOrphanEmpty => '本地資料乾淨,未發現孤兒資料';
+
+  @override
+  String get maintenanceOrphanGroupDb => '資料庫孤兒';
+
+  @override
+  String get maintenanceOrphanGroupFile => '磁碟檔案孤兒';
+
+  @override
+  String get maintenanceOrphanGroupSync => '同步狀態孤兒';
+
+  @override
+  String maintenanceOrphanSummary(int count) {
+    return '發現 $count 項異常';
+  }
+
+  @override
+  String maintenanceOrphanSummarySize(String size) {
+    return '可釋放空間約 $size';
+  }
+
+  @override
+  String get maintenanceOrphanSelectAll => '全選';
+
+  @override
+  String get maintenanceOrphanDeselectAll => '取消全選';
+
+  @override
+  String get maintenanceOrphanDeleteOne => '刪除此項';
+
+  @override
+  String maintenanceOrphanSelectedHint(int count) {
+    return '已選 $count 項';
+  }
+
+  @override
+  String get maintenanceOrphanCleanSelected => '清理已選';
+
+  @override
+  String get maintenanceOrphanConfirmTitle => '確認清理';
+
+  @override
+  String maintenanceOrphanConfirmDeleteOne(String title) {
+    return '確定清理「$title」嗎？操作不可撤銷。';
+  }
+
+  @override
+  String maintenanceOrphanConfirmDeleteBatch(int count) {
+    return '確定清理選中的 $count 項嗎？操作不可撤銷。';
+  }
+
+  @override
+  String maintenanceOrphanCleanSuccess(int count) {
+    return '已清理 $count 項';
+  }
+
+  @override
+  String maintenanceOrphanCleanPartial(int ok, int fail) {
+    return '成功 $ok 項,失敗 $fail 項';
+  }
+
+  @override
+  String get syncProgressTitle => '正在同步';
+
+  @override
+  String syncProgressCount(int applied, int total) {
+    return '$applied / $total 條';
+  }
+
+  @override
+  String get exchangeRatePageTitle => '匯率管理';
+
+  @override
+  String get exchangeRateEntrySubtitle => '自動取得匯率，支援手動修正';
+
+  @override
+  String get baseCurrencyLabel => '主幣種';
+
+  @override
+  String get rateSourceAuto => '自動';
+
+  @override
+  String get rateSourceManual => '手動';
+
+  @override
+  String rateUpdatedAt(String date) {
+    return '$date 更新';
+  }
+
+  @override
+  String get rateNotFetched => '未取得';
+
+  @override
+  String get rateTapToSet => '點擊手動設定';
+
+  @override
+  String get rateEditTitle => '編輯匯率';
+
+  @override
+  String rateInverseHint(String base, String rate, String quote) {
+    return '反向參考:1 $base ≈ $rate $quote';
+  }
+
+  @override
+  String get rateResetToAuto => '恢復自動';
+
+  @override
+  String get rateRefreshSuccess => '匯率已更新';
+
+  @override
+  String get rateRefreshFailed => '取得失敗,可手動設定匯率';
+
+  @override
+  String get ratesEmptyHint => '給帳戶設定不同幣種後,這裡會出現可管理的匯率';
+
+  @override
+  String get rateDisclaimer => '資料來源:開源匯率資料,每日更新;折算僅供參考,可能與銀行實際牌價有差異。';
+
+  @override
+  String convertedNetWorth(String currency) {
+    return '淨資產(折$currency)';
+  }
+
+  @override
+  String convertedFootnote(String date) {
+    return '按 $date 匯率折算,點擊管理匯率';
+  }
+
+  @override
+  String convertedPartialWarning(String currencies) {
+    return '$currencies 未折算,點擊設定匯率';
+  }
+
+  @override
+  String get unconvertedBadge => '未折算';
+
+  @override
+  String get commonDetail => '詳情';
+
+  @override
+  String get conversionDetailTitle => '折算詳情';
+
+  @override
+  String get assetConversionToggle => '按主幣種折算';
+
+  @override
+  String rateManualApplied(int count) {
+    return '已套用 $count 條手動匯率';
+  }
+
+  @override
+  String get netWorthTrendTitle => '淨值趨勢';
+
+  @override
+  String get netWorthTrend3M => '3個月';
+
+  @override
+  String get netWorthTrend6M => '6個月';
+
+  @override
+  String get netWorthTrend12M => '12個月';
+
+  @override
+  String get netWorthTrendAll => '全部';
+
+  @override
+  String get netWorthTrendLineNet => '淨資產';
+
+  @override
+  String get netWorthTrendLineAssets => '總資產';
+
+  @override
+  String get netWorthTrendLineLiabilities => '總負債';
+
+  @override
+  String get netWorthTrendMultiCurrencyNote => '歷史淨值為各幣種原值相加,未折算';
+
+  @override
+  String get txFlagExcludeFromStats => '不計入收支';
+
+  @override
+  String get txFlagExcludeFromBudget => '不計入預算';
+
+  @override
+  String get txFlagMoreOptions => '更多選項';
+
+  @override
+  String get txFlagDialogTitle => '帳單標記';
+
+  @override
+  String get txFlagExcludeFromStatsHint => '不計入收支統計,但仍計入帳戶餘額';
+
+  @override
+  String get txFlagExcludeFromBudgetHint => '不佔用預算額度';
+
+  @override
+  String get txFlagExcludedTag => '不計收支';
+
+  @override
+  String get txFlagBudgetExcludedTag => '不計預算';
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,6 @@ import 'cloud/sync/sync_engine.dart';
 import 'providers/sync_providers.dart' as sp;
 import 'utils/voice_billing_helper.dart';
 import 'utils/image_billing_helper.dart';
-import 'services/ai/ai_constants.dart';
 import 'pages/ai/ai_chat_page.dart';
 import 'services/platform/app_link_service.dart';
 import 'services/platform/quick_actions_service.dart';
@@ -65,6 +65,15 @@ class _BeeAppState extends ConsumerState<BeeApp>
   static bool _isHandlingAppLink = false;
   static DateTime? _lastAppLinkHandleTime;
 
+  // _triggerInitialCloudSync 节流戳。app 启动期 microtask + listenManual
+  // 两路都会触发,曾导致 fullPush 2-3 路并发把 sync_changes 表撑膨胀 2-2.5x
+  // (详见 .docs/concurrent-fullpush-bloat.md)。5 秒内只跑第一次。
+  //
+  // 注意:fullPush / push 内部已经有 in-flight 单飞兜底,这里是防御性的第二
+  // 层 —— 避免 trigger 内的 phase 1(syncMyProfile / storage.list / pull)
+  // 重复跑浪费 HTTP。
+  DateTime? _lastInitialCloudSyncTriggeredAt;
+
   // 记账按钮相关状态
   late AnimationController _expandController;
   late Animation<double> _expandAnimation;
@@ -102,7 +111,7 @@ class _BeeAppState extends ConsumerState<BeeApp>
     _quickActionsService.onNavigate = (action) {
       if (mounted) {
         logger.info('QuickActions', 'BeeApp: 执行快捷操作 $action');
-        _handleAppLinkAction(context, action);
+        _handleAppLinkAction(action);
       }
     };
     _quickActionsService.initialize();
@@ -120,10 +129,12 @@ class _BeeAppState extends ConsumerState<BeeApp>
         logger.info('AppLink',
             'BeeApp: 监听触发 previous=$previous, next=$next, mounted=$mounted');
         if (next != null && mounted) {
-          logger.info('AppLink', 'BeeApp: 执行动作 $next');
-          _handleAppLinkAction(context, next);
-          // 清除待处理动作
+          // 不在此处直接 push：冷启动 / 厂商主题变更(themeChanged)会重建页面树,
+          // 此刻多半处于 inactive/hidden,push 的路由会被丢弃(deep-link「没打开」根因)。
+          // 改为持久化待处理深链,等 ready + 前台 resumed 后在最终页面树上认领打开。
+          _persistPendingDeepLink(next, ref.read(pendingNewTransactionTypeProvider));
           ref.read(pendingAppLinkActionProvider.notifier).state = null;
+          _drainPendingDeepLink(trigger: 'listener');
         }
       },
       fireImmediately: true,
@@ -152,6 +163,18 @@ class _BeeAppState extends ConsumerState<BeeApp>
       }
     });
 
+    // 启动同步走 `Future.microtask` 而**不是** `addPostFrameCallback`。
+    //
+    // 历史:之前为了首屏更快试过 addPostFrameCallback,首帧渲染完才开始 sync,
+    // 代价是 sync 完成后 bump 一堆 refresh ticker → home 已渲染好的内容触发
+    // 二次 cascade rebuild,FutureProvider invalidate 走 loading→data 切换,
+    // 用户感知"进首页 → 出现预算卡片 / 列表展开 → 整页刷新一遍"。
+    //
+    // 改回 microtask:让 sync 在首屏渲染**之前**就开始抢占主线程跑,首屏出
+    // 来时 ticker bump 已经发生或正在发生,跟首屏渲染叠加成单次"加载",没
+    // 有"先显示后又刷新"的二次绘制感。Phase1/Phase2 分层结构保留(下面的
+    // `_triggerInitialCloudSync` 还是分层并行,避免多账本场景重复跑用户级
+    // 操作),只换了 trigger 时机。
     Future.microtask(() async {
       try {
         final syncService = ref.read(syncServiceProvider);
@@ -162,7 +185,7 @@ class _BeeAppState extends ConsumerState<BeeApp>
           _triggerInitialCloudSync(syncService);
         }
       } catch (e) {
-        // 静默失败，不影响App启动
+        // 静默失败,不影响 App 启动
       }
     });
 
@@ -179,38 +202,164 @@ class _BeeAppState extends ConsumerState<BeeApp>
   }
 
   void _triggerInitialCloudSync(SyncEngine engine) {
+    // 5 秒幂等节流:microtask + listenManual 在启动期可能两路都触发,这里挡掉
+    // 第二次,phase 1 / phase 2 都只跑一次。详见 [_lastInitialCloudSyncTriggeredAt]。
+    final now = DateTime.now();
+    final last = _lastInitialCloudSyncTriggeredAt;
+    if (last != null && now.difference(last).inSeconds < 5) {
+      logger.info('AppStart',
+          '_triggerInitialCloudSync 5 秒内已触发过(${now.difference(last).inMilliseconds}ms 前),跳过');
+      return;
+    }
+    _lastInitialCloudSyncTriggeredAt = now;
+
     Future(() async {
       try {
-        // 用户可能有多个本地账本。原先只同步 currentLedgerIdProvider，其他账本
-        // 永远不会被推送上去。这里遍历所有本地账本，挨个触发一次 sync()。
-        final db = ref.read(databaseProvider);
-        final ledgers = await db.select(db.ledgers).get();
+        // 启动同步分层策略(2026-05-24 改造):
+        //
+        // 旧实现 `for (ledger in ledgers) { engine.sync(ledger) }` 串行 5
+        // 次完整 sync,每次内部都跑 `syncMyProfile` / `storage.list` / `pull`
+        // 等**用户级**操作(跟 ledgerId 无关),5 次重复浪费;且串行 HTTP 任
+        // 一慢就累积卡 UI。
+        //
+        // 改造:
+        //   Phase 1 — 用户级数据(只跑一次,跨 ledger 共享)
+        //     a. syncMyProfile         HTTP profile/me
+        //     b. storage.list          HTTP /sync/ledgers 拿远端账本列表
+        //     c. pull                  HTTP /sync/pull 用户级 sync_changes 流
+        //   Phase 2 — 每个 ledger 并行(push + 附件上下行)
+        //     a. fast skip:无 unpushed change + 已在远端 → 跳
+        //     b. 否则:uploadAttachments + push + downloadAttachments
+        //   并发限制由 SQLite mutex 自然控制(Drift 内部排队,不会真并发写)
+        final ledgers = await ref.read(repositoryProvider).getAllLedgers();
         if (ledgers.isEmpty) {
-          logger.info('AppStart', '本地无账本，跳过首次同步');
+          logger.info('AppStart', '本地无账本,跳过首次同步');
           return;
         }
-        logger.info('AppStart', '触发 BeeCount Cloud 首次同步，本地账本数=${ledgers.length}');
-        int totalPushed = 0;
-        int totalPulled = 0;
-        for (final ledger in ledgers) {
-          try {
-            final result = await engine.sync(ledgerId: ledger.id.toString());
-            if (result.hasError) {
-              logger.error('AppStart',
-                  '账本 ${ledger.name}(${ledger.id}) 同步失败: ${result.error}');
-            } else {
-              totalPushed += result.pushed;
-              totalPulled += result.pulled;
-              logger.info('AppStart',
-                  '账本 ${ledger.name}(${ledger.id}) 同步完成: pushed=${result.pushed}, pulled=${result.pulled}');
-            }
-          } catch (e, st) {
-            logger.error('AppStart',
-                '账本 ${ledger.name}(${ledger.id}) 同步异常', e, st);
-          }
-        }
         logger.info('AppStart',
-            'BeeCount Cloud 首次同步汇总: pushed=$totalPushed, pulled=$totalPulled');
+            'BeeCount Cloud 首次同步: 本地账本数=${ledgers.length}');
+        final overallStart = DateTime.now();
+
+        // ========== Phase 1: 用户级一次性 ==========
+        // a) profile + appearance + AI config + avatar
+        unawaited(() async {
+          try {
+            await engine.syncMyProfile();
+          } catch (e, st) {
+            logger.warning('AppStart', 'syncMyProfile 失败', st);
+            logger.warning('AppStart', 'error: $e');
+          }
+        }());
+
+        // b) 远端账本列表(单次拉,所有 ledger 用同一份决定 fullPush)
+        List<dynamic>? remoteLedgers;
+        try {
+          remoteLedgers = await engine.provider.storage.list(path: '');
+          logger.info(
+              'AppStart', 'Phase1: 远端账本=${remoteLedgers.length}');
+        } catch (e, st) {
+          logger.warning('AppStart', 'Phase1: 拉 remote_ledgers 失败,fallback', st);
+          logger.warning('AppStart', 'error: $e');
+        }
+
+        // c) 用户级 sync_changes 流(只拉一次,所有 ledger 共享 cursor)
+        try {
+          final pulled = await engine.pull('');
+          logger.info('AppStart', 'Phase1: pull(用户级) applied=$pulled');
+        } catch (e, st) {
+          logger.error('AppStart', 'Phase1: pull 失败', e, st);
+        }
+
+        // d) 推 user-global change(account / category / tag)。
+        //    放在 Phase 2(每个 ledger 并行)之前显式跑一次,确保:
+        //    1) Phase 2 并发 push 时,各 ledger 的 _push/fullPush 调
+        //       pushUserGlobalEntities 都会复用这次的 in-flight,不会重复推
+        //    2) 即使 Phase 2 全部 fast-skip(无 ledger-scope 待推 + 已在远端),
+        //       user-global 的新增/重命名也能推上去(原来 Phase 2 skip 时会漏)
+        try {
+          final pushed = await engine.pushUserGlobalEntities();
+          logger.info('AppStart', 'Phase1: pushUserGlobalEntities pushed=$pushed');
+        } catch (e, st) {
+          logger.error('AppStart', 'Phase1: pushUserGlobalEntities 失败', e, st);
+        }
+
+        // ========== Phase 2: 每个 ledger 并行 push + 附件 ==========
+        final remoteSyncIds = <String>{
+          if (remoteLedgers != null)
+            for (final r in remoteLedgers)
+              if (r.path is String) r.path as String,
+        };
+
+        final futures = ledgers.map((ledger) async {
+          final tag = '${ledger.name}(${ledger.id})';
+          try {
+            final unpushed = await engine.changeTracker
+                .getUnpushedChangesForLedger(ledger.id);
+            final mySyncId = ledger.syncId;
+            final hasSyncId = mySyncId != null && mySyncId.isNotEmpty;
+            final inRemote = hasSyncId && remoteSyncIds.contains(mySyncId);
+
+            // fast skip:无待推送 + 已在远端 + 非共享 Editor 或 Owner
+            if (unpushed.isEmpty && inRemote) {
+              logger.info('AppStart', 'Phase2 skip $tag (无待推送 + 已绑定)');
+              return _LedgerSyncResult.skip();
+            }
+
+            // 共享账本 Editor:只 push 自己的 unpushed change,不 fullPush
+            // (会覆盖 Owner 数据)
+            final isSharedAsEditor =
+                ledger.isShared && ledger.myRole != 'owner';
+
+            // 需要 fullPush:非 Editor 且账本不在远端
+            if (!inRemote && !isSharedAsEditor) {
+              logger.info('AppStart', 'Phase2 $tag → fullPush');
+              try {
+                await engine.uploadAttachments(ledgerId: ledger.id);
+              } catch (e, st) {
+                logger.warning('AppStart', '$tag uploadAttachments 失败', st);
+                logger.warning('AppStart', 'error: $e');
+              }
+              await engine.fullPush(ledgerId: ledger.id);
+              // 推剩余 delete change
+              final extra = await engine.push(ledger.id.toString());
+              try {
+                await engine.downloadAttachments(ledgerId: ledger.id);
+              } catch (e, st) {
+                logger.warning('AppStart', '$tag downloadAttachments 失败', st);
+                logger.warning('AppStart', 'error: $e');
+              }
+              return _LedgerSyncResult(pushed: extra + 1, pulled: 0);
+            }
+
+            // 普通 push 路径:有 unpushed 才走附件 + push
+            try {
+              await engine.uploadAttachments(ledgerId: ledger.id);
+            } catch (e, st) {
+              logger.warning('AppStart', '$tag uploadAttachments 失败', st);
+              logger.warning('AppStart', 'error: $e');
+            }
+            final pushed = await engine.push(ledger.id.toString());
+            try {
+              await engine.downloadAttachments(ledgerId: ledger.id);
+            } catch (e, st) {
+              logger.warning('AppStart', '$tag downloadAttachments 失败', st);
+              logger.warning('AppStart', 'error: $e');
+            }
+            logger.info('AppStart', 'Phase2 $tag done: pushed=$pushed');
+            return _LedgerSyncResult(pushed: pushed, pulled: 0);
+          } catch (e, st) {
+            logger.error('AppStart', 'Phase2 $tag 异常', e, st);
+            return _LedgerSyncResult(pushed: 0, pulled: 0);
+          }
+        });
+        final results = await Future.wait(futures);
+
+        final totalPushed = results.fold<int>(0, (a, b) => a + b.pushed);
+        final skipped = results.where((r) => r.skipped).length;
+        final totalMs =
+            DateTime.now().difference(overallStart).inMilliseconds;
+        logger.info('AppStart',
+            'BeeCount Cloud 首次同步完成: synced=${ledgers.length - skipped} skipped=$skipped pushed=$totalPushed 总耗时 ${totalMs}ms');
         ref.read(syncStatusRefreshProvider.notifier).state++;
         ref.read(ledgerListRefreshProvider.notifier).state++;
       } catch (e, st) {
@@ -219,8 +368,10 @@ class _BeeAppState extends ConsumerState<BeeApp>
     });
   }
 
-  /// 处理 AppLink 动作
-  void _handleAppLinkAction(BuildContext context, AppLinkAction action) {
+  /// 处理「桌面长按图标快捷项」的动作:立即执行,带 1s 防抖去重。
+  /// (URL deep-link / 桌面小组件走 _persistPendingDeepLink → _drainPendingDeepLink
+  ///  的「重建可恢复」路径;两条路径最终都汇到 [_openDeepLink] 统一派发。)
+  void _handleAppLinkAction(AppLinkAction action) {
     // 防止重复执行（使用时间戳和标志双重检查）
     final now = DateTime.now();
     if (_isHandlingAppLink ||
@@ -238,56 +389,132 @@ class _BeeAppState extends ConsumerState<BeeApp>
       _isHandlingAppLink = false;
     });
 
+    String? type;
+    if (action == AppLinkAction.newTransaction) {
+      type = ref.read(pendingNewTransactionTypeProvider) ?? 'expense';
+      ref.read(pendingNewTransactionTypeProvider.notifier).state = null;
+    }
+    _openDeepLink(action, type);
+  }
+
+  // ——— 深链「重建可恢复」打开 ———
+  // 背景:部分厂商(如 ColorOS)在浏览器→App 拉起 deep-link 时会触发主题变更
+  // (onConfigurationChanged: themeChanged),导致页面树/Activity 重建;若在重建前就
+  // push,路由会被丢弃,用户看到「没打开」。做法:把待打开的深链持久化(跨重建/重置
+  // 存活),等 appInitState==ready 且生命周期 resumed(前台稳定)后,在最终页面树上认领
+  // 打开,认领即清除并去重,确保只打开一次。
+  static const String _kPendingDeepLink = 'pending_deeplink_action';
+  int? _lastDrainedDeepLinkTs;
+  Timer? _drainTimer;
+
+  void _persistPendingDeepLink(AppLinkAction action, String? type) {
+    SharedPreferences.getInstance().then((p) {
+      p.setString(_kPendingDeepLink, jsonEncode({
+        'action': action.name,
+        'type': type,
+        'ts': DateTime.now().millisecondsSinceEpoch,
+      }));
+    }).catchError((_) {});
+  }
+
+  void _drainPendingDeepLink({String trigger = ''}) {
+    if (!mounted) return;
+    if (ref.read(appInitStateProvider) != AppInitState.ready) return;
+    if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) return;
+    // 重建有时在 resumed 之后还会再发生一次:延迟一拍再认领,只在「存活过这段缓冲期」的
+    // 最终页面树上打开。若本页在缓冲期内被销毁(重建),timer 随 dispose 取消,新页面会
+    // 重新排程,自然落到稳定的页面树上。
+    _drainTimer?.cancel();
+    _drainTimer =
+        Timer(const Duration(milliseconds: 700), () => _executeDrain(trigger));
+  }
+
+  Future<void> _executeDrain(String trigger) async {
+    if (!mounted) return;
+    // 必须就绪 + 前台稳定:冷启动/主题变更的重建窗口(inactive/hidden)里打开会被丢弃
+    if (ref.read(appInitStateProvider) != AppInitState.ready) return;
+    if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) return;
+
+    SharedPreferences prefs;
+    try {
+      prefs = await SharedPreferences.getInstance();
+    } catch (_) {
+      return;
+    }
+    if (!mounted) return;
+    final raw = prefs.getString(_kPendingDeepLink);
+    if (raw == null) return;
+
+    Map<String, dynamic> data;
+    try {
+      data = jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      await prefs.remove(_kPendingDeepLink);
+      return;
+    }
+    final ts = (data['ts'] as num?)?.toInt() ?? 0;
+    final ageMs = DateTime.now().millisecondsSinceEpoch - ts;
+    // 过期(>20s)或时间异常 → 丢弃,避免历史深链在普通启动时误触发
+    if (ageMs < 0 || ageMs > 20000) {
+      await prefs.remove(_kPendingDeepLink);
+      return;
+    }
+    // 同一条只认领一次(listener / resumed 多次触发去重)
+    if (_lastDrainedDeepLinkTs == ts) return;
+
+    AppLinkAction? action;
+    final actionName = data['action'] as String?;
+    for (final a in AppLinkAction.values) {
+      if (a.name == actionName) {
+        action = a;
+        break;
+      }
+    }
+    if (action == null) {
+      await prefs.remove(_kPendingDeepLink);
+      return;
+    }
+
+    // 认领成功:打标 + 清持久化,再打开(用根 Navigator,落在最终稳定的页面树上)
+    _lastDrainedDeepLinkTs = ts;
+    await prefs.remove(_kPendingDeepLink);
+    if (!mounted) return;
+    final type = data['type'] as String?;
+    logger.info('AppLink', 'BeeApp: drain($trigger) 打开深链 $action type=$type');
+    _openDeepLink(action, type);
+  }
+
+  /// AppLink 动作的唯一派发出口:快捷项([_handleAppLinkAction])与
+  /// URL deep-link / 小组件([_executeDrain])两条路径共用,避免分叉。
+  void _openDeepLink(AppLinkAction action, String? type) {
+    final nav = Navigator.of(context, rootNavigator: true);
     switch (action) {
       case AppLinkAction.voice:
-        // 打开语音记账
         VoiceBillingHelper.startVoiceBilling(context, ref);
         break;
       case AppLinkAction.image:
-        // 打开图片记账（从相册）
         ImageBillingHelper.pickImageForBilling(context, ref);
         break;
       case AppLinkAction.camera:
-        // 打开拍照记账
         ImageBillingHelper.openCameraForBilling(context, ref);
         break;
       case AppLinkAction.aiChat:
-        // 打开 AI 小助手
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const AIChatPage()),
-        );
+        nav.push(MaterialPageRoute(builder: (_) => const AIChatPage()));
         break;
       case AppLinkAction.newTransaction:
-        // 打开手动记账页面（从小组件快捷入口）
-        final type = ref.read(pendingNewTransactionTypeProvider) ?? 'expense';
-        ref.read(pendingNewTransactionTypeProvider.notifier).state = null;
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => TransactionEditorPage(initialKind: type),
-          ),
-        );
+        nav.push(MaterialPageRoute(
+          builder: (_) =>
+              TransactionEditorPage(initialKind: type ?? 'expense', quickAdd: true),
+        ));
         break;
       default:
-        // 其他动作在 AppLinkService 中已处理
         break;
-    }
-  }
-
-  /// 检查语音识别是否可用（需要开启AI智能识别并配置GLM API Key）
-  Future<bool> _checkGlmApiKeyConfigured() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final aiEnabled =
-          prefs.getBool(AIConstants.keyAiBillExtractionEnabled) ?? false;
-      final apiKey = prefs.getString(AIConstants.keyGlmApiKey) ?? '';
-      return aiEnabled && apiKey.isNotEmpty;
-    } catch (e) {
-      return false;
     }
   }
 
   @override
   void dispose() {
+    _drainTimer?.cancel();
     _appLinkSubscription?.close();
     _removeOverlay();
     _expandController.dispose();
@@ -335,6 +562,10 @@ class _BeeAppState extends ConsumerState<BeeApp>
       }
     }
 
+    _dismissOverlay();
+  }
+
+  void _dismissOverlay() {
     _hoveredIndex = null;
     _expandController.reverse();
     _removeOverlay();
@@ -372,6 +603,7 @@ class _BeeAppState extends ConsumerState<BeeApp>
         animation: _expandAnimation,
         hoveredIndex: _hoveredIndex,
         backgroundColor: ref.read(primaryColorProvider),
+        onDismiss: _dismissOverlay,
       ),
     );
 
@@ -465,6 +697,8 @@ class _BeeAppState extends ConsumerState<BeeApp>
         ref.read(showPrivacyScreenProvider.notifier).state = true;
       }
     } else if (state == AppLifecycleState.paused) {
+      // 系统拖拽/侧边栏弹出时，强制关闭扇形菜单
+      _dismissOverlay();
       // 记录进入后台时间
       AppLockService.recordBackgroundTime();
     } else if (state == AppLifecycleState.resumed) {
@@ -474,6 +708,8 @@ class _BeeAppState extends ConsumerState<BeeApp>
       _checkAppLockOnResume();
       // 当app从后台恢复到前台时，更新小组件数据
       _updateWidget();
+      // 前台稳定后认领待处理深链(冷启动/主题变更重建后,在最终页面树上打开)
+      _drainPendingDeepLink(trigger: 'resumed');
     }
   }
 
@@ -709,6 +945,10 @@ class _BeeBottomBar extends StatelessWidget {
                 const SizedBox(height: 1),
                 Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  textScaler: TextScaler.noScaling,
                   style: TextStyle(
                     fontSize: 10,
                     color: isActive ? primaryColor : inactiveColor,
@@ -741,6 +981,10 @@ class _BeeBottomBar extends StatelessWidget {
               const SizedBox(height: 1),
               Text(
                 l10n.tabRecord,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                textScaler: TextScaler.noScaling,
                 style: TextStyle(
                   fontSize: 10,
                   color: inactiveColor,
@@ -799,6 +1043,10 @@ class _BeeBottomBar extends StatelessWidget {
                 const SizedBox(height: 1),
                 Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  textScaler: TextScaler.noScaling,
                   style: TextStyle(
                     fontSize: 10,
                     color: isActive ? primaryColor : inactiveColor,
@@ -822,6 +1070,7 @@ class _SpeedDialOverlay extends StatelessWidget {
   final Animation<double> animation;
   final int? hoveredIndex;
   final Color backgroundColor;
+  final VoidCallback? onDismiss;
 
   const _SpeedDialOverlay({
     required this.buttonPosition,
@@ -830,6 +1079,7 @@ class _SpeedDialOverlay extends StatelessWidget {
     required this.animation,
     required this.hoveredIndex,
     required this.backgroundColor,
+    this.onDismiss,
   });
 
   @override
@@ -853,7 +1103,8 @@ class _SpeedDialOverlay extends StatelessWidget {
         return Stack(
           children: [
             Positioned.fill(
-              child: IgnorePointer(
+              child: GestureDetector(
+                onTap: onDismiss,
                 child: Container(
                   color: Colors.black.withValues(alpha: 0.3 * animation.value),
                 ),
@@ -938,4 +1189,17 @@ class _SpeedDialOverlay extends StatelessWidget {
     }
     return result;
   }
+}
+
+/// `_triggerInitialCloudSync` Phase2 单 ledger 处理结果。
+class _LedgerSyncResult {
+  const _LedgerSyncResult({required this.pushed, required this.pulled})
+      : skipped = false;
+  const _LedgerSyncResult.skip()
+      : pushed = 0,
+        pulled = 0,
+        skipped = true;
+  final int pushed;
+  final int pulled;
+  final bool skipped;
 }
