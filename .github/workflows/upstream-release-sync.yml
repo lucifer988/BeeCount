@@ -12,7 +12,6 @@ concurrency:
 permissions:
   contents: write
   actions: write
-  workflows: write
 
 jobs:
   sync:
@@ -73,7 +72,9 @@ jobs:
             echo 'branch_changed=false' >> "$GITHUB_OUTPUT"
             echo 'Fork already contains the latest upstream changes.'
           else
-            git merge --no-edit "upstream/${DEFAULT_BRANCH}"
+            git merge --no-commit --no-ff "upstream/${DEFAULT_BRANCH}"
+            git restore --source="${CURRENT_SHA}" --staged --worktree .github/workflows
+            git commit --no-edit
             git push origin "${DEFAULT_BRANCH}"
             echo 'branch_changed=true' >> "$GITHUB_OUTPUT"
           fi
