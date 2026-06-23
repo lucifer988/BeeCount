@@ -36,19 +36,31 @@ jobs:
           python3 <<'PY'
           import json, os, urllib.request
           repo = os.environ['UPSTREAM_REPO']
-          url = f'https://api.github.com/repos/{repo}/releases/latest'
-          req = urllib.request.Request(url, headers={
+          headers = {
               'Accept': 'application/vnd.github+json',
               'User-Agent': 'github-actions'
-          })
-          with urllib.request.urlopen(req, timeout=30) as r:
-              release = json.load(r)
+          }
+
+          def get_json(url):
+              req = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  return json.load(r)
+
+          release = get_json(f'https://api.github.com/repos/{repo}/releases/latest')
           tag = release['tag_name']
           name = release.get('name') or tag
+          ref = get_json(f'https://api.github.com/repos/{repo}/git/ref/tags/{tag}')
+          target = ref['object']
+          if target['type'] == 'tag':
+              target = get_json(target['url'])['object']
+          if target['type'] != 'commit':
+              raise SystemExit(f'Expected tag {tag} to resolve to a commit, got {target["type"]}')
+
           with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as fh:
               fh.write(f'tag_name={tag}\n')
               fh.write(f'release_name={name}\n')
-          print(f'Latest upstream release: {tag} ({name})')
+              fh.write(f'tag_commit_sha={target["sha"]}\n')
+          print(f'Latest upstream release: {tag} ({name}) -> {target["sha"]}')
           PY
 
       - name: Sync fork branch to upstream
@@ -81,20 +93,55 @@ jobs:
 
       - name: Inspect existing fork tag
         id: current
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         shell: bash
         run: |
           set -euo pipefail
-          TARGET_TAG='${{ steps.upstream.outputs.tag_name }}'
-          if git rev-parse -q --verify "refs/tags/${TARGET_TAG}" >/dev/null; then
-            TAG_SHA="$(git rev-list -n 1 "refs/tags/${TARGET_TAG}")"
-            echo "tag_exists=true" >> "$GITHUB_OUTPUT"
-            echo "tag_sha=${TAG_SHA}" >> "$GITHUB_OUTPUT"
-            echo "Fork already has tag ${TARGET_TAG} at ${TAG_SHA}"
-          else
-            echo 'tag_exists=false' >> "$GITHUB_OUTPUT"
-            echo 'tag_sha=' >> "$GITHUB_OUTPUT"
-            echo "Fork does not have tag ${TARGET_TAG}"
-          fi
+          python3 <<'PY'
+          import json, os, urllib.request, urllib.error
+
+          tag = '${{ steps.upstream.outputs.tag_name }}'
+          repo = os.environ['REPO']
+          token = os.environ['GH_TOKEN']
+          req = urllib.request.Request(
+              f'https://api.github.com/repos/{repo}/git/ref/tags/{tag}',
+              headers={
+                  'Authorization': f'Bearer {token}',
+                  'Accept': 'application/vnd.github+json',
+                  'X-GitHub-Api-Version': '2022-11-28',
+                  'User-Agent': 'github-actions',
+              },
+          )
+
+          exists = False
+          sha = ''
+          try:
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  ref = json.load(r)
+              target = ref['object']
+              if target['type'] == 'tag':
+                  tag_req = urllib.request.Request(target['url'], headers=req.headers)
+                  with urllib.request.urlopen(tag_req, timeout=30) as r:
+                      target = json.load(r)['object']
+              if target['type'] != 'commit':
+                  raise SystemExit(f'Expected fork tag {tag} to resolve to a commit, got {target["type"]}')
+              exists = True
+              sha = target['sha']
+          except urllib.error.HTTPError as e:
+              if e.code != 404:
+                  body = e.read().decode() if e.fp else ''
+                  raise SystemExit(f'Failed to inspect fork tag {tag}: {e.code} {body}')
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as fh:
+              fh.write(f'tag_exists={str(exists).lower()}\n')
+              fh.write(f'tag_sha={sha}\n')
+          if exists:
+              print(f'Fork already has remote tag {tag} at {sha}')
+          else:
+              print(f'Fork does not have remote tag {tag}')
+          PY
 
       - name: Decide whether release rebuild is needed
         id: decision
@@ -102,7 +149,7 @@ jobs:
         run: |
           set -euo pipefail
           NEEDS_BUILD=false
-          if [[ '${{ steps.branch_sync.outputs.upstream_sha }}' != '${{ steps.current.outputs.tag_sha }}' ]]; then
+          if [[ '${{ steps.upstream.outputs.tag_commit_sha }}' != '${{ steps.current.outputs.tag_sha }}' ]]; then
             NEEDS_BUILD=true
           fi
           if [[ '${{ steps.current.outputs.tag_exists }}' != 'true' ]]; then
@@ -175,16 +222,57 @@ jobs:
 
       - name: Recreate latest release tag on synced main
         if: steps.decision.outputs.needs_build == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         shell: bash
         run: |
           set -euo pipefail
-          TARGET_TAG='${{ steps.upstream.outputs.tag_name }}'
-          TARGET_SHA='${{ steps.branch_sync.outputs.upstream_sha }}'
-          git fetch origin --prune --tags
-          git tag -d "${TARGET_TAG}" >/dev/null 2>&1 || true
-          git push origin ":refs/tags/${TARGET_TAG}" >/dev/null 2>&1 || true
-          git tag "${TARGET_TAG}" "${TARGET_SHA}"
-          git push origin "refs/tags/${TARGET_TAG}" --force
+          python3 <<'PY'
+          import json, os, urllib.request, urllib.error
+
+          tag = '${{ steps.upstream.outputs.tag_name }}'
+          sha = '${{ steps.upstream.outputs.tag_commit_sha }}'
+          repo = os.environ['REPO']
+          token = os.environ['GH_TOKEN']
+          headers = {
+              'Authorization': f'Bearer {token}',
+              'Accept': 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28',
+              'User-Agent': 'github-actions',
+              'Content-Type': 'application/json',
+          }
+
+          def request(method, url, payload=None, allow_404=False):
+              data = None if payload is None else json.dumps(payload).encode()
+              req = urllib.request.Request(url, data=data, headers=headers, method=method)
+              try:
+                  with urllib.request.urlopen(req, timeout=60) as r:
+                      body = r.read().decode() or ''
+                      return r.status, body
+              except urllib.error.HTTPError as e:
+                  body = e.read().decode() if e.fp else ''
+                  if allow_404 and e.code == 404:
+                      return e.code, body
+                  raise SystemExit(f'{method} {url} failed: {e.code} {body}')
+
+          ref_url = f'https://api.github.com/repos/{repo}/git/refs/tags/{tag}'
+          status, _ = request('GET', ref_url, allow_404=True)
+          if status == 404:
+              status, body = request(
+                  'POST',
+                  f'https://api.github.com/repos/{repo}/git/refs',
+                  {'ref': f'refs/tags/{tag}', 'sha': sha},
+              )
+              if status not in (201,):
+                  raise SystemExit(f'Failed to create tag {tag}: {status} {body}')
+              print(f'Created tag {tag} -> {sha}')
+          else:
+              status, body = request('PATCH', ref_url, {'sha': sha, 'force': True})
+              if status not in (200,):
+                  raise SystemExit(f'Failed to update tag {tag}: {status} {body}')
+              print(f'Updated tag {tag} -> {sha}')
+          PY
 
       - name: Dispatch release build workflow
         if: steps.decision.outputs.needs_build == 'true'
