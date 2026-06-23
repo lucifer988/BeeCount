@@ -74,17 +74,17 @@ jobs:
           git fetch origin --prune --tags
           git fetch upstream --prune --tags
           git checkout "${DEFAULT_BRANCH}"
-          UPSTREAM_SHA="$(git rev-parse "upstream/${DEFAULT_BRANCH}")"
+          TARGET_SHA='${{ steps.upstream.outputs.tag_commit_sha }}'
           CURRENT_SHA="$(git rev-parse HEAD)"
-          echo "upstream_sha=${UPSTREAM_SHA}" >> "$GITHUB_OUTPUT"
+          echo "upstream_sha=${TARGET_SHA}" >> "$GITHUB_OUTPUT"
           echo "current_sha=${CURRENT_SHA}" >> "$GITHUB_OUTPUT"
-          echo "Fork main:     ${CURRENT_SHA}"
-          echo "Upstream main: ${UPSTREAM_SHA}"
-          if git merge-base --is-ancestor "${UPSTREAM_SHA}" HEAD; then
+          echo "Fork main:            ${CURRENT_SHA}"
+          echo "Upstream release SHA: ${TARGET_SHA}"
+          if git merge-base --is-ancestor "${TARGET_SHA}" HEAD; then
             echo 'branch_changed=false' >> "$GITHUB_OUTPUT"
-            echo 'Fork already contains the latest upstream changes.'
+            echo 'Fork already contains the latest upstream release commit.'
           else
-            git merge --no-commit --no-ff "upstream/${DEFAULT_BRANCH}"
+            git merge --no-commit --no-ff "${TARGET_SHA}"
             git restore --source="${CURRENT_SHA}" --staged --worktree .github/workflows
             git commit --no-edit
             git push origin "${DEFAULT_BRANCH}"
@@ -167,14 +167,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          KEEP_TAG: ${{ steps.upstream.outputs.tag_name }}
         run: |
           set -euo pipefail
           python3 <<'PY'
           import json, os, urllib.request, urllib.error
           token = os.environ['GH_TOKEN']
           repo = os.environ['REPO']
-          keep_tag = os.environ['KEEP_TAG']
           headers = {
               'Authorization': f'Bearer {token}',
               'Accept': 'application/vnd.github+json',
@@ -198,8 +196,6 @@ jobs:
               raise SystemExit(f'Failed to list releases: {status} {body}')
           releases = json.loads(body)
           for rel in releases:
-              if rel['tag_name'] == keep_tag:
-                  continue
               status, body = request('DELETE', f"https://api.github.com/repos/{repo}/releases/{rel['id']}")
               if status not in (204, 404):
                   raise SystemExit(f"Failed to delete release {rel['tag_name']}: {status} {body}")
@@ -212,66 +208,10 @@ jobs:
           tags = json.loads(body)
           for tag in tags:
               name = tag['name']
-              if name == keep_tag:
-                  continue
               status, body = request('DELETE', f'https://api.github.com/repos/{repo}/git/refs/tags/{name}')
               if status not in (204, 404):
                   raise SystemExit(f'Failed to delete tag {name}: {status} {body}')
               print(f'Deleted tag: {name}')
-          PY
-
-      - name: Recreate latest release tag on synced main
-        if: steps.decision.outputs.needs_build == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 <<'PY'
-          import json, os, urllib.request, urllib.error
-
-          tag = '${{ steps.upstream.outputs.tag_name }}'
-          sha = '${{ steps.upstream.outputs.tag_commit_sha }}'
-          repo = os.environ['REPO']
-          token = os.environ['GH_TOKEN']
-          headers = {
-              'Authorization': f'Bearer {token}',
-              'Accept': 'application/vnd.github+json',
-              'X-GitHub-Api-Version': '2022-11-28',
-              'User-Agent': 'github-actions',
-              'Content-Type': 'application/json',
-          }
-
-          def request(method, url, payload=None, allow_404=False):
-              data = None if payload is None else json.dumps(payload).encode()
-              req = urllib.request.Request(url, data=data, headers=headers, method=method)
-              try:
-                  with urllib.request.urlopen(req, timeout=60) as r:
-                      body = r.read().decode() or ''
-                      return r.status, body
-              except urllib.error.HTTPError as e:
-                  body = e.read().decode() if e.fp else ''
-                  if allow_404 and e.code == 404:
-                      return e.code, body
-                  raise SystemExit(f'{method} {url} failed: {e.code} {body}')
-
-          ref_url = f'https://api.github.com/repos/{repo}/git/refs/tags/{tag}'
-          status, _ = request('GET', ref_url, allow_404=True)
-          if status == 404:
-              status, body = request(
-                  'POST',
-                  f'https://api.github.com/repos/{repo}/git/refs',
-                  {'ref': f'refs/tags/{tag}', 'sha': sha},
-              )
-              if status not in (201,):
-                  raise SystemExit(f'Failed to create tag {tag}: {status} {body}')
-              print(f'Created tag {tag} -> {sha}')
-          else:
-              status, body = request('PATCH', ref_url, {'sha': sha, 'force': True})
-              if status not in (200,):
-                  raise SystemExit(f'Failed to update tag {tag}: {status} {body}')
-              print(f'Updated tag {tag} -> {sha}')
           PY
 
       - name: Dispatch release build workflow
