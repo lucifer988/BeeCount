@@ -1,0 +1,413 @@
+name: Upstream Release Sync
+
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: upstream-release-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      UPSTREAM_REPO: TNT-Likely/BeeCount
+      RELEASE_WORKFLOW: release.yml
+      DEFAULT_BRANCH: main
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Discover latest upstream release
+        id: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 <<'PY_SCRIPT'
+          import json
+          import os
+          import urllib.request
+
+          repo = os.environ['UPSTREAM_REPO']
+          headers = {
+              'Accept': 'application/vnd.github+json',
+              'User-Agent': 'github-actions',
+          }
+
+          def get_json(url):
+              req = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  return json.load(response)
+
+          release = get_json(f'https://api.github.com/repos/{repo}/releases/latest')
+          tag = release['tag_name']
+          name = release.get('name') or tag
+
+          ref = get_json(f'https://api.github.com/repos/{repo}/git/ref/tags/{tag}')
+          target = ref['object']
+          if target['type'] == 'tag':
+              target = get_json(target['url'])['object']
+
+          if target['type'] != 'commit':
+              raise SystemExit(f'Expected upstream tag {tag} to resolve to a commit, got {target["type"]}')
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as fh:
+              fh.write(f'tag_name={tag}\n')
+              fh.write(f'release_name={name}\n')
+              fh.write(f'tag_commit_sha={target["sha"]}\n')
+
+          print(f'Latest upstream release: {tag} ({name}) -> {target["sha"]}')
+          PY_SCRIPT
+
+      - name: Inspect existing fork tag
+        id: current
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG_NAME: ${{ steps.upstream.outputs.tag_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 <<'PY_SCRIPT'
+          import json
+          import os
+          import re
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+
+          repo = os.environ['REPO']
+          token = os.environ['GH_TOKEN']
+          tag = os.environ['TAG_NAME']
+
+          headers = {
+              'Authorization': f'Bearer {token}',
+              'Accept': 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28',
+              'User-Agent': 'github-actions',
+          }
+
+          def get_json(url):
+              req = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  return json.load(response)
+
+          exists = False
+          target_sha = ''
+          marker_sha = ''
+          ref_type = ''
+
+          encoded_tag = urllib.parse.quote(tag, safe='')
+          url = f'https://api.github.com/repos/{repo}/git/ref/tags/{encoded_tag}'
+
+          try:
+              ref = get_json(url)
+              exists = True
+              target = ref['object']
+              ref_type = target['type']
+
+              if target['type'] == 'tag':
+                  tag_object = get_json(target['url'])
+                  message = tag_object.get('message') or ''
+                  match = re.search(r'upstream_commit_sha=([0-9a-f]{40})', message)
+                  if match:
+                      marker_sha = match.group(1)
+
+                  target = tag_object['object']
+
+              if target['type'] != 'commit':
+                  raise SystemExit(f'Expected fork tag {tag} to resolve to a commit, got {target["type"]}')
+
+              target_sha = target['sha']
+
+          except urllib.error.HTTPError as exc:
+              if exc.code != 404:
+                  body = exc.read().decode(errors='replace')
+                  raise SystemExit(f'Failed to inspect fork tag {tag}: {exc.code} {body}')
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as fh:
+              fh.write(f'tag_exists={str(exists).lower()}\n')
+              fh.write(f'tag_sha={target_sha}\n')
+              fh.write(f'marker_sha={marker_sha}\n')
+              fh.write(f'ref_type={ref_type}\n')
+
+          if exists:
+              print(f'Fork tag {tag} exists, type={ref_type}, target={target_sha}, marker={marker_sha or "(none)"}')
+          else:
+              print(f'Fork tag {tag} does not exist')
+          PY_SCRIPT
+
+      - name: Decide whether sync is needed
+        id: decision
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          NEEDS_SYNC=false
+          UPSTREAM_SHA='${{ steps.upstream.outputs.tag_commit_sha }}'
+          CURRENT_TAG_SHA='${{ steps.current.outputs.tag_sha }}'
+          CURRENT_MARKER_SHA='${{ steps.current.outputs.marker_sha }}'
+
+          if [[ '${{ steps.current.outputs.tag_exists }}' != 'true' ]]; then
+            NEEDS_SYNC=true
+          elif [[ "${CURRENT_MARKER_SHA}" == "${UPSTREAM_SHA}" ]]; then
+            NEEDS_SYNC=false
+          elif [[ "${CURRENT_TAG_SHA}" == "${UPSTREAM_SHA}" ]]; then
+            # Compatibility with older runs that pointed the fork tag directly at the upstream commit.
+            NEEDS_SYNC=false
+          else
+            NEEDS_SYNC=true
+          fi
+
+          echo "needs_sync=${NEEDS_SYNC}" >> "$GITHUB_OUTPUT"
+          echo "needs_sync=${NEEDS_SYNC}"
+
+      - name: Stop when fork already matches latest upstream release
+        if: steps.decision.outputs.needs_sync != 'true'
+        run: echo 'Fork already matches the latest upstream release; nothing to do.'
+
+      - name: Fetch upstream release tag
+        if: steps.decision.outputs.needs_sync == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG_NAME='${{ steps.upstream.outputs.tag_name }}'
+          TARGET_SHA='${{ steps.upstream.outputs.tag_commit_sha }}'
+          SAFE_TAG_REF="refs/tags/upstream-sync/${TAG_NAME}"
+
+          git remote add upstream "https://github.com/${UPSTREAM_REPO}.git" 2>/dev/null || \
+            git remote set-url upstream "https://github.com/${UPSTREAM_REPO}.git"
+
+          git fetch --no-tags upstream "+refs/tags/${TAG_NAME}:${SAFE_TAG_REF}"
+
+          RESOLVED_SHA="$(git rev-parse "${SAFE_TAG_REF}^{commit}")"
+          echo "Fetched upstream tag ${TAG_NAME} -> ${RESOLVED_SHA}"
+
+          if [[ "${RESOLVED_SHA}" != "${TARGET_SHA}" ]]; then
+            echo "Expected ${TARGET_SHA}, got ${RESOLVED_SHA}"
+            exit 1
+          fi
+
+      - name: Create safe fork release commit
+        id: safe_commit
+        if: steps.decision.outputs.needs_sync == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG_NAME='${{ steps.upstream.outputs.tag_name }}'
+          TARGET_SHA='${{ steps.upstream.outputs.tag_commit_sha }}'
+          SAFE_TAG_REF="refs/tags/upstream-sync/${TAG_NAME}"
+          BASE_SHA="$(git rev-parse HEAD)"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          # Create a synthetic release commit from the fork's current main branch.
+          # Its file contents come from the upstream release, but .github/workflows is
+          # restored from this fork. This avoids pushing upstream workflow-file changes
+          # with GITHUB_TOKEN, which GitHub rejects.
+          git checkout -B "auto/upstream-release-build" "${BASE_SHA}"
+
+          git rm -r --quiet . || true
+          git checkout "${SAFE_TAG_REF}" -- .
+
+          rm -rf .github/workflows
+          git rm -r --quiet --cached .github/workflows || true
+
+          if git cat-file -e "${BASE_SHA}:.github/workflows" 2>/dev/null; then
+            git checkout "${BASE_SHA}" -- .github/workflows
+          fi
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo 'No source changes after applying upstream release tree; using current HEAD.'
+          else
+            git commit \
+              -m "sync upstream release ${TAG_NAME}" \
+              -m "upstream_repo=${UPSTREAM_REPO}" \
+              -m "upstream_tag=${TAG_NAME}" \
+              -m "upstream_commit_sha=${TARGET_SHA}"
+          fi
+
+          SAFE_COMMIT_SHA="$(git rev-parse HEAD)"
+
+          git tag -a -f "${TAG_NAME}" "${SAFE_COMMIT_SHA}" \
+            -m "BeeCount upstream release sync" \
+            -m "upstream_repo=${UPSTREAM_REPO}" \
+            -m "upstream_tag=${TAG_NAME}" \
+            -m "upstream_commit_sha=${TARGET_SHA}" \
+            -m "safe_commit_sha=${SAFE_COMMIT_SHA}"
+
+          echo "safe_commit_sha=${SAFE_COMMIT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "Created safe fork tag ${TAG_NAME} at ${SAFE_COMMIT_SHA}, upstream source ${TARGET_SHA}"
+
+      - name: Delete old fork version releases and tags
+        if: steps.decision.outputs.needs_sync == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          LATEST_TAG: ${{ steps.upstream.outputs.tag_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 <<'PY_SCRIPT'
+          import json
+          import os
+          import re
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+
+          token = os.environ['GH_TOKEN']
+          repo = os.environ['REPO']
+          latest_tag = os.environ['LATEST_TAG']
+
+          headers = {
+              'Authorization': f'Bearer {token}',
+              'Accept': 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28',
+              'User-Agent': 'github-actions',
+          }
+
+          semverish = re.compile(r'^v?\d+(?:\.\d+){1,3}(?:[-+][0-9A-Za-z.-]+)?$')
+
+          def should_delete_tag(name):
+              return name == latest_tag or bool(semverish.match(name))
+
+          def request(method, url):
+              req = urllib.request.Request(url, headers=headers, method=method)
+              try:
+                  with urllib.request.urlopen(req, timeout=60) as response:
+                      return response.status, response.read().decode() or ''
+              except urllib.error.HTTPError as exc:
+                  return exc.code, exc.read().decode(errors='replace')
+
+          def paged(url):
+              delimiter = '&' if '?' in url else '?'
+              page = 1
+              while True:
+                  status, body = request('GET', f'{url}{delimiter}per_page=100&page={page}')
+                  if status != 200:
+                      raise SystemExit(f'Failed to list {url}: {status} {body}')
+
+                  items = json.loads(body)
+                  if not items:
+                      break
+
+                  yield from items
+
+                  if len(items) < 100:
+                      break
+
+                  page += 1
+
+          for rel in paged(f'https://api.github.com/repos/{repo}/releases'):
+              name = rel['tag_name']
+              if not should_delete_tag(name):
+                  print(f'Skipped non-version release: {name}')
+                  continue
+
+              status, body = request('DELETE', f"https://api.github.com/repos/{repo}/releases/{rel['id']}")
+              if status not in (204, 404):
+                  raise SystemExit(f'Failed to delete release {name}: {status} {body}')
+
+              print(f'Deleted release: {name}')
+
+          for tag in paged(f'https://api.github.com/repos/{repo}/tags'):
+              name = tag['name']
+              if not should_delete_tag(name):
+                  print(f'Skipped non-version tag: {name}')
+                  continue
+
+              encoded_name = urllib.parse.quote(name, safe='')
+              status, body = request('DELETE', f'https://api.github.com/repos/{repo}/git/refs/tags/{encoded_name}')
+              if status not in (204, 404):
+                  raise SystemExit(f'Failed to delete tag {name}: {status} {body}')
+
+              print(f'Deleted tag: {name}')
+          PY_SCRIPT
+
+      - name: Push safe fork tag
+        if: steps.decision.outputs.needs_sync == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG_NAME='${{ steps.upstream.outputs.tag_name }}'
+          git push origin "refs/tags/${TAG_NAME}" --force
+
+          echo "Pushed safe fork tag ${TAG_NAME} -> ${{ steps.safe_commit.outputs.safe_commit_sha }}"
+          echo "Upstream commit marker: ${{ steps.upstream.outputs.tag_commit_sha }}"
+
+      - name: Dispatch release build workflow
+        if: steps.decision.outputs.needs_sync == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          DEFAULT_BRANCH: ${{ env.DEFAULT_BRANCH }}
+          TAG_NAME: ${{ steps.upstream.outputs.tag_name }}
+          RELEASE_NAME: ${{ steps.upstream.outputs.release_name }}
+          WORKFLOW_FILE: ${{ env.RELEASE_WORKFLOW }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 <<'PY_SCRIPT'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          token = os.environ['GH_TOKEN']
+          repo = os.environ['REPO']
+          workflow = os.environ['WORKFLOW_FILE']
+          tag_name = os.environ['TAG_NAME']
+
+          payload = {
+              'ref': os.environ['DEFAULT_BRANCH'],
+              'inputs': {
+                  'source_ref': tag_name,
+                  'tag_name': tag_name,
+                  'release_name': os.environ['RELEASE_NAME'],
+                  'prerelease': 'false',
+                  'create_release': 'true',
+              },
+          }
+
+          req = urllib.request.Request(
+              f'https://api.github.com/repos/{repo}/actions/workflows/{workflow}/dispatches',
+              data=json.dumps(payload).encode(),
+              headers={
+                  'Authorization': f'Bearer {token}',
+                  'Accept': 'application/vnd.github+json',
+                  'X-GitHub-Api-Version': '2022-11-28',
+                  'User-Agent': 'github-actions',
+                  'Content-Type': 'application/json',
+              },
+              method='POST',
+          )
+
+          try:
+              with urllib.request.urlopen(req, timeout=60) as response:
+                  print(f'Dispatch status: {response.status}')
+          except urllib.error.HTTPError as exc:
+              body = exc.read().decode(errors='replace')
+              raise SystemExit(f'Failed to dispatch release workflow: {exc.code} {body}')
+          PY_SCRIPT
