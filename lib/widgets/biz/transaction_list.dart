@@ -377,20 +377,20 @@ class TransactionListState extends ConsumerState<TransactionList> {
             for (final it in list) {
               // 转账不计入收支统计
               if (it.t.type == 'income') {
-                dayIncome += it.t.amount;
+                dayIncome += it.t.nativeAmount ?? it.t.amount;
               }
               if (it.t.type == 'expense') {
-                dayExpense += it.t.amount;
+                dayExpense += it.t.nativeAmount ?? it.t.amount;
               }
             }
             final isFirst = index == 0;
 
             Widget header = Column(
               children: [
-                if (!isFirst && BeeTokens.cardInnerDividerHeight(context) > 0)
+                if (!isFirst)
                   Divider(
-                    height: BeeTokens.cardInnerDividerHeight(context),
-                    color: BeeTokens.cardInnerDividerColor(context),
+                    height: BeeTokens.listDayDividerHeight(context),
+                    color: BeeTokens.listDayDividerColor(context),
                   ),
                 DaySectionHeader(
                   dateText: dateKey,
@@ -510,6 +510,8 @@ class TransactionListState extends ConsumerState<TransactionList> {
                           ? null
                           : categoryName,
                         amount: it.t.amount,
+                        currencyCode: it.t.currencyCode,
+                        nativeAmount: it.t.nativeAmount,
                         isExpense: isExpense,
                         isTransfer: isTransfer,
                         isAdjustment: isAdjustment,

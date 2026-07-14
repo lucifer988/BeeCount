@@ -56,7 +56,11 @@ android/*.keystore
 android/app/*.keystore
 
 .docs
+docs/superpowers/
 .tmp
 tmp
 # Playwright MCP capture artifacts
 .playwright-mcp/
+
+# visual brainstorm 临时文件
+.superpowers/

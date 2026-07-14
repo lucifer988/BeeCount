@@ -7,6 +7,18 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get aiConsentTitle => '开启 AI 功能前,请知悉';
+
+  @override
+  String get aiConsentBody => 'AI 功能需将相关数据发送给你所配置的第三方 AI 服务商进行处理:\n\n• 发送给谁:默认「智谱 GLM」(open.bigmodel.cn,由智谱华章运营);若你自行配置了其它第三方 AI 服务商,则发送给你填写的服务商。\n• 发送什么:你主动用于识别/对话的内容 —— 账单图片、语音录音、你输入的文字,以及为完成识别/分析所需的分类名称、账户名称和相关交易记录。\n• 用途:仅用于账单识别、记账与你发起的对话分析;蜜蜂记账自身不收集、不存储这些数据。\n\n数据由该第三方服务商按其隐私政策处理。开启即表示你同意上述数据共享。';
+
+  @override
+  String get aiConsentAgree => '同意并开启';
+
+  @override
+  String get aboutPrivacyPolicy => '隐私政策';
+
+  @override
   String get appTitle => '蜜蜂记账';
 
   @override
@@ -141,6 +153,47 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get voiceRecordingNoSpeech => '未检测到语音输入';
+
+  @override
+  String get voiceRecordingHoldToTalk => '按住 说话';
+
+  @override
+  String get voiceRecordingReleaseToFinish => '松手结束录音';
+
+  @override
+  String get voiceRecordingTooShort => '录音时间过短';
+
+  @override
+  String get voiceRecordingResultLabel => '识别结果：';
+
+  @override
+  String get voiceRecordingAutoHintSpoken => '说完后停顿即可自动识别';
+
+  @override
+  String get voiceRecordingAutoHintWaiting => '请开始说话...';
+
+  @override
+  String get smartBillingVoiceTrigger => '语音触发方式';
+
+  @override
+  String get voiceTriggerModeAuto => '自动检测停顿';
+
+  @override
+  String get voiceTriggerModeAutoDesc => '录音后自动判断说完，适合短句快速记账';
+
+  @override
+  String get voiceTriggerModeHold => '按住说话';
+
+  @override
+  String get voiceTriggerModeHoldDesc => '长按录音、松开结束，适合一次说较多内容';
+
+  @override
+  String get smartBillingVoiceSilenceTimeout => '停顿结束时长';
+
+  @override
+  String smartBillingVoiceSilenceTimeoutValue(String seconds) {
+    return '停顿 $seconds 秒后自动结束识别';
+  }
 
   @override
   String get commonPrevious => '上一步';
@@ -278,6 +331,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get searchCategoryHint => '搜索分类名称...';
 
   @override
+  String get searchCategoryFilter => '分类筛选';
+
+  @override
   String get searchMinAmount => '最小金额';
 
   @override
@@ -370,6 +426,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String searchResultsCount(Object count) {
     return '共 $count 条结果';
   }
+
+  @override
+  String get searchSummaryIncome => '收入';
+
+  @override
+  String get searchSummaryExpense => '支出';
 
   @override
   String get searchFilterTitle => '筛选';
@@ -966,6 +1028,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get headerSkinMemphis => '孟菲斯';
+
+  @override
+  String get headerSkinSilk => '丝带';
+
+  @override
+  String get headerSkinBubbles => '气泡';
+
+  @override
+  String get headerSkinGalaxy => '星系';
+
+  @override
+  String get headerSkinLowPoly => '低多边形';
+
+  @override
+  String get headerSkinPrism => '棱镜';
+
+  @override
+  String get headerSkinTerrazzo => '水磨石';
 
   @override
   String get mineAvatarTitle => '头像设置';
@@ -2026,6 +2106,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appearanceNoteDisplayNoteDesc => '有备注时显示备注,无备注时显示分类名';
 
   @override
+  String get appearanceNoteHistory => '历史备注';
+
+  @override
+  String get appearanceNoteHistoryScope => '展示范围';
+
+  @override
+  String get appearanceNoteHistoryScopeAllCategories => '全部分类';
+
+  @override
+  String get appearanceNoteHistoryScopeCurrentCategory => '当前分类';
+
+  @override
+  String get appearanceNoteHistorySort => '排序方式';
+
+  @override
+  String get appearanceNoteHistorySortFrequency => '使用频次';
+
+  @override
+  String get appearanceNoteHistorySortRecent => '最近使用';
+
+  @override
+  String get appearanceNoteHistoryLimit => '显示数量';
+
+  @override
+  String get appearanceNoteHistoryLimitHint => '可设置 1 至 100 条';
+
+  @override
+  String get appearanceNoteHistoryLimitInvalid => '请输入 1 至 100 的整数';
+
+  @override
   String get appearanceColorScheme => '收支颜色方案';
 
   @override
@@ -2484,7 +2594,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authInvalidEmail => '请输入有效的邮箱地址';
 
   @override
-  String get authPasswordRequirementShort => '密码需包含字母和数字，长度至少 6 位';
+  String get authNoAccountYet => '还没有账号？';
+
+  @override
+  String get authViewRegisterGuide => '查看注册指引';
 
   @override
   String get authErrorInvalidCredentials => '邮箱或密码不正确。';
@@ -4366,6 +4479,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aboutDouyin => '抖音';
+
+  @override
+  String get aboutTelegram => 'Telegram 群';
 
   @override
   String get aboutSupportDevelopment => '支持开发';
@@ -6834,11 +6950,391 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get txFlagBudgetExcludedTag => '不计预算';
+
+  @override
+  String get txCurrencyLabel => '币种';
+
+  @override
+  String get txRateLabel => '汇率';
+
+  @override
+  String txConvertedPreview(Object amount, Object currency) {
+    return '≈ $amount $currency';
+  }
+
+  @override
+  String get txRateMissingHint => '请手动填写本笔汇率后保存';
+
+  @override
+  String get txCrossCurrencyTransferBlocked => '暂不支持跨币种转账,请分别记两笔或使用同币种账户';
+
+  @override
+  String get ledgerBaseCurrencyLabel => '主币种';
+
+  @override
+  String statsConvertedFootnote(Object currency) {
+    return '含外币,已按各笔记账时汇率折算为 $currency';
+  }
+
+  @override
+  String get ledgerCurrencyChangeRecalcHint => '修改本位币将按当前汇率重算全部历史交易的折算值';
+
+  @override
+  String get recalcForeignTxBanner => '检测到该账本有未折算的外币交易';
+
+  @override
+  String get recalcForeignTxAction => '按当前汇率重算折算';
+
+  @override
+  String recalcForeignTxDone(Object count) {
+    return '已重算 $count 笔外币交易的折算值';
+  }
+
+  @override
+  String get txCurrencyPickerTitle => '选择币种';
+
+  @override
+  String recalcSyncCountHint(Object count) {
+    return '将重算并同步 $count 笔交易';
+  }
+
+  @override
+  String get exportCsvHeaderCurrency => '币种';
+
+  @override
+  String get importFieldCurrency => '币种';
+
+  @override
+  String get currencyMOP => '澳门元';
+
+  @override
+  String get currencyMNT => '蒙古图格里克';
+
+  @override
+  String get currencyKPW => '朝鲜元';
+
+  @override
+  String get currencyKHR => '柬埔寨瑞尔';
+
+  @override
+  String get currencyLAK => '老挝基普';
+
+  @override
+  String get currencyBND => '文莱元';
+
+  @override
+  String get currencyNPR => '尼泊尔卢比';
+
+  @override
+  String get currencyBTN => '不丹努尔特鲁姆';
+
+  @override
+  String get currencyMVR => '马尔代夫拉菲亚';
+
+  @override
+  String get currencyAFN => '阿富汗尼';
+
+  @override
+  String get currencyUZS => '乌兹别克斯坦索姆';
+
+  @override
+  String get currencyTJS => '塔吉克斯坦索莫尼';
+
+  @override
+  String get currencyTMT => '土库曼斯坦马纳特';
+
+  @override
+  String get currencyKGS => '吉尔吉斯斯坦索姆';
+
+  @override
+  String get currencyQAR => '卡塔尔里亚尔';
+
+  @override
+  String get currencyKWD => '科威特第纳尔';
+
+  @override
+  String get currencyBHD => '巴林第纳尔';
+
+  @override
+  String get currencyOMR => '阿曼里亚尔';
+
+  @override
+  String get currencyJOD => '约旦第纳尔';
+
+  @override
+  String get currencyLBP => '黎巴嫩镑';
+
+  @override
+  String get currencyIQD => '伊拉克第纳尔';
+
+  @override
+  String get currencyIRR => '伊朗里亚尔';
+
+  @override
+  String get currencyYER => '也门里亚尔';
+
+  @override
+  String get currencySYP => '叙利亚镑';
+
+  @override
+  String get currencyGEL => '格鲁吉亚拉里';
+
+  @override
+  String get currencyAMD => '亚美尼亚德拉姆';
+
+  @override
+  String get currencyAZN => '阿塞拜疆马纳特';
+
+  @override
+  String get currencyRON => '罗马尼亚列伊';
+
+  @override
+  String get currencyBGN => '保加利亚列弗';
+
+  @override
+  String get currencyRSD => '塞尔维亚第纳尔';
+
+  @override
+  String get currencyISK => '冰岛克朗';
+
+  @override
+  String get currencyMDL => '摩尔多瓦列伊';
+
+  @override
+  String get currencyALL => '阿尔巴尼亚列克';
+
+  @override
+  String get currencyMKD => '北马其顿第纳尔';
+
+  @override
+  String get currencyBAM => '波黑可兑换马克';
+
+  @override
+  String get currencyGIP => '直布罗陀镑';
+
+  @override
+  String get currencyGTQ => '危地马拉格查尔';
+
+  @override
+  String get currencyHNL => '洪都拉斯伦皮拉';
+
+  @override
+  String get currencyNIO => '尼加拉瓜科多巴';
+
+  @override
+  String get currencyCRC => '哥斯达黎加科朗';
+
+  @override
+  String get currencyPAB => '巴拿马巴波亚';
+
+  @override
+  String get currencyDOP => '多米尼加比索';
+
+  @override
+  String get currencyCUP => '古巴比索';
+
+  @override
+  String get currencyJMD => '牙买加元';
+
+  @override
+  String get currencyTTD => '特立尼达和多巴哥元';
+
+  @override
+  String get currencyBSD => '巴哈马元';
+
+  @override
+  String get currencyBBD => '巴巴多斯元';
+
+  @override
+  String get currencyBZD => '伯利兹元';
+
+  @override
+  String get currencyHTG => '海地古德';
+
+  @override
+  String get currencyXCD => '东加勒比元';
+
+  @override
+  String get currencyKYD => '开曼群岛元';
+
+  @override
+  String get currencyAWG => '阿鲁巴弗罗林';
+
+  @override
+  String get currencyANG => '荷属安的列斯盾';
+
+  @override
+  String get currencyBMD => '百慕大元';
+
+  @override
+  String get currencyUYU => '乌拉圭比索';
+
+  @override
+  String get currencyPYG => '巴拉圭瓜拉尼';
+
+  @override
+  String get currencyBOB => '玻利维亚诺';
+
+  @override
+  String get currencyVES => '委内瑞拉玻利瓦尔';
+
+  @override
+  String get currencyGYD => '圭亚那元';
+
+  @override
+  String get currencySRD => '苏里南元';
+
+  @override
+  String get currencyFJD => '斐济元';
+
+  @override
+  String get currencyPGK => '巴布亚新几内亚基那';
+
+  @override
+  String get currencySBD => '所罗门群岛元';
+
+  @override
+  String get currencyTOP => '汤加潘加';
+
+  @override
+  String get currencyVUV => '瓦努阿图瓦图';
+
+  @override
+  String get currencyWST => '萨摩亚塔拉';
+
+  @override
+  String get currencyXPF => '太平洋法郎';
+
+  @override
+  String get currencyKES => '肯尼亚先令';
+
+  @override
+  String get currencyGHS => '加纳塞地';
+
+  @override
+  String get currencyMAD => '摩洛哥迪拉姆';
+
+  @override
+  String get currencyDZD => '阿尔及利亚第纳尔';
+
+  @override
+  String get currencyTND => '突尼斯第纳尔';
+
+  @override
+  String get currencyLYD => '利比亚第纳尔';
+
+  @override
+  String get currencyETB => '埃塞俄比亚比尔';
+
+  @override
+  String get currencyUGX => '乌干达先令';
+
+  @override
+  String get currencyTZS => '坦桑尼亚先令';
+
+  @override
+  String get currencyRWF => '卢旺达法郎';
+
+  @override
+  String get currencyXAF => '中非法郎';
+
+  @override
+  String get currencyXOF => '西非法郎';
+
+  @override
+  String get currencyMUR => '毛里求斯卢比';
+
+  @override
+  String get currencyBWP => '博茨瓦纳普拉';
+
+  @override
+  String get currencyNAD => '纳米比亚元';
+
+  @override
+  String get currencyZMW => '赞比亚克瓦查';
+
+  @override
+  String get currencyMWK => '马拉维克瓦查';
+
+  @override
+  String get currencyMZN => '莫桑比克梅蒂卡尔';
+
+  @override
+  String get currencyAOA => '安哥拉宽扎';
+
+  @override
+  String get currencyCDF => '刚果法郎';
+
+  @override
+  String get currencyGMD => '冈比亚达拉西';
+
+  @override
+  String get currencyGNF => '几内亚法郎';
+
+  @override
+  String get currencyLRD => '利比里亚元';
+
+  @override
+  String get currencySLE => '塞拉利昂利昂';
+
+  @override
+  String get currencySDG => '苏丹镑';
+
+  @override
+  String get currencySSP => '南苏丹镑';
+
+  @override
+  String get currencySOS => '索马里先令';
+
+  @override
+  String get currencyDJF => '吉布提法郎';
+
+  @override
+  String get currencyERN => '厄立特里亚纳克法';
+
+  @override
+  String get currencyBIF => '布隆迪法郎';
+
+  @override
+  String get currencyCVE => '佛得角埃斯库多';
+
+  @override
+  String get currencySTN => '圣多美多布拉';
+
+  @override
+  String get currencySCR => '塞舌尔卢比';
+
+  @override
+  String get currencyKMF => '科摩罗法郎';
+
+  @override
+  String get currencyLSL => '莱索托洛蒂';
+
+  @override
+  String get currencySZL => '斯威士兰里兰吉尼';
+
+  @override
+  String get currencyMGA => '马达加斯加阿里亚里';
+
+  @override
+  String get currencyMRU => '毛里塔尼亚乌吉亚';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
 class AppLocalizationsZhTw extends AppLocalizationsZh {
   AppLocalizationsZhTw(): super('zh_TW');
+
+  @override
+  String get aiConsentTitle => '開啟 AI 功能前,請知悉';
+
+  @override
+  String get aiConsentBody => 'AI 功能需將相關資料傳送給你所設定的第三方 AI 服務商進行處理:\n\n• 傳送給誰:預設「智譜 GLM」(open.bigmodel.cn,由智譜華章營運);若你自行設定了其它第三方 AI 服務商,則傳送給你填寫的服務商。\n• 傳送什麼:你主動用於辨識/對話的內容 —— 帳單圖片、語音錄音、你輸入的文字,以及為完成辨識/分析所需的分類名稱、帳戶名稱和相關交易記錄。\n• 用途:僅用於帳單辨識、記帳與你發起的對話分析;蜜蜂記帳本身不收集、不儲存這些資料。\n\n資料由該第三方服務商依其隱私政策處理。開啟即表示你同意上述資料共享。';
+
+  @override
+  String get aiConsentAgree => '同意並開啟';
+
+  @override
+  String get aboutPrivacyPolicy => '隱私政策';
 
   @override
   String get appTitle => '蜜蜂記帳';
@@ -6851,6 +7347,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get tabAssets => '資產';
+
+  @override
+  String get tabRecord => '記帳';
 
   @override
   String get tabMine => '我的';
@@ -6972,6 +7471,47 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get voiceRecordingNoSpeech => '未檢測到語音輸入';
+
+  @override
+  String get voiceRecordingHoldToTalk => '按住 說話';
+
+  @override
+  String get voiceRecordingReleaseToFinish => '鬆手結束錄音';
+
+  @override
+  String get voiceRecordingTooShort => '錄音時間過短';
+
+  @override
+  String get voiceRecordingResultLabel => '識別結果：';
+
+  @override
+  String get voiceRecordingAutoHintSpoken => '說完後停頓即可自動識別';
+
+  @override
+  String get voiceRecordingAutoHintWaiting => '請開始說話...';
+
+  @override
+  String get smartBillingVoiceTrigger => '語音觸發方式';
+
+  @override
+  String get voiceTriggerModeAuto => '自動偵測停頓';
+
+  @override
+  String get voiceTriggerModeAutoDesc => '錄音後自動判斷說完，適合短句快速記帳';
+
+  @override
+  String get voiceTriggerModeHold => '按住說話';
+
+  @override
+  String get voiceTriggerModeHoldDesc => '長按錄音、鬆開結束，適合一次說較多內容';
+
+  @override
+  String get smartBillingVoiceSilenceTimeout => '停頓結束時長';
+
+  @override
+  String smartBillingVoiceSilenceTimeoutValue(String seconds) {
+    return '停頓 $seconds 秒後自動結束辨識';
+  }
 
   @override
   String get commonPrevious => '上一步';
@@ -7109,6 +7649,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get searchCategoryHint => '搜尋分類名稱...';
 
   @override
+  String get searchCategoryFilter => '分類篩選';
+
+  @override
   String get searchMinAmount => '最小金額';
 
   @override
@@ -7201,6 +7744,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String searchResultsCount(Object count) {
     return '共 $count 條結果';
   }
+
+  @override
+  String get searchSummaryIncome => '收入';
+
+  @override
+  String get searchSummaryExpense => '支出';
 
   @override
   String get searchFilterTitle => '篩選';
@@ -7797,6 +8346,24 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get headerSkinMemphis => '孟菲斯';
+
+  @override
+  String get headerSkinSilk => '絲帶';
+
+  @override
+  String get headerSkinBubbles => '氣泡';
+
+  @override
+  String get headerSkinGalaxy => '星系';
+
+  @override
+  String get headerSkinLowPoly => '低多邊形';
+
+  @override
+  String get headerSkinPrism => '稜鏡';
+
+  @override
+  String get headerSkinTerrazzo => '水磨石';
 
   @override
   String get mineAvatarTitle => '頭像設定';
@@ -8857,6 +9424,36 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get appearanceNoteDisplayNoteDesc => '有備註時顯示備註,無備註時顯示分類名';
 
   @override
+  String get appearanceNoteHistory => '歷史備註';
+
+  @override
+  String get appearanceNoteHistoryScope => '顯示範圍';
+
+  @override
+  String get appearanceNoteHistoryScopeAllCategories => '全部分類';
+
+  @override
+  String get appearanceNoteHistoryScopeCurrentCategory => '目前分類';
+
+  @override
+  String get appearanceNoteHistorySort => '排序方式';
+
+  @override
+  String get appearanceNoteHistorySortFrequency => '使用頻次';
+
+  @override
+  String get appearanceNoteHistorySortRecent => '最近使用';
+
+  @override
+  String get appearanceNoteHistoryLimit => '顯示數量';
+
+  @override
+  String get appearanceNoteHistoryLimitHint => '可設定 1 至 100 筆';
+
+  @override
+  String get appearanceNoteHistoryLimitInvalid => '請輸入 1 至 100 的整數';
+
+  @override
   String get appearanceColorScheme => '收支顏色方案';
 
   @override
@@ -9315,7 +9912,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get authInvalidEmail => '請輸入有效的電子郵件地址';
 
   @override
-  String get authPasswordRequirementShort => '密碼需包含字母和數字，長度至少 6 位';
+  String get authNoAccountYet => '還沒有帳號？';
+
+  @override
+  String get authViewRegisterGuide => '查看註冊指引';
 
   @override
   String get authErrorInvalidCredentials => '電子郵件或密碼不正確。';
@@ -10465,7 +11065,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get accountsTitle => '資產管理';
 
   @override
-  String get accountsEmptyMessage => '還没有帳戶，点击右上角添加';
+  String get accountsEmptyMessage => '還沒有帳戶，點擊右上角添加';
 
   @override
   String get accountAddTooltip => '添加帳戶';
@@ -10474,7 +11074,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get accountAddButton => '添加帳戶';
 
   @override
-  String get accountBalance => '余額';
+  String get accountBalance => '餘額';
 
   @override
   String get accountEditTitle => '編輯帳戶';
@@ -10483,13 +11083,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get accountNewTitle => '新建帳戶';
 
   @override
-  String get accountNameLabel => '帳戶名称';
+  String get accountNameLabel => '帳戶名稱';
 
   @override
-  String get accountNameHint => '例如：工商银行、支付宝等';
+  String get accountNameHint => '例如：工商銀行、支付寶等';
 
   @override
-  String get accountNameRequired => '請輸入帳戶名称';
+  String get accountNameRequired => '請輸入帳戶名稱';
 
   @override
   String get accountNameDuplicate => '帳戶名稱已存在，請使用其他名稱';
@@ -10501,13 +11101,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get accountTypeCash => '現金';
 
   @override
-  String get accountTypeBankCard => '银行卡';
+  String get accountTypeBankCard => '銀行卡';
 
   @override
   String get accountTypeCreditCard => '信用卡';
 
   @override
-  String get accountTypeAlipay => '支付宝';
+  String get accountTypeAlipay => '支付寶';
 
   @override
   String get accountTypeWechat => '微信';
@@ -10526,11 +11126,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String accountDeleteWarningMessage(int count) {
-    return '該帳戶有 $count 筆關聯交易，刪除后交易记錄中的帳戶信息將被清空。確認刪除吗？';
+    return '該帳戶有 $count 筆關聯交易，刪除後交易記錄中的帳戶信息將被清空。確認刪除嗎？';
   }
 
   @override
-  String get accountDeleteConfirm => '確認刪除該帳戶吗？';
+  String get accountDeleteConfirm => '確認刪除該帳戶嗎？';
 
   @override
   String get accountSelectTitle => '選擇帳戶';
@@ -10551,10 +11151,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get updateCorruptedFileMessage => '檢測到之前下載的安裝包不完整或已損壞，是否刪除並重新下載？';
 
   @override
-  String get welcomeTitle => '欢迎使用 BeeCount';
+  String get welcomeTitle => '歡迎使用 BeeCount';
 
   @override
-  String get welcomeDescription => '一个真正尊重您隐私的记帳應用';
+  String get welcomeDescription => '一個真正尊重您隱私的記帳應用';
 
   @override
   String get welcomeCurrencyDescription => '選擇您常用的貨幣，之後可以隨時在設定中更改';
@@ -10602,31 +11202,31 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get widgetPreview => '小組件預覽';
 
   @override
-  String get widgetPreviewDesc => '小組件会自動顯示當前帳本的實際數據，主題色跟隨應用設置';
+  String get widgetPreviewDesc => '小組件會自動顯示當前帳本的實際數據，主題色跟隨應用設置';
 
   @override
   String get howToAddWidget => '如何添加小組件';
 
   @override
-  String get iosWidgetStep1 => '长按主屏幕空白區域，進入編輯模式';
+  String get iosWidgetStep1 => '長按主屏幕空白區域，進入編輯模式';
 
   @override
-  String get iosWidgetStep2 => '点击左上角的\"+\"按钮';
+  String get iosWidgetStep2 => '點擊左上角的\"+\"按鈕';
 
   @override
-  String get iosWidgetStep3 => '搜索并選擇\"蜜蜂记帳\"';
+  String get iosWidgetStep3 => '搜索並選擇\"蜜蜂記帳\"';
 
   @override
   String get iosWidgetStep4 => '選擇中型小組件，添加到主屏幕';
 
   @override
-  String get androidWidgetStep1 => '长按主屏幕空白區域';
+  String get androidWidgetStep1 => '長按主屏幕空白區域';
 
   @override
   String get androidWidgetStep2 => '選擇\"小組件\"或\"Widgets\"';
 
   @override
-  String get androidWidgetStep3 => '找到并长按\"蜜蜂记帳\"小組件';
+  String get androidWidgetStep3 => '找到並長按\"蜜蜂記帳\"小組件';
 
   @override
   String get androidWidgetStep4 => '拖動到主屏幕合适位置';
@@ -10635,7 +11235,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get aboutWidget => '關于小組件';
 
   @override
-  String get widgetDescription => '小組件会自動同步顯示今日和本月的收支數據，每30分钟自動刷新一次。打開應用后会立即更新數據。';
+  String get widgetDescription => '小組件會自動同步顯示今日和本月的收支數據，每30分鐘自動刷新一次。打開應用後會立即更新數據。';
 
   @override
   String get widgetQuickEntryTitle => '快捷記帳';
@@ -10644,7 +11244,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get widgetQuickEntryDesc => '點擊小組件左側區域可快速新建支出，點擊右側區域可快速新建收入。也可透過捷徑使用 beecount://new?type=transfer 快速發起轉帳。';
 
   @override
-  String get appName => '蜜蜂记帳';
+  String get appName => '蜜蜂記帳';
 
   @override
   String get monthSuffix => '月';
@@ -11197,6 +11797,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get aboutDouyin => '抖音';
+
+  @override
+  String get aboutTelegram => 'Telegram 群';
 
   @override
   String get aboutSupportDevelopment => '支持開發';
@@ -12764,6 +13367,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get cloudSyncGuideLimitItem4 => '不含附件：交易的圖片附件不參與同步，需透過資料管理單獨匯出';
 
   @override
+  String get mineMultiDeviceSyncTitle => '多裝置同步';
+
+  @override
+  String get mineMultiDeviceSyncSubtitle => '進入頁面時自動檢查雲端變更';
+
+  @override
   String get appLockTitle => '應用鎖';
 
   @override
@@ -12915,6 +13524,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get accountNoMoreData => '沒有更多資料了';
 
   @override
+  String get totalAssets => '總資產';
+
+  @override
+  String get totalLiabilities => '總負債';
+
+  @override
+  String get assetAccounts => '資產帳戶';
+
+  @override
+  String get liabilityAccounts => '負債帳戶';
+
+  @override
+  String get assetComposition => '資產構成';
+
+  @override
   String get accountTypeInvestment => '投資理財';
 
   @override
@@ -12963,6 +13587,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get accountGroupValuation => '資產/負債';
+
+  @override
+  String get adjustmentTransaction => '估值調整';
 
   @override
   String creditCardBillingInfo(int billingDay, int paymentDueDay) {
@@ -13131,6 +13758,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get syncHealthRowAttachment => '附件';
+
+  @override
+  String get syncHealthRowCategoryIcon => '分類圖示';
 
   @override
   String get syncHealthRowBudget => '預算';
@@ -13638,4 +14268,372 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get txFlagBudgetExcludedTag => '不計預算';
+
+  @override
+  String get txCurrencyLabel => '幣種';
+
+  @override
+  String get txRateLabel => '匯率';
+
+  @override
+  String txConvertedPreview(Object amount, Object currency) {
+    return '≈ $amount $currency';
+  }
+
+  @override
+  String get txRateMissingHint => '請手動填寫本筆匯率後儲存';
+
+  @override
+  String get txCrossCurrencyTransferBlocked => '暫不支援跨幣種轉帳,請分別記兩筆或使用同幣種帳戶';
+
+  @override
+  String get ledgerBaseCurrencyLabel => '主幣種';
+
+  @override
+  String statsConvertedFootnote(Object currency) {
+    return '含外幣,已按各筆記帳時匯率折算為 $currency';
+  }
+
+  @override
+  String get ledgerCurrencyChangeRecalcHint => '修改本位幣將按當前匯率重算全部歷史交易的折算值';
+
+  @override
+  String get recalcForeignTxBanner => '偵測到該帳本有未折算的外幣交易';
+
+  @override
+  String get recalcForeignTxAction => '按當前匯率重算折算';
+
+  @override
+  String recalcForeignTxDone(Object count) {
+    return '已重算 $count 筆外幣交易的折算值';
+  }
+
+  @override
+  String get txCurrencyPickerTitle => '選擇幣種';
+
+  @override
+  String recalcSyncCountHint(Object count) {
+    return '將重算並同步 $count 筆交易';
+  }
+
+  @override
+  String get exportCsvHeaderCurrency => '幣種';
+
+  @override
+  String get importFieldCurrency => '幣種';
+
+  @override
+  String get currencyMOP => '澳門元';
+
+  @override
+  String get currencyMNT => '蒙古圖格里克';
+
+  @override
+  String get currencyKPW => '朝鲜元';
+
+  @override
+  String get currencyKHR => '柬埔寨瑞爾';
+
+  @override
+  String get currencyLAK => '老撾基普';
+
+  @override
+  String get currencyBND => '文萊元';
+
+  @override
+  String get currencyNPR => '尼泊爾盧比';
+
+  @override
+  String get currencyBTN => '不丹努爾特魯姆';
+
+  @override
+  String get currencyMVR => '马爾代夫拉菲亞';
+
+  @override
+  String get currencyAFN => '阿富汗尼';
+
+  @override
+  String get currencyUZS => '烏茲別克斯坦索姆';
+
+  @override
+  String get currencyTJS => '塔吉克斯坦索莫尼';
+
+  @override
+  String get currencyTMT => '土庫曼斯坦马納特';
+
+  @override
+  String get currencyKGS => '吉爾吉斯斯坦索姆';
+
+  @override
+  String get currencyQAR => '卡塔爾里亞爾';
+
+  @override
+  String get currencyKWD => '科威特第納爾';
+
+  @override
+  String get currencyBHD => '巴林第納爾';
+
+  @override
+  String get currencyOMR => '阿曼里亞爾';
+
+  @override
+  String get currencyJOD => '约旦第納爾';
+
+  @override
+  String get currencyLBP => '黎巴嫩鎊';
+
+  @override
+  String get currencyIQD => '伊拉克第納爾';
+
+  @override
+  String get currencyIRR => '伊朗里亞爾';
+
+  @override
+  String get currencyYER => '也門里亞爾';
+
+  @override
+  String get currencySYP => '敘利亞鎊';
+
+  @override
+  String get currencyGEL => '格魯吉亞拉里';
+
+  @override
+  String get currencyAMD => '亞美尼亞德拉姆';
+
+  @override
+  String get currencyAZN => '阿塞拜疆马納特';
+
+  @override
+  String get currencyRON => '羅马尼亞列伊';
+
+  @override
+  String get currencyBGN => '保加利亞列弗';
+
+  @override
+  String get currencyRSD => '塞爾維亞第納爾';
+
+  @override
+  String get currencyISK => '冰岛克朗';
+
+  @override
+  String get currencyMDL => '摩爾多瓦列伊';
+
+  @override
+  String get currencyALL => '阿爾巴尼亞列克';
+
+  @override
+  String get currencyMKD => '北马其顿第納爾';
+
+  @override
+  String get currencyBAM => '波黑可兑換马克';
+
+  @override
+  String get currencyGIP => '直布羅陀鎊';
+
+  @override
+  String get currencyGTQ => '危地马拉格查爾';
+
+  @override
+  String get currencyHNL => '洪都拉斯伦皮拉';
+
+  @override
+  String get currencyNIO => '尼加拉瓜科多巴';
+
+  @override
+  String get currencyCRC => '哥斯達黎加科朗';
+
+  @override
+  String get currencyPAB => '巴拿马巴波亞';
+
+  @override
+  String get currencyDOP => '多米尼加比索';
+
+  @override
+  String get currencyCUP => '古巴比索';
+
+  @override
+  String get currencyJMD => '牙買加元';
+
+  @override
+  String get currencyTTD => '特立尼達和多巴哥元';
+
+  @override
+  String get currencyBSD => '巴哈马元';
+
+  @override
+  String get currencyBBD => '巴巴多斯元';
+
+  @override
+  String get currencyBZD => '伯利茲元';
+
+  @override
+  String get currencyHTG => '海地古德';
+
+  @override
+  String get currencyXCD => '东加勒比元';
+
+  @override
+  String get currencyKYD => '开曼群岛元';
+
+  @override
+  String get currencyAWG => '阿魯巴弗羅林';
+
+  @override
+  String get currencyANG => '荷屬安的列斯盾';
+
+  @override
+  String get currencyBMD => '百慕大元';
+
+  @override
+  String get currencyUYU => '烏拉圭比索';
+
+  @override
+  String get currencyPYG => '巴拉圭瓜拉尼';
+
+  @override
+  String get currencyBOB => '玻利維亞诺';
+
+  @override
+  String get currencyVES => '委內瑞拉玻利瓦爾';
+
+  @override
+  String get currencyGYD => '圭亞那元';
+
+  @override
+  String get currencySRD => '蘇里南元';
+
+  @override
+  String get currencyFJD => '斐濟元';
+
+  @override
+  String get currencyPGK => '巴布亞新幾內亞基那';
+
+  @override
+  String get currencySBD => '所羅門群岛元';
+
+  @override
+  String get currencyTOP => '湯加潘加';
+
+  @override
+  String get currencyVUV => '瓦努阿圖瓦圖';
+
+  @override
+  String get currencyWST => '薩摩亞塔拉';
+
+  @override
+  String get currencyXPF => '太平洋法郎';
+
+  @override
+  String get currencyKES => '肯尼亞先令';
+
+  @override
+  String get currencyGHS => '加納塞地';
+
+  @override
+  String get currencyMAD => '摩洛哥迪拉姆';
+
+  @override
+  String get currencyDZD => '阿爾及利亞第納爾';
+
+  @override
+  String get currencyTND => '突尼斯第納爾';
+
+  @override
+  String get currencyLYD => '利比亞第納爾';
+
+  @override
+  String get currencyETB => '埃塞俄比亞比爾';
+
+  @override
+  String get currencyUGX => '烏干達先令';
+
+  @override
+  String get currencyTZS => '坦桑尼亞先令';
+
+  @override
+  String get currencyRWF => '盧旺達法郎';
+
+  @override
+  String get currencyXAF => '中非法郎';
+
+  @override
+  String get currencyXOF => '西非法郎';
+
+  @override
+  String get currencyMUR => '毛里求斯盧比';
+
+  @override
+  String get currencyBWP => '博茨瓦納普拉';
+
+  @override
+  String get currencyNAD => '納米比亞元';
+
+  @override
+  String get currencyZMW => '贊比亞克瓦查';
+
+  @override
+  String get currencyMWK => '马拉維克瓦查';
+
+  @override
+  String get currencyMZN => '莫桑比克梅蒂卡爾';
+
+  @override
+  String get currencyAOA => '安哥拉宽扎';
+
+  @override
+  String get currencyCDF => '剛果法郎';
+
+  @override
+  String get currencyGMD => '岡比亞達拉西';
+
+  @override
+  String get currencyGNF => '幾內亞法郎';
+
+  @override
+  String get currencyLRD => '利比里亞元';
+
+  @override
+  String get currencySLE => '塞拉利昂利昂';
+
+  @override
+  String get currencySDG => '蘇丹鎊';
+
+  @override
+  String get currencySSP => '南蘇丹鎊';
+
+  @override
+  String get currencySOS => '索马里先令';
+
+  @override
+  String get currencyDJF => '吉布提法郎';
+
+  @override
+  String get currencyERN => '厄立特里亞納克法';
+
+  @override
+  String get currencyBIF => '布隆迪法郎';
+
+  @override
+  String get currencyCVE => '佛得角埃斯庫多';
+
+  @override
+  String get currencySTN => '聖多美多布拉';
+
+  @override
+  String get currencySCR => '塞舌爾盧比';
+
+  @override
+  String get currencyKMF => '科摩羅法郎';
+
+  @override
+  String get currencyLSL => '萊索托洛蒂';
+
+  @override
+  String get currencySZL => '斯威士蘭里蘭吉尼';
+
+  @override
+  String get currencyMGA => '马達加斯加阿里亞里';
+
+  @override
+  String get currencyMRU => '毛里塔尼亞烏吉亞';
 }
