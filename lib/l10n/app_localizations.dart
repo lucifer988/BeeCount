@@ -98,6 +98,258 @@ abstract class AppLocalizations {
     Locale('zh', 'TW')
   ];
 
+  /// No description provided for @agentActivityPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing your answer…'**
+  String get agentActivityPreparing;
+
+  /// No description provided for @agentActivityAwaitingModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the model…'**
+  String get agentActivityAwaitingModel;
+
+  /// No description provided for @agentActivityThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Model is thinking…'**
+  String get agentActivityThinking;
+
+  /// No description provided for @agentActivityGenerating.
+  ///
+  /// In en, this message translates to:
+  /// **'Composing the answer…'**
+  String get agentActivityGenerating;
+
+  /// No description provided for @agentExecutionCompletedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed {count} operations'**
+  String agentExecutionCompletedSummary(int count);
+
+  /// No description provided for @agentExecutionFailedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Some operations did not complete'**
+  String get agentExecutionFailedSummary;
+
+  /// No description provided for @agentActivityUnknownTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Local operation'**
+  String get agentActivityUnknownTool;
+
+  /// No description provided for @agentActivityOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Income and expense overview'**
+  String get agentActivityOverview;
+
+  /// No description provided for @agentActivityTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending trend'**
+  String get agentActivityTrend;
+
+  /// No description provided for @agentActivityCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending categories'**
+  String get agentActivityCategories;
+
+  /// No description provided for @agentActivityLeafCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed categories'**
+  String get agentActivityLeafCategories;
+
+  /// No description provided for @agentActivityCategoryScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories: {categories}'**
+  String agentActivityCategoryScope(String categories);
+
+  /// No description provided for @agentActivityReturnedRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Returned {count} transactions'**
+  String agentActivityReturnedRows(int count);
+
+  /// No description provided for @agentActivityReturnedGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Returned {count} groups'**
+  String agentActivityReturnedGroups(int count);
+
+  /// No description provided for @agentActivityTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Only part of the results was returned'**
+  String get agentActivityTruncated;
+
+  /// No description provided for @agentFollowUpRotate.
+  ///
+  /// In en, this message translates to:
+  /// **'Another set'**
+  String get agentFollowUpRotate;
+
+  /// No description provided for @agentScrollToLatest.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the latest message'**
+  String get agentScrollToLatest;
+
+  /// No description provided for @agentSuggestionHealthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial health'**
+  String get agentSuggestionHealthTitle;
+
+  /// No description provided for @agentSuggestionHealthPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze this month\'s income, expenses, balance and savings rate, and list monthly spending for the last six months. Give financial health observations and suggestions based on tool results; explain any data limitations.'**
+  String get agentSuggestionHealthPrompt;
+
+  /// No description provided for @agentSuggestionSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly spending summary'**
+  String get agentSuggestionSummaryTitle;
+
+  /// No description provided for @agentSuggestionSummaryPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Summarize this month\'s spending, analyze the main top-level categories and their shares, and suggest ways to save. Use actual tool results and explain any data limitations.'**
+  String get agentSuggestionSummaryPrompt;
+
+  /// No description provided for @agentSuggestionAnalysisTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Category analysis'**
+  String get agentSuggestionAnalysisTitle;
+
+  /// No description provided for @agentSuggestionAnalysisPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze this month\'s top-level spending categories and shares, and suggest improvements. Do not judge spending as unreasonable from its share alone; explain any data limitations.'**
+  String get agentSuggestionAnalysisPrompt;
+
+  /// No description provided for @agentSuggestionBudgetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget planning'**
+  String get agentSuggestionBudgetTitle;
+
+  /// No description provided for @agentSuggestionBudgetPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this month\'s income, expenses and balance, top-level category spending shares, and monthly spending trend for the last six months to suggest next month\'s category budgets. Give advice only; do not create or modify budgets. Explain any data limitations.'**
+  String get agentSuggestionBudgetPrompt;
+
+  /// No description provided for @agentSuggestionAnomalyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending check'**
+  String get agentSuggestionAnomalyTitle;
+
+  /// No description provided for @agentSuggestionAnomalyPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Review transaction details and the income and expense overview for the last thirty days. Flag large or repeated transactions worth reviewing and explain the evidence. This is only a preliminary check of returned details, not a scan of all transactions; do not label normal purchases as abnormal.'**
+  String get agentSuggestionAnomalyPrompt;
+
+  /// No description provided for @agentSuggestionSavingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving tips'**
+  String get agentSuggestionSavingTitle;
+
+  /// No description provided for @agentSuggestionSavingPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze this month\'s top-level spending categories and shares and the monthly spending trend for the last six months. Offer three to five practical saving tips based on tool results, without inferring personal circumstances. Explain any data limitations.'**
+  String get agentSuggestionSavingPrompt;
+
+  /// No description provided for @agentFollowUpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore further'**
+  String get agentFollowUpTitle;
+
+  /// No description provided for @agentFollowUpRange.
+  ///
+  /// In en, this message translates to:
+  /// **'{start} to {end} (end exclusive)'**
+  String agentFollowUpRange(String start, String end);
+
+  /// No description provided for @agentFollowUpAllCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'all spending categories'**
+  String get agentFollowUpAllCategories;
+
+  /// No description provided for @agentFollowUpCategoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View category shares'**
+  String get agentFollowUpCategoryTitle;
+
+  /// No description provided for @agentFollowUpCategoryPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Show top-level spending category shares for {range}.'**
+  String agentFollowUpCategoryPrompt(String range);
+
+  /// No description provided for @agentFollowUpTrendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View spending trend'**
+  String get agentFollowUpTrendTitle;
+
+  /// No description provided for @agentFollowUpTrendPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'List monthly spending for {category} during {range}, without month-over-month or year-over-year comparison.'**
+  String agentFollowUpTrendPrompt(String category, String range);
+
+  /// No description provided for @agentFollowUpCompareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare adjacent months'**
+  String get agentFollowUpCompareTitle;
+
+  /// No description provided for @agentFollowUpComparePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'List monthly spending for {category} during {range}, with month-over-month changes between adjacent months.'**
+  String agentFollowUpComparePrompt(String category, String range);
+
+  /// No description provided for @agentFollowUpLeafTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore {category}'**
+  String agentFollowUpLeafTitle(String category);
+
+  /// No description provided for @agentFollowUpLeafPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Show subcategory spending shares within the category “{category}” for {range}.'**
+  String agentFollowUpLeafPrompt(String category, String range);
+
+  /// No description provided for @agentFollowUpOverviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View income and expenses'**
+  String get agentFollowUpOverviewTitle;
+
+  /// No description provided for @agentFollowUpOverviewPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Show total income, expenses and balance for {range}.'**
+  String agentFollowUpOverviewPrompt(String range);
+
   /// No description provided for @aiConsentTitle.
   ///
   /// In en, this message translates to:
@@ -121,6 +373,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Privacy Policy'**
   String get aboutPrivacyPolicy;
+
+  /// No description provided for @aboutChangelog.
+  ///
+  /// In en, this message translates to:
+  /// **'Changelog'**
+  String get aboutChangelog;
 
   /// The application title
   ///
@@ -691,6 +949,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **''**
   String get widgetMonthSuffix;
+
+  /// No description provided for @widgetToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get widgetToday;
+
+  /// No description provided for @widgetQuickAddLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get widgetQuickAddLabel;
+
+  /// No description provided for @widgetBudgetTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get widgetBudgetTotal;
+
+  /// No description provided for @widgetBudgetRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get widgetBudgetRemaining;
+
+  /// No description provided for @widgetNoBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'No Budget'**
+  String get widgetNoBudget;
+
+  /// No description provided for @widgetNoTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'No Transactions'**
+  String get widgetNoTransactions;
+
+  /// No description provided for @widgetRecentTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Transactions'**
+  String get widgetRecentTransactions;
+
+  /// No description provided for @widgetNoAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'No Accounts'**
+  String get widgetNoAccounts;
 
   /// No description provided for @searchTitle.
   ///
@@ -1370,6 +1676,150 @@ abstract class AppLocalizations {
   /// **'Category Management'**
   String get categoryTitle;
 
+  /// No description provided for @categoryIconGroupBasic.
+  ///
+  /// In en, this message translates to:
+  /// **'Basics'**
+  String get categoryIconGroupBasic;
+
+  /// No description provided for @categoryIconGroupFoodDining.
+  ///
+  /// In en, this message translates to:
+  /// **'Food & Dining'**
+  String get categoryIconGroupFoodDining;
+
+  /// No description provided for @categoryIconGroupTransportation.
+  ///
+  /// In en, this message translates to:
+  /// **'Transportation'**
+  String get categoryIconGroupTransportation;
+
+  /// No description provided for @categoryIconGroupShopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping'**
+  String get categoryIconGroupShopping;
+
+  /// No description provided for @categoryIconGroupHomeLiving.
+  ///
+  /// In en, this message translates to:
+  /// **'Home & Living'**
+  String get categoryIconGroupHomeLiving;
+
+  /// No description provided for @categoryIconGroupCommunicationDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Communication & Devices'**
+  String get categoryIconGroupCommunicationDevices;
+
+  /// No description provided for @categoryIconGroupEntertainmentLeisure.
+  ///
+  /// In en, this message translates to:
+  /// **'Entertainment & Leisure'**
+  String get categoryIconGroupEntertainmentLeisure;
+
+  /// No description provided for @categoryIconGroupHealthMedical.
+  ///
+  /// In en, this message translates to:
+  /// **'Health & Medicine'**
+  String get categoryIconGroupHealthMedical;
+
+  /// No description provided for @categoryIconGroupEducationLearning.
+  ///
+  /// In en, this message translates to:
+  /// **'Education & Learning'**
+  String get categoryIconGroupEducationLearning;
+
+  /// No description provided for @categoryIconGroupPetsAnimals.
+  ///
+  /// In en, this message translates to:
+  /// **'Pets & Animals'**
+  String get categoryIconGroupPetsAnimals;
+
+  /// No description provided for @categoryIconGroupClothingBeauty.
+  ///
+  /// In en, this message translates to:
+  /// **'Clothing & Beauty'**
+  String get categoryIconGroupClothingBeauty;
+
+  /// No description provided for @categoryIconGroupOtherMiscellaneous.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get categoryIconGroupOtherMiscellaneous;
+
+  /// No description provided for @categoryIconGroupWorkCareer.
+  ///
+  /// In en, this message translates to:
+  /// **'Work & Career'**
+  String get categoryIconGroupWorkCareer;
+
+  /// No description provided for @categoryIconGroupFinance.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance'**
+  String get categoryIconGroupFinance;
+
+  /// No description provided for @categoryIconGroupRewardsGifts.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewards & Gifts'**
+  String get categoryIconGroupRewardsGifts;
+
+  /// No description provided for @categoryIconGroupInvestmentReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'Investment Returns'**
+  String get categoryIconGroupInvestmentReturns;
+
+  /// No description provided for @categoryIconGroupOtherIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Other Income'**
+  String get categoryIconGroupOtherIncome;
+
+  /// No description provided for @categoryGenerateDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate Default Categories'**
+  String get categoryGenerateDefault;
+
+  /// No description provided for @categoryGenerateDefaultFlat.
+  ///
+  /// In en, this message translates to:
+  /// **'Level 1 categories'**
+  String get categoryGenerateDefaultFlat;
+
+  /// No description provided for @categoryGenerateDefaultHierarchical.
+  ///
+  /// In en, this message translates to:
+  /// **'Level 2 categories'**
+  String get categoryGenerateDefaultHierarchical;
+
+  /// No description provided for @categoryGenerateDefaultHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing categories are kept. Default categories with matching names are skipped.'**
+  String get categoryGenerateDefaultHint;
+
+  /// No description provided for @categoryGenerateDefaultSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated {count} default categories'**
+  String categoryGenerateDefaultSuccess(int count);
+
+  /// No description provided for @categoryGenerateDefaultNoChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Default categories already exist'**
+  String get categoryGenerateDefaultNoChanges;
+
+  /// No description provided for @categoryGenerateDefaultFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not generate default categories. Try again.'**
+  String get categoryGenerateDefaultFailed;
+
   /// No description provided for @categoryNew.
   ///
   /// In en, this message translates to:
@@ -1886,11 +2336,101 @@ abstract class AppLocalizations {
   /// **'Follows your theme color, layered over the header'**
   String get headerSkinSubtitle;
 
+  /// No description provided for @headerSkinGroupBasic.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic'**
+  String get headerSkinGroupBasic;
+
+  /// No description provided for @headerSkinGroupAnniversary.
+  ///
+  /// In en, this message translates to:
+  /// **'Anniversary'**
+  String get headerSkinGroupAnniversary;
+
+  /// No description provided for @headerSkinGroupGradient.
+  ///
+  /// In en, this message translates to:
+  /// **'Gradient'**
+  String get headerSkinGroupGradient;
+
+  /// No description provided for @headerSkinGroupScene.
+  ///
+  /// In en, this message translates to:
+  /// **'Scenery'**
+  String get headerSkinGroupScene;
+
+  /// No description provided for @headerSkinGroupPattern.
+  ///
+  /// In en, this message translates to:
+  /// **'Patterns'**
+  String get headerSkinGroupPattern;
+
+  /// No description provided for @headerSkinGroupGeometric.
+  ///
+  /// In en, this message translates to:
+  /// **'Geometric'**
+  String get headerSkinGroupGeometric;
+
   /// No description provided for @headerSkinNone.
   ///
   /// In en, this message translates to:
   /// **'Solid'**
   String get headerSkinNone;
+
+  /// No description provided for @headerSkinAnniversary.
+  ///
+  /// In en, this message translates to:
+  /// **'Constellation No.1'**
+  String get headerSkinAnniversary;
+
+  /// No description provided for @headerSkinAnnivCake.
+  ///
+  /// In en, this message translates to:
+  /// **'Birthday Cake'**
+  String get headerSkinAnnivCake;
+
+  /// No description provided for @headerSkinTabAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get headerSkinTabAll;
+
+  /// No description provided for @headerSkinTabAnimated.
+  ///
+  /// In en, this message translates to:
+  /// **'Animated'**
+  String get headerSkinTabAnimated;
+
+  /// No description provided for @headerSkinTabStatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Static'**
+  String get headerSkinTabStatic;
+
+  /// No description provided for @headerSkinAnimatedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'LIVE'**
+  String get headerSkinAnimatedBadge;
+
+  /// No description provided for @headerSkinFixedPalette.
+  ///
+  /// In en, this message translates to:
+  /// **'Own palette'**
+  String get headerSkinFixedPalette;
+
+  /// No description provided for @personalizeLockedBySkin.
+  ///
+  /// In en, this message translates to:
+  /// **'The skin \"{skin}\" comes with its own palette, so the theme color is set by the skin and can\'t be changed. Switch to another skin to get your color back.'**
+  String personalizeLockedBySkin(String skin);
+
+  /// No description provided for @personalizeFixedSkinAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Change skin'**
+  String get personalizeFixedSkinAction;
 
   /// No description provided for @headerSkinAurora.
   ///
@@ -2669,7 +3209,7 @@ abstract class AppLocalizations {
   /// No description provided for @mineCurrentBalance.
   ///
   /// In en, this message translates to:
-  /// **'Balance'**
+  /// **'Ledger balance'**
   String get mineCurrentBalance;
 
   /// No description provided for @mineCloudService.
@@ -3961,6 +4501,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Abbreviate large amounts, e.g. 12.3K (only affects account balance)'**
   String get appearanceAmountFormatCompactDesc;
+
+  /// No description provided for @appearanceSkinAnimation.
+  ///
+  /// In en, this message translates to:
+  /// **'Skin Animation'**
+  String get appearanceSkinAnimation;
+
+  /// No description provided for @appearanceSkinAnimationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off to freeze animated skins on a still frame and save power'**
+  String get appearanceSkinAnimationDesc;
 
   /// No description provided for @appearanceShowTransactionTime.
   ///
@@ -7166,6 +7718,84 @@ abstract class AppLocalizations {
   /// **'Balance'**
   String get accountBalance;
 
+  /// No description provided for @accountUpdateBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Balance'**
+  String get accountUpdateBalance;
+
+  /// No description provided for @accountBalanceAdjustmentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm balance change'**
+  String get accountBalanceAdjustmentTitle;
+
+  /// No description provided for @accountBalanceAdjustmentChooseAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how to save this balance change'**
+  String get accountBalanceAdjustmentChooseAction;
+
+  /// No description provided for @accountBalanceAdjustmentOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance only'**
+  String get accountBalanceAdjustmentOnly;
+
+  /// No description provided for @accountBalanceAdjustmentOnlyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No transaction will be created. Historical balance trends will use the new balance as their baseline.'**
+  String get accountBalanceAdjustmentOnlyMessage;
+
+  /// No description provided for @accountBalanceAdjustmentCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create transaction'**
+  String get accountBalanceAdjustmentCreate;
+
+  /// No description provided for @accountBalanceAdjustmentCreateMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Also add a regular income or expense under the Balance category, included in income, expense, and budget statistics.'**
+  String get accountBalanceAdjustmentCreateMessage;
+
+  /// No description provided for @accountBalanceAdjustmentConfirmOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm balance only'**
+  String get accountBalanceAdjustmentConfirmOnly;
+
+  /// No description provided for @accountBalanceAdjustmentConfirmCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm and create transaction'**
+  String get accountBalanceAdjustmentConfirmCreate;
+
+  /// No description provided for @accountBalanceCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current balance'**
+  String get accountBalanceCurrent;
+
+  /// No description provided for @accountBalanceAfterAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjusted balance'**
+  String get accountBalanceAfterAdjustment;
+
+  /// No description provided for @accountBalanceDifference.
+  ///
+  /// In en, this message translates to:
+  /// **'Difference'**
+  String get accountBalanceDifference;
+
+  /// No description provided for @accountBalanceUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The balance has not changed'**
+  String get accountBalanceUnchanged;
+
   /// No description provided for @accountEditTitle.
   ///
   /// In en, this message translates to:
@@ -7292,6 +7922,78 @@ abstract class AppLocalizations {
   /// **'Enable Account Feature'**
   String get accountsEnableFeature;
 
+  /// No description provided for @accountHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide account'**
+  String get accountHide;
+
+  /// No description provided for @accountUnhide.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore account'**
+  String get accountUnhide;
+
+  /// No description provided for @accountRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get accountRestore;
+
+  /// No description provided for @accountHiddenTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get accountHiddenTag;
+
+  /// No description provided for @accountHiddenSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get accountHiddenSection;
+
+  /// No description provided for @accountHiddenSectionSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} hidden · {total}'**
+  String accountHiddenSectionSummary(int count, String total);
+
+  /// No description provided for @accountHideConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide this account?'**
+  String get accountHideConfirmTitle;
+
+  /// No description provided for @accountHideConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It won\'t be selectable for new records; history and balance are kept and you can restore it anytime.'**
+  String get accountHideConfirmBody;
+
+  /// No description provided for @accountHideRecurringWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} recurring bills use this account; they\'ll be skipped while hidden.'**
+  String accountHideRecurringWarn(int count);
+
+  /// No description provided for @accountHideClearedDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleared its default-account setting'**
+  String get accountHideClearedDefault;
+
+  /// No description provided for @accountHiddenToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get accountHiddenToast;
+
+  /// No description provided for @accountRestoredToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored'**
+  String get accountRestoredToast;
+
   /// No description provided for @privacyOpenSourceUrlError.
   ///
   /// In en, this message translates to:
@@ -7417,6 +8119,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Widget automatically displays actual data from current ledger, theme color follows app settings'**
   String get widgetPreviewDesc;
+
+  /// No description provided for @widgetGalleryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Widget Gallery'**
+  String get widgetGalleryTitle;
+
+  /// No description provided for @widgetGalleryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Previews use sample data — the real widget shows your current ledger and follows your theme color.'**
+  String get widgetGalleryDesc;
+
+  /// No description provided for @widgetGalleryGlanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get widgetGalleryGlanceTitle;
+
+  /// No description provided for @widgetGalleryGlanceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s and this month\'s income and expenses at a glance'**
+  String get widgetGalleryGlanceDesc;
+
+  /// No description provided for @widgetGalleryNetWorthDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Total assets, liabilities and net worth trend'**
+  String get widgetGalleryNetWorthDesc;
+
+  /// No description provided for @widgetGalleryQuickAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Add'**
+  String get widgetGalleryQuickAddTitle;
+
+  /// No description provided for @widgetGalleryQuickAddDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'One-tap entry for your frequent categories'**
+  String get widgetGalleryQuickAddDesc;
+
+  /// No description provided for @widgetGalleryBudgetDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Track your budget progress at a glance'**
+  String get widgetGalleryBudgetDesc;
+
+  /// No description provided for @widgetGalleryRecentDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'See your latest transactions'**
+  String get widgetGalleryRecentDesc;
+
+  /// No description provided for @widgetGalleryDashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get widgetGalleryDashboardTitle;
+
+  /// No description provided for @widgetDashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This Month'**
+  String get widgetDashboardTitle;
+
+  /// No description provided for @widgetGalleryDashboardDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Income, trend and recent transactions in one view'**
+  String get widgetGalleryDashboardDesc;
+
+  /// No description provided for @widgetConsumptionRhythmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending Rhythm'**
+  String get widgetConsumptionRhythmTitle;
+
+  /// No description provided for @widgetConsumptionRhythmRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 30 days'**
+  String get widgetConsumptionRhythmRange;
+
+  /// No description provided for @widgetConsumptionRhythmStable.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending is steady'**
+  String get widgetConsumptionRhythmStable;
+
+  /// No description provided for @widgetConsumptionRhythmIncrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Faster than last week'**
+  String get widgetConsumptionRhythmIncrease;
+
+  /// No description provided for @widgetConsumptionRhythmDecrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Steadier than last week'**
+  String get widgetConsumptionRhythmDecrease;
+
+  /// No description provided for @widgetConsumptionRhythmEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No spending in the last 30 days'**
+  String get widgetConsumptionRhythmEmpty;
+
+  /// No description provided for @widgetBeeTrailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record Bee Trail'**
+  String get widgetBeeTrailTitle;
+
+  /// No description provided for @widgetBeeTrailStreakSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get widgetBeeTrailStreakSuffix;
+
+  /// No description provided for @widgetBeeTrailCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'28-day completion'**
+  String get widgetBeeTrailCompletion;
+
+  /// No description provided for @widgetBeeTrailEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a record to light the first cell'**
+  String get widgetBeeTrailEmpty;
+
+  /// No description provided for @widgetGalleryConsumptionRhythmDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'See your spending pace across the last 30 days'**
+  String get widgetGalleryConsumptionRhythmDesc;
+
+  /// No description provided for @widgetGalleryBeeTrailDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Build a gentle daily recording habit'**
+  String get widgetGalleryBeeTrailDesc;
+
+  /// No description provided for @widgetSizeSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Small'**
+  String get widgetSizeSmall;
+
+  /// No description provided for @widgetSizeMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get widgetSizeMedium;
+
+  /// No description provided for @widgetSizeLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get widgetSizeLarge;
 
   /// No description provided for @howToAddWidget.
   ///
@@ -8083,6 +8947,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ledger not found'**
   String get aiOcrNoLedger;
+
+  /// No description provided for @aiBillingRateMissingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'⚠️ No {currency} rate available — recorded 1:1 for now; use “Reconvert” on the stats page to fix.'**
+  String aiBillingRateMissingHint(String currency);
+
+  /// No description provided for @aiPromptVarCurrencies.
+  ///
+  /// In en, this message translates to:
+  /// **'Ledger base currency + foreign-currency accounts in use'**
+  String get aiPromptVarCurrencies;
+
+  /// No description provided for @aiPromptVarBillGuard.
+  ///
+  /// In en, this message translates to:
+  /// **'Non-bill filter (injected for screenshot / auto bookkeeping only)'**
+  String get aiPromptVarBillGuard;
+
+  /// No description provided for @aiPromptMissingVarsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your custom template is missing these variables, so the matching features stop working: {vars}'**
+  String aiPromptMissingVarsHint(String vars);
+
+  /// No description provided for @aiPromptInsertVarSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert {name} section'**
+  String aiPromptInsertVarSection(String name);
+
+  /// No description provided for @aiPromptVarSectionInserted.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} section appended — review, then save'**
+  String aiPromptVarSectionInserted(String name);
 
   /// No description provided for @aiOcrSuccess.
   ///
@@ -9536,6 +10436,114 @@ abstract class AppLocalizations {
   /// **'e.g.: Bought a coffee for \$35'**
   String get aiChatInputHint;
 
+  /// No description provided for @aiQuickCommandsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a task'**
+  String get aiQuickCommandsTitle;
+
+  /// No description provided for @agentSuggestionOverviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This month\'s totals'**
+  String get agentSuggestionOverviewTitle;
+
+  /// No description provided for @agentSuggestionOverviewPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Summarize this month\'s income, expenses and balance.'**
+  String get agentSuggestionOverviewPrompt;
+
+  /// No description provided for @agentSuggestionCategoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Category shares'**
+  String get agentSuggestionCategoryTitle;
+
+  /// No description provided for @agentSuggestionCategoryPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'What are this month\'s spending shares by top-level category?'**
+  String get agentSuggestionCategoryPrompt;
+
+  /// No description provided for @aiQuickCommandsOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open suggestions'**
+  String get aiQuickCommandsOpen;
+
+  /// No description provided for @aiChatEmptyMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet'**
+  String get aiChatEmptyMessages;
+
+  /// No description provided for @aiChatEmptyCurrentLedger.
+  ///
+  /// In en, this message translates to:
+  /// **'Current ledger'**
+  String get aiChatEmptyCurrentLedger;
+
+  /// No description provided for @aiChatEmptyStartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with a transaction or a question'**
+  String get aiChatEmptyStartTitle;
+
+  /// No description provided for @aiChatEmptyStartDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ll answer from this ledger and ask for permission when needed.'**
+  String get aiChatEmptyStartDescription;
+
+  /// No description provided for @aiChatEmptyMonthExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'This month\'s spending'**
+  String get aiChatEmptyMonthExpense;
+
+  /// No description provided for @aiChatEmptyRecordedTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded transactions'**
+  String get aiChatEmptyRecordedTransactions;
+
+  /// No description provided for @aiChatEmptyTransactionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} recorded'**
+  String aiChatEmptyTransactionCount(int count);
+
+  /// No description provided for @aiChatEmptyQuestionExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Try asking: What did I spend the most on this month?'**
+  String get aiChatEmptyQuestionExample;
+
+  /// No description provided for @aiChatEmptyFirstTransactionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with today\'s first transaction'**
+  String get aiChatEmptyFirstTransactionTitle;
+
+  /// No description provided for @aiChatEmptyFirstTransactionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell me the amount and purpose, and I\'ll help record it.'**
+  String get aiChatEmptyFirstTransactionDescription;
+
+  /// No description provided for @aiChatEmptyFirstTransactionExample.
+  ///
+  /// In en, this message translates to:
+  /// **'For example: Lunch cost 28'**
+  String get aiChatEmptyFirstTransactionExample;
+
+  /// No description provided for @aiChatMessagesLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load messages: {error}'**
+  String aiChatMessagesLoadFailed(String error);
+
   /// No description provided for @aiChatThinking.
   ///
   /// In en, this message translates to:
@@ -9602,6 +10610,366 @@ abstract class AppLocalizations {
   /// **'Failed to send'**
   String get aiChatSendFailed;
 
+  /// No description provided for @agentRunFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'AI service is temporarily unavailable. Please try again later.'**
+  String get agentRunFailed;
+
+  /// No description provided for @agentNativeToolsUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This model can chat normally, but it does not support the native tool calls required to read or change ledger data. Open Settings > AI Settings > Provider Management to test or switch models.'**
+  String get agentNativeToolsUnsupported;
+
+  /// No description provided for @agentTurnTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI response timed out. Please try again shortly.'**
+  String get agentTurnTimedOut;
+
+  /// No description provided for @agentRecordIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'The transaction details are incomplete. Please include an amount and purpose, then try again.'**
+  String get agentRecordIncomplete;
+
+  /// No description provided for @agentRecordCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created {count, plural, =1{1 transaction} other{{count} transactions}}.'**
+  String agentRecordCreated(int count);
+
+  /// No description provided for @agentStepsExceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'This request took too many steps. Please simplify it and try again.'**
+  String get agentStepsExceeded;
+
+  /// No description provided for @agentExecutingTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Working: {tool}'**
+  String agentExecutingTool(Object tool);
+
+  /// No description provided for @agentToolCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Done: {tool}'**
+  String agentToolCompleted(Object tool);
+
+  /// No description provided for @agentToolFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not complete: {tool}'**
+  String agentToolFailed(Object tool);
+
+  /// No description provided for @agentToolQueryTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'query transactions'**
+  String get agentToolQueryTransactions;
+
+  /// No description provided for @agentToolSpendingSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'summarize spending'**
+  String get agentToolSpendingSummary;
+
+  /// No description provided for @agentToolTransactionSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'summarize transactions'**
+  String get agentToolTransactionSummary;
+
+  /// No description provided for @agentToolBudgetStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'check budget'**
+  String get agentToolBudgetStatus;
+
+  /// No description provided for @agentToolRecurringTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'view recurring transactions'**
+  String get agentToolRecurringTransactions;
+
+  /// No description provided for @agentToolRecordTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'record transaction'**
+  String get agentToolRecordTransaction;
+
+  /// No description provided for @agentToolSaveMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'save memory'**
+  String get agentToolSaveMemory;
+
+  /// No description provided for @agentToolForgetMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'forget memory'**
+  String get agentToolForgetMemory;
+
+  /// No description provided for @agentPermissionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Assistant permissions'**
+  String get agentPermissionsTitle;
+
+  /// No description provided for @agentPermissionsIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what AI Assistant can do here. Read-only tools only view data; tools that change data ask for authorization before running.'**
+  String get agentPermissionsIntro;
+
+  /// No description provided for @agentPermissionsReadOnlySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only tools'**
+  String get agentPermissionsReadOnlySection;
+
+  /// No description provided for @agentPermissionsReadOnlySectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'View ledger information without changing anything.'**
+  String get agentPermissionsReadOnlySectionDescription;
+
+  /// No description provided for @agentPermissionsWriteSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Data-changing tools'**
+  String get agentPermissionsWriteSection;
+
+  /// No description provided for @agentPermissionsWriteSectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'These can change your ledger or local memories; asking every time is recommended.'**
+  String get agentPermissionsWriteSectionDescription;
+
+  /// No description provided for @agentPermissionsDefaultsActive.
+  ///
+  /// In en, this message translates to:
+  /// **'All tools are using their default policies'**
+  String get agentPermissionsDefaultsActive;
+
+  /// No description provided for @agentPermissionsModifiedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} custom settings'**
+  String agentPermissionsModifiedCount(int count);
+
+  /// No description provided for @agentPermissionsRestoreDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore defaults'**
+  String get agentPermissionsRestoreDefaults;
+
+  /// No description provided for @agentPermissionsRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore default permissions?'**
+  String get agentPermissionsRestoreTitle;
+
+  /// No description provided for @agentPermissionsRestoreDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This clears every Always allow setting and restores each tool\'s default permission.'**
+  String get agentPermissionsRestoreDescription;
+
+  /// No description provided for @agentPermissionsRestoreConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get agentPermissionsRestoreConfirm;
+
+  /// No description provided for @agentPermissionAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask every time'**
+  String get agentPermissionAsk;
+
+  /// No description provided for @agentPermissionAlwaysAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Always allow'**
+  String get agentPermissionAlwaysAllow;
+
+  /// No description provided for @agentPermissionWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for your authorization'**
+  String get agentPermissionWaiting;
+
+  /// No description provided for @agentPermissionWriteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save permission settings. Please try again.'**
+  String get agentPermissionWriteFailed;
+
+  /// No description provided for @agentAuthorizationPersistenceFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission could not be saved; this operation still follows your choice.'**
+  String get agentAuthorizationPersistenceFailed;
+
+  /// No description provided for @agentToolQueryTransactionsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'View transactions in the current ledger for a selected time range.'**
+  String get agentToolQueryTransactionsDescription;
+
+  /// No description provided for @agentToolSpendingSummaryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Summarize spending in the current ledger for a selected time range.'**
+  String get agentToolSpendingSummaryDescription;
+
+  /// No description provided for @agentToolTransactionSummaryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Aggregate transactions in the current ledger by type, category, tag, account, or time period.'**
+  String get agentToolTransactionSummaryDescription;
+
+  /// No description provided for @agentToolBudgetStatusDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'View the budget status for the current ledger.'**
+  String get agentToolBudgetStatusDescription;
+
+  /// No description provided for @agentToolRecurringTransactionsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'View enabled recurring transactions in the current ledger.'**
+  String get agentToolRecurringTransactionsDescription;
+
+  /// No description provided for @agentToolRecordTransactionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a transaction from the original text you sent.'**
+  String get agentToolRecordTransactionDescription;
+
+  /// No description provided for @agentToolSaveMemoryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Save something you explicitly asked the assistant to remember.'**
+  String get agentToolSaveMemoryDescription;
+
+  /// No description provided for @agentToolForgetMemoryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete a saved local memory.'**
+  String get agentToolForgetMemoryDescription;
+
+  /// No description provided for @agentToolUnknownDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Run a local Agent tool.'**
+  String get agentToolUnknownDescription;
+
+  /// No description provided for @agentAuthorizationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Agent action?'**
+  String get agentAuthorizationTitle;
+
+  /// No description provided for @agentAuthorizationCurrentLedger.
+  ///
+  /// In en, this message translates to:
+  /// **'Ledger: current ledger (ID {ledgerId})'**
+  String agentAuthorizationCurrentLedger(int ledgerId);
+
+  /// No description provided for @agentAuthorizationAllLedgers.
+  ///
+  /// In en, this message translates to:
+  /// **'Ledger: all accessible ledgers'**
+  String get agentAuthorizationAllLedgers;
+
+  /// No description provided for @agentAuthorizationParameters.
+  ///
+  /// In en, this message translates to:
+  /// **'Information used this time'**
+  String get agentAuthorizationParameters;
+
+  /// No description provided for @agentAuthorizationNoParameters.
+  ///
+  /// In en, this message translates to:
+  /// **'No parameters need to be shown.'**
+  String get agentAuthorizationNoParameters;
+
+  /// No description provided for @agentAuthorizationSourceText.
+  ///
+  /// In en, this message translates to:
+  /// **'Original transaction text'**
+  String get agentAuthorizationSourceText;
+
+  /// No description provided for @agentAuthorizationTimeRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Query time range'**
+  String get agentAuthorizationTimeRange;
+
+  /// No description provided for @agentAuthorizationSummaryTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction types'**
+  String get agentAuthorizationSummaryTypes;
+
+  /// No description provided for @agentAuthorizationSummaryGroupBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Group by'**
+  String get agentAuthorizationSummaryGroupBy;
+
+  /// No description provided for @agentAuthorizationCategoryIds.
+  ///
+  /// In en, this message translates to:
+  /// **'Category IDs'**
+  String get agentAuthorizationCategoryIds;
+
+  /// No description provided for @agentAuthorizationTagIds.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag IDs'**
+  String get agentAuthorizationTagIds;
+
+  /// No description provided for @agentAuthorizationAccountIds.
+  ///
+  /// In en, this message translates to:
+  /// **'Account IDs'**
+  String get agentAuthorizationAccountIds;
+
+  /// No description provided for @agentAuthorizationMemoryContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Memory content'**
+  String get agentAuthorizationMemoryContent;
+
+  /// No description provided for @agentAuthorizationMemoryId.
+  ///
+  /// In en, this message translates to:
+  /// **'Memory ID'**
+  String get agentAuthorizationMemoryId;
+
+  /// No description provided for @agentAuthorizationDeny.
+  ///
+  /// In en, this message translates to:
+  /// **'Deny'**
+  String get agentAuthorizationDeny;
+
+  /// No description provided for @agentAuthorizationAllowOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow once'**
+  String get agentAuthorizationAllowOnce;
+
+  /// No description provided for @agentAuthorizationAlwaysAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Always allow'**
+  String get agentAuthorizationAlwaysAllow;
+
   /// No description provided for @billCardSuccess.
   ///
   /// In en, this message translates to:
@@ -9643,6 +11011,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'💳 Account'**
   String get billCardAccount;
+
+  /// No description provided for @billCardTransferAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'🔁 Transfer accounts'**
+  String get billCardTransferAccounts;
+
+  /// No description provided for @billCardType.
+  ///
+  /// In en, this message translates to:
+  /// **'↕️ Type'**
+  String get billCardType;
+
+  /// No description provided for @billCardExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get billCardExpense;
+
+  /// No description provided for @billCardIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get billCardIncome;
+
+  /// No description provided for @billCardTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get billCardTransfer;
+
+  /// No description provided for @billCardCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'💱 Currency'**
+  String get billCardCurrency;
+
+  /// No description provided for @billCardTags.
+  ///
+  /// In en, this message translates to:
+  /// **'🏷️ Tags'**
+  String get billCardTags;
 
   /// No description provided for @billCardUndo.
   ///
@@ -10159,6 +11569,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create New Tag'**
   String get tagSelectCreateNew;
+
+  /// No description provided for @tagSelectOwnerManaged.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared ledger tags are managed by the owner'**
+  String get tagSelectOwnerManaged;
 
   /// No description provided for @tagSelectRecentlyUsed.
   ///
@@ -11990,12 +13406,6 @@ abstract class AppLocalizations {
   /// **'Assets/Liabilities'**
   String get accountGroupValuation;
 
-  /// No description provided for @adjustmentTransaction.
-  ///
-  /// In en, this message translates to:
-  /// **'Valuation Adjustment'**
-  String get adjustmentTransaction;
-
   /// No description provided for @creditCardBillingInfo.
   ///
   /// In en, this message translates to:
@@ -12043,138 +13453,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Set up'**
   String get budgetSetupAction;
-
-  /// No description provided for @cloudCollabDevicesPageTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Device Sessions'**
-  String get cloudCollabDevicesPageTitle;
-
-  /// No description provided for @cloudCollabDevicesPageSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage active devices'**
-  String get cloudCollabDevicesPageSubtitle;
-
-  /// No description provided for @cloudCollabDevicesViewAllSessions.
-  ///
-  /// In en, this message translates to:
-  /// **'Show all sessions'**
-  String get cloudCollabDevicesViewAllSessions;
-
-  /// No description provided for @cloudCollabDevicesViewModeHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Default view shows deduped devices active in the last 30 days.'**
-  String get cloudCollabDevicesViewModeHint;
-
-  /// No description provided for @cloudCollabNoDevices.
-  ///
-  /// In en, this message translates to:
-  /// **'No active devices'**
-  String get cloudCollabNoDevices;
-
-  /// No description provided for @cloudCollabUnknownDeviceName.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown Device'**
-  String get cloudCollabUnknownDeviceName;
-
-  /// No description provided for @cloudCollabDeviceCurrentTag.
-  ///
-  /// In en, this message translates to:
-  /// **'Current Device'**
-  String get cloudCollabDeviceCurrentTag;
-
-  /// No description provided for @cloudCollabCurrentDeviceCannotRevoke.
-  ///
-  /// In en, this message translates to:
-  /// **'Current device cannot be revoked.'**
-  String get cloudCollabCurrentDeviceCannotRevoke;
-
-  /// No description provided for @cloudCollabDeviceAppVersion.
-  ///
-  /// In en, this message translates to:
-  /// **'App: {version}'**
-  String cloudCollabDeviceAppVersion(String version);
-
-  /// No description provided for @cloudCollabDeviceOsVersion.
-  ///
-  /// In en, this message translates to:
-  /// **'OS: {version}'**
-  String cloudCollabDeviceOsVersion(String version);
-
-  /// No description provided for @cloudCollabDeviceModel.
-  ///
-  /// In en, this message translates to:
-  /// **'Model: {model}'**
-  String cloudCollabDeviceModel(String model);
-
-  /// No description provided for @cloudCollabDeviceLastIp.
-  ///
-  /// In en, this message translates to:
-  /// **'IP: {ip}'**
-  String cloudCollabDeviceLastIp(String ip);
-
-  /// No description provided for @cloudCollabDeviceSessionCount.
-  ///
-  /// In en, this message translates to:
-  /// **'Sessions: {count}'**
-  String cloudCollabDeviceSessionCount(String count);
-
-  /// No description provided for @cloudCollabDeviceLastSeen.
-  ///
-  /// In en, this message translates to:
-  /// **'Last seen: {time}'**
-  String cloudCollabDeviceLastSeen(String time);
-
-  /// No description provided for @cloudCollabDeviceCreatedAt.
-  ///
-  /// In en, this message translates to:
-  /// **'Created: {time}'**
-  String cloudCollabDeviceCreatedAt(String time);
-
-  /// No description provided for @cloudCollabDeviceRevokeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Revoke Device'**
-  String get cloudCollabDeviceRevokeTitle;
-
-  /// No description provided for @cloudCollabDeviceRevokeMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Revoke device {name} ({id})?'**
-  String cloudCollabDeviceRevokeMessage(String name, String id);
-
-  /// No description provided for @cloudCollabDeviceRevokeMultipleMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Revoke {count} sessions for device {name}?'**
-  String cloudCollabDeviceRevokeMultipleMessage(String name, String count);
-
-  /// No description provided for @cloudCollabDeviceRevoked.
-  ///
-  /// In en, this message translates to:
-  /// **'Device revoked'**
-  String get cloudCollabDeviceRevoked;
-
-  /// No description provided for @cloudCollabUnavailableMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Cloud sync is unavailable.'**
-  String get cloudCollabUnavailableMessage;
-
-  /// No description provided for @cloudCollabScopeDeniedHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Server has not enabled ALLOW_APP_RW_SCOPES, so device sessions are unavailable.'**
-  String get cloudCollabScopeDeniedHint;
-
-  /// No description provided for @cloudCollabScopeDeniedAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Set ALLOW_APP_RW_SCOPES=true in server .env, restart the service, then sign in again.'**
-  String get cloudCollabScopeDeniedAction;
 
   /// No description provided for @syncHealthTitle.
   ///
@@ -13172,6 +14450,18 @@ abstract class AppLocalizations {
   /// **'Rate'**
   String get txRateLabel;
 
+  /// No description provided for @transactionDoubleTapHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Double tap'**
+  String get transactionDoubleTapHint;
+
+  /// No description provided for @transactionSavedNextCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved. Choose another category.'**
+  String get transactionSavedNextCategory;
+
   /// No description provided for @txConvertedPreview.
   ///
   /// In en, this message translates to:
@@ -13879,6 +15169,426 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mauritanian Ouguiya'**
   String get currencyMRU;
+
+  /// No description provided for @agentAssistantSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Assistant'**
+  String get agentAssistantSettingsTitle;
+
+  /// No description provided for @agentAssistantSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage how the assistant uses local data and tools.'**
+  String get agentAssistantSettingsSubtitle;
+
+  /// No description provided for @agentAssistantPermissionsEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions'**
+  String get agentAssistantPermissionsEntry;
+
+  /// No description provided for @agentAssistantPermissionsEntryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose when data-changing tools need your approval.'**
+  String get agentAssistantPermissionsEntryDescription;
+
+  /// No description provided for @agentAssistantMemoryEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Local memory'**
+  String get agentAssistantMemoryEntry;
+
+  /// No description provided for @agentAssistantMemoryEntryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'View and remove memories kept only on this device.'**
+  String get agentAssistantMemoryEntryDescription;
+
+  /// No description provided for @agentAssistantActivityEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent activity'**
+  String get agentAssistantActivityEntry;
+
+  /// No description provided for @agentAssistantActivityEntryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Review local tool calls and their outcomes.'**
+  String get agentAssistantActivityEntryDescription;
+
+  /// No description provided for @agentExecutionDepthEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution depth'**
+  String get agentExecutionDepthEntry;
+
+  /// No description provided for @agentExecutionDepthEntryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Higher limits can handle more steps but may take longer.'**
+  String get agentExecutionDepthEntryDescription;
+
+  /// No description provided for @agentExecutionDepthSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {turns} model turns'**
+  String agentExecutionDepthSelected(int turns);
+
+  /// No description provided for @agentExecutionDepthChooseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution depth'**
+  String get agentExecutionDepthChooseTitle;
+
+  /// No description provided for @agentExecutionDepthQuick.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick'**
+  String get agentExecutionDepthQuick;
+
+  /// No description provided for @agentExecutionDepthStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get agentExecutionDepthStandard;
+
+  /// No description provided for @agentExecutionDepthDeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep'**
+  String get agentExecutionDepthDeep;
+
+  /// No description provided for @agentExecutionDepthCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get agentExecutionDepthCustom;
+
+  /// No description provided for @agentMemoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Local memory'**
+  String get agentMemoryTitle;
+
+  /// No description provided for @agentMemoryIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'These memories stay on this device and apply only to the current ledger.'**
+  String get agentMemoryIntro;
+
+  /// No description provided for @agentMemoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No local memories yet.'**
+  String get agentMemoryEmpty;
+
+  /// No description provided for @agentMemoryDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this memory?'**
+  String get agentMemoryDeleteTitle;
+
+  /// No description provided for @agentMemoryDeleteDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant will no longer use this memory.'**
+  String get agentMemoryDeleteDescription;
+
+  /// No description provided for @agentMemoryClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear current ledger memories'**
+  String get agentMemoryClear;
+
+  /// No description provided for @agentMemoryClearTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all current ledger memories?'**
+  String get agentMemoryClearTitle;
+
+  /// No description provided for @agentMemoryClearDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes every local memory for this ledger and cannot be undone.'**
+  String get agentMemoryClearDescription;
+
+  /// No description provided for @agentActivityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent activity'**
+  String get agentActivityTitle;
+
+  /// No description provided for @agentActivityIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'This activity history is stored locally and is never synced.'**
+  String get agentActivityIntro;
+
+  /// No description provided for @agentActivityEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No assistant activity yet.'**
+  String get agentActivityEmpty;
+
+  /// No description provided for @agentActivityCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get agentActivityCompleted;
+
+  /// No description provided for @agentActivityFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get agentActivityFailed;
+
+  /// No description provided for @agentActivityRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get agentActivityRunning;
+
+  /// No description provided for @agentActivityCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get agentActivityCancelled;
+
+  /// No description provided for @agentActivityTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get agentActivityTools;
+
+  /// No description provided for @agentActivityToolCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get agentActivityToolCompleted;
+
+  /// No description provided for @agentActivityToolDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Denied'**
+  String get agentActivityToolDenied;
+
+  /// No description provided for @agentActivityToolFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get agentActivityToolFailed;
+
+  /// No description provided for @agentRunCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'This run was stopped.'**
+  String get agentRunCancelled;
+
+  /// No description provided for @agentRunStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get agentRunStop;
+
+  /// No description provided for @agentQueryValidationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The query parameters could not be corrected, so a reliable result is unavailable. Please try again.'**
+  String get agentQueryValidationFailed;
+
+  /// No description provided for @annualReportInsightsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual Insights'**
+  String get annualReportInsightsTitle;
+
+  /// No description provided for @annualReportInsightsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover your spending habits through data'**
+  String get annualReportInsightsSubtitle;
+
+  /// No description provided for @annualReportAveragePerRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Average Spending per Record'**
+  String get annualReportAveragePerRecord;
+
+  /// No description provided for @annualReportAveragePerRecordDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Average amount per bookkeeping record'**
+  String get annualReportAveragePerRecordDesc;
+
+  /// No description provided for @annualReportDailyAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Average Spending'**
+  String get annualReportDailyAverage;
+
+  /// No description provided for @annualReportDailyAverageDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Average amount spent each day'**
+  String get annualReportDailyAverageDesc;
+
+  /// No description provided for @annualReportMonthlyAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Average Spending'**
+  String get annualReportMonthlyAverage;
+
+  /// No description provided for @annualReportMonthlyAverageDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Average amount spent each month'**
+  String get annualReportMonthlyAverageDesc;
+
+  /// No description provided for @annualReportBusiestMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Most Active Month'**
+  String get annualReportBusiestMonth;
+
+  /// No description provided for @annualReportBusiestMonthDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Month with the most bookkeeping activity'**
+  String get annualReportBusiestMonthDesc;
+
+  /// No description provided for @annualReportCategoryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending Categories'**
+  String get annualReportCategoryCount;
+
+  /// No description provided for @annualReportCategoryCountDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of spending categories used'**
+  String get annualReportCategoryCountDesc;
+
+  /// No description provided for @annualReportCategoryCountValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 category} other{{count} categories}}'**
+  String annualReportCategoryCountValue(int count);
+
+  /// No description provided for @annualReportSavingsRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Savings Rate'**
+  String get annualReportSavingsRate;
+
+  /// No description provided for @annualReportSavingsRatePositive.
+  ///
+  /// In en, this message translates to:
+  /// **'The share of your income saved this year'**
+  String get annualReportSavingsRatePositive;
+
+  /// No description provided for @annualReportSavingsRateNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending exceeded income this year'**
+  String get annualReportSavingsRateNegative;
+
+  /// No description provided for @annualReportComparisonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Income vs. Expense'**
+  String get annualReportComparisonTitle;
+
+  /// No description provided for @annualReportComparisonSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare monthly income and expenses'**
+  String get annualReportComparisonSubtitle;
+
+  /// No description provided for @annualReportHighestIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Highest Income'**
+  String get annualReportHighestIncome;
+
+  /// No description provided for @annualReportHighestExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Highest Expense'**
+  String get annualReportHighestExpense;
+
+  /// No description provided for @annualReportConsistency.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookkeeping Streak'**
+  String get annualReportConsistency;
+
+  /// No description provided for @annualReportDaysValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, one{1 day} other{{days} days}}'**
+  String annualReportDaysValue(int days);
+
+  /// No description provided for @annualReportSavingsPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Congratulations on your savings'**
+  String get annualReportSavingsPositive;
+
+  /// No description provided for @annualReportSavingsNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending exceeded income this year'**
+  String get annualReportSavingsNegative;
+
+  /// No description provided for @annualReportMonthlyExpenseTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Spending Trend'**
+  String get annualReportMonthlyExpenseTrend;
+
+  /// No description provided for @annualReportAchieved.
+  ///
+  /// In en, this message translates to:
+  /// **'Achieved'**
+  String get annualReportAchieved;
+
+  /// No description provided for @annualReportNotAchieved.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Achieved'**
+  String get annualReportNotAchieved;
+
+  /// No description provided for @annualReportDownloadHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan to download BeeCount and start bookkeeping'**
+  String get annualReportDownloadHint;
+
+  /// No description provided for @attachmentKeepOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Original Attachments'**
+  String get attachmentKeepOriginal;
+
+  /// No description provided for @attachmentKeepOriginalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses more storage and sync data'**
+  String get attachmentKeepOriginalDesc;
+
+  /// No description provided for @transactionCopyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy as new transaction'**
+  String get transactionCopyAction;
+
+  /// No description provided for @transactionCopyUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This transaction cannot be copied. Check the ledger and your access.'**
+  String get transactionCopyUnavailable;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

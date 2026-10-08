@@ -28,7 +28,7 @@
 <br/>
 <br/>
 
-[🌐 官网](https://count.beejz.com) · [📖 文档](https://count.beejz.com/docs/intro) · [💝 捐赠](#-捐赠支持) · [💬 Telegram](https://t.me/beecount) · [📦 APK](https://github.com/TNT-Likely/BeeCount/releases/latest) · [🚀 TestFlight](https://testflight.apple.com/join/Eaw2rWxa)
+[🌐 官网](https://count.beejz.com) · [📖 文档](https://count.beejz.com/docs/intro) · [💝 捐赠](#-捐赠支持) · [🤝 商务合作](mailto:sunxiaoyes@outlook.com?subject=BeeCount%20Business%20Inquiry) · [💬 Telegram](https://t.me/beecount) · [📦 APK](https://github.com/TNT-Likely/BeeCount/releases/latest) · [🚀 TestFlight](https://testflight.apple.com/join/Eaw2rWxa)
 
 </div>
 
@@ -50,7 +50,7 @@
 | ❌ 高级功能付费墙 | ✅ **完全免费**(包括 AI / OCR / 语音记账) |
 | ❌ 广告 / 理财推荐 | ✅ **零广告 / 零追踪 / 零数据收集** |
 
-> **平台支持**:🤖 Android 5.0+ · 🍎 iOS 15.5+ · 🌐 Web(BeeCount Cloud 自带,见下文)
+> **平台支持**:🤖 Android 6.0+(GitHub APK)/Android 7.0+(Google Play) · 🍎 iOS 15.5+ · 🌐 Web(BeeCount Cloud 自带,见下文)
 >
 > ~~📱 HarmonyOS — [已停止更新](https://github.com/TNT-Likely/beecount-openharmony)~~
 
@@ -87,7 +87,7 @@
 
 - **暗黑模式** — 纯黑 + 主题色边框,OLED 友好
 - **多语言** — 官方简中 / 繁中 / English,社区贡献韩语,本地化日期/数字格式
-- **桌面小组件** — iOS / Android 桌面快速记账
+- **桌面小组件** — 6 类 × 12 种规格(收支速览/净资产/快速记账/预算/最近交易/仪表盘),暗黑/多语言/主题色全跟随,[全家福预览](#桌面小组件)
 - **主题装扮** — 多主题色
 
 </details>
@@ -101,6 +101,19 @@
   <img src="demo/videos/zh/02-ocr-recognition.gif" alt="AI OCR 智能识别" width="200" />
   <img src="demo/videos/zh/04-data-analysis.gif" alt="数据分析" width="200" />
 </div>
+
+### 桌面小组件
+
+6 类内容 × 12 种规格,不打开 App 也能看账、一点直达记账:
+
+<details>
+<summary>查看桌面小组件全家福(6 类 × 12 规格)</summary>
+
+<div align="center">
+  <img src="demo/widgets/widgets-showcase-zh.png" alt="桌面小组件全家福:收支速览 / 净资产 / 快速记账 / 预算进度 / 最近交易 / 综合仪表盘" width="820" />
+</div>
+
+</details>
 
 <details>
 <summary>更多截图(9 大主题 / 暗黑模式)</summary>
@@ -291,11 +304,12 @@ A: 使用自己的服务器 / Storage / Bucket,WebDAV 和 S3 建议 HTTPS 加密
 
 ## 💝 捐赠支持
 
-蜜蜂记账完全免费开源,**无广告无付费功能**。如果觉得有用,请作者喝杯咖啡 ☕ 支持持续开发。
+BeeCount 和 BeeCount Cloud 由同一作者维护。如果这些项目对你有帮助，欢迎请作者喝杯咖啡 ☕，支持持续开发。
 
 ### 捐赠方式
 
 [![PayPal](https://img.shields.io/badge/PayPal-Donate-0070BA?logo=paypal&logoColor=white&style=for-the-badge)](https://paypal.me/sunxiaoyes)
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/sunxiao)
 
 <details><summary>支付宝 / 微信二维码</summary>
 
@@ -305,26 +319,41 @@ A: 使用自己的服务器 / Storage / Bucket,WebDAV 和 S3 建议 HTTPS 加密
 
 </details>
 
-**USDT (TRC20)**:`TKBV69B2AoU67p3vDhnJUbMJtZ1DxuUF5C` · <details><summary>币安二维码</summary>![币安](docs/donate/binance.png)</details>
+<details>
+<summary>USDT</summary>
 
-### 资金透明度
+**币安 Pay**（币安 App 内扫码转账）：
 
-| 项 | 金额 |
-|---|---|
-| Apple 开发者账号续费 | ¥688 / 年 |
-| 轻量云服务器(ICP 备案) | ¥79 / 年 |
-| 域名 | ¥80 / 年 |
-| Google Play 开发者账号(一次性) | ¥177 |
-| **年度持续成本** | **¥847 / 年** |
+<img src="docs/donate/binance.png" width="220" alt="币安 Pay 收款码"/>
+
+**链上 USDT（TRC20）**——任意 TRON 钱包扫码：
+
+地址：`TKBV69B2AoU67p3vDhnJUbMJtZ1DxuUF5C`
+
+<img src="docs/donate/trc20.png" width="220" alt="USDT TRC20 地址二维码"/>
+
+</details>
 
 ### 感谢支持者
 
-| | | | | | | | | | | | |
-|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| <img src="assets/avatars/qiao.svg" width="44"/> | <img src="assets/avatars/rui.svg" width="44"/> | <a href="https://github.com/fishdivinity"><img src="assets/avatars/fishdivinity.png" width="44"/></a> | <img src="assets/avatars/shao.svg" width="44"/> | <img src="assets/avatars/ge.svg" width="44"/> | <img src="assets/avatars/te.svg" width="44"/> | <img src="assets/avatars/wen.svg" width="44"/> | <img src="assets/avatars/anon.svg" width="44"/> | <a href="https://github.com/birdnofoots"><img src="https://github.com/birdnofoots.png" width="44"/></a> | <a href="https://github.com/charieswang72-pro"><img src="https://github.com/charieswang72-pro.png" width="44"/></a> | <a href="https://github.com/542474846"><img src="https://github.com/542474846.png" width="44"/></a> | <a href="https://github.com/JOHN-2025"><img src="https://github.com/JOHN-2025.png" width="44"/></a> |
-| *桥 ¥12 | *睿 ¥720 | fishdivinity ¥100 | *邵 ¥15 | *哥 ¥6 | *特 ¥15 | *文 ¥50 | 匿名 ¥50 | birdnofoots ¥10 | Charies ¥10 | 542474846 ¥66 | JOHN-2025 ¥30 |
+<p>
+  <a href="https://github.com/fishdivinity"><img src="assets/avatars/fishdivinity.png" width="44" height="44" alt="fishdivinity" /></a>
+  <a href="https://github.com/birdnofoots"><img src="https://github.com/birdnofoots.png" width="44" height="44" alt="birdnofoots" /></a>
+  <a href="https://github.com/charieswang72-pro"><img src="https://github.com/charieswang72-pro.png" width="44" height="44" alt="charieswang72-pro" /></a>
+  <a href="https://github.com/542474846"><img src="https://github.com/542474846.png" width="44" height="44" alt="542474846" /></a>
+  <a href="https://github.com/JOHN-2025"><img src="https://github.com/JOHN-2025.png" width="44" height="44" alt="JOHN-2025" /></a>
+  <a href="https://github.com/HowcanoeWang"><img src="https://github.com/HowcanoeWang.png" width="44" height="44" alt="HowcanoeWang" /></a>
+</p>
 
-> 💡 已捐赠?[提交信息](https://github.com/TNT-Likely/BeeCount/issues/new?template=donation_info.yml) 展示在列表中。
+> 💡 已捐赠?[提交信息](https://github.com/TNT-Likely/BeeCount/issues/new?template=donation_info.yml) 提供个人主页链接，展示在支持者列表中。
+
+---
+
+## 🤝 商务合作
+
+欢迎商业授权、部署协助、定制开发与合作咨询。请邮件联系，并简要说明你的需求与使用场景。
+
+**[📧 sunxiaoyes@outlook.com](mailto:sunxiaoyes@outlook.com?subject=BeeCount%20Business%20Inquiry)**
 
 ---
 
@@ -345,7 +374,7 @@ A: 使用自己的服务器 / Storage / Bucket,WebDAV 和 S3 建议 HTTPS 加密
 - 基于本软件开发商业产品
 - 提供基于本软件的付费云服务
 
-如需商业授权,请通过 [GitHub Issues](https://github.com/TNT-Likely/BeeCount/issues) 联系。详见 [LICENSE](LICENSE)。
+商业授权价格与购买流程见 [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md)，或邮件联系 **sunxiaoyes@outlook.com**。详见 [LICENSE](LICENSE)。
 
 </details>
 
@@ -358,25 +387,7 @@ A: 使用自己的服务器 / Storage / Bucket,WebDAV 和 S3 建议 HTTPS 加密
 | [BeeCount-Cloud](https://github.com/TNT-Likely/BeeCount-Cloud) | 自建云同步服务端 + Web 管理端(FastAPI + React) |
 | [BeeCount-Website](https://github.com/TNT-Likely/BeeCount-Website) | 官网 / 文档仓库 |
 | [beecount-openharmony](https://github.com/TNT-Likely/beecount-openharmony) | 鸿蒙版本(已停止更新) |
-| [BeeShot](https://github.com/TNT-Likely/BeeShot) | App Store 截图生成器 |
 | [honeycomb](https://github.com/TNT-Likely/honeycomb) | Claude Code 开发脚手架插件市场(本项目开发用的 skills/agents 集合) |
-
----
-
-## ⭐ Star History
-
-<details>
-<summary>查看 Star 历史曲线</summary>
-
-<a href="https://www.star-history.com/?repos=tnt-likely%2Fbeecount&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=tnt-likely/beecount&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=tnt-likely/beecount&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=tnt-likely/beecount&type=date&legend=top-left" />
- </picture>
-</a>
-
-</details>
 
 ---
 

@@ -89,6 +89,49 @@ class TransactionListState extends ConsumerState<TransactionList> {
     return widget.transactions ?? [];
   }
 
+  bool _showingTransactionActions = false;
+
+  Future<void> _showTransactionActions(
+    Transaction transaction,
+    BuildContext rowContext,
+  ) async {
+    if (_showingTransactionActions) return;
+    _showingTransactionActions = true;
+    try {
+      final action = await _pickTransactionAction(rowContext);
+      if (action == 'copy' && mounted) {
+        switchToStreamMode();
+        await TransactionEditUtils.copyTransaction(context, ref, transaction);
+      }
+    } catch (error, stack) {
+      logger.error('TransactionList', '打开交易操作失败', error, stack);
+      if (mounted) {
+        showToast(context, AppLocalizations.of(context).transactionCopyUnavailable);
+      }
+    }
+  }
+
+  Future<String?> _pickTransactionAction(BuildContext rowContext) async {
+    try {
+      final overlay =
+          Overlay.of(context).context.findRenderObject() as RenderBox;
+      final row = rowContext.findRenderObject() as RenderBox;
+      return await BeePopupMenu.showForAnchor(
+        context: context,
+        anchor: row.localToGlobal(Offset.zero, ancestor: overlay) & row.size,
+        items: [
+          BeeMenuItem.action(
+            value: 'copy',
+            icon: Icons.copy_outlined,
+            label: AppLocalizations.of(context).transactionCopyAction,
+          ),
+        ],
+      );
+    } finally {
+      _showingTransactionActions = false;
+    }
+  }
+
   /// 预加载数据的 ID 集合（用于快速判断某条交易是否有预加载详情）
   Set<int>? _preloadedIds;
   Set<int> get _preloadedIdSet {
@@ -420,12 +463,9 @@ class TransactionListState extends ConsumerState<TransactionList> {
             final allItemsInDay = item.$3 as List<({Transaction t, Category? category, Account? account, Account? toAccount})>;
             final isTransfer = it.t.type == 'transfer';
             final isExpense = it.t.type == 'expense';
-            final isAdjustment = it.t.type == 'adjustment';
 
             // 获取分类显示名称
-            final categoryName = isAdjustment
-                ? AppLocalizations.of(context).adjustmentTransaction
-                : CategoryUtils.getDisplayName(it.category?.name, context);
+            final categoryName = CategoryUtils.getDisplayName(it.category?.name, context);
 
             final subtitle = it.t.note ?? '';
 
@@ -497,24 +537,19 @@ class TransactionListState extends ConsumerState<TransactionList> {
                       final attachmentCount = _getAttachmentCountForTransaction(it.t.id);
 
                       return TransactionListItem(
-                        icon: isAdjustment
-                          ? Icons.tune
-                          : getCategoryIconData(category: it.category, categoryName: categoryName),
-                        category: isAdjustment ? null : it.category,
+                        icon: getCategoryIconData(category: it.category, categoryName: categoryName),
+                        category: it.category,
                         title: isTransfer
-                          ? (subtitle.isNotEmpty ? subtitle : AppLocalizations.of(context).transferTitle)
-                          : isAdjustment
-                            ? categoryName
+                            ? (subtitle.isNotEmpty
+                                ? subtitle
+                                : AppLocalizations.of(context).transferTitle)
                             : subtitle,
-                        categoryName: (isTransfer || isAdjustment)
-                          ? null
-                          : categoryName,
+                        categoryName: isTransfer ? null : categoryName,
                         amount: it.t.amount,
                         currencyCode: it.t.currencyCode,
                         nativeAmount: it.t.nativeAmount,
                         isExpense: isExpense,
                         isTransfer: isTransfer,
-                        isAdjustment: isAdjustment,
                         hide: widget.hideAmounts,
                         happenedAt: it.t.happenedAt,
                         accountName: isTransfer
@@ -556,6 +591,8 @@ class TransactionListState extends ConsumerState<TransactionList> {
                             it.category,
                           );
                         },
+                        onLongPressStart: (_) =>
+                            _showTransactionActions(it.t, context),
                         onCategoryTap: !isTransfer && it.category?.id != null
                             ? () async {
                                 switchToStreamMode(); // 用户交互，切换到 Stream 模式

@@ -5,6 +5,9 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// Google Play 自动保护要求 AAB 至少 API 24；APK 继续支持 API 23。
+def buildingAppBundle = gradle.startParameter.taskNames.any { it.toLowerCase().contains("bundle") }
+
 // Load signing credentials from key.properties (not committed to VCS)
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('key.properties')
@@ -35,10 +38,14 @@ android {
         applicationId = "com.tntlikely.beecount"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23  // Required by record_android for voice recording
-        targetSdk = flutter.targetSdkVersion
+        minSdk = buildingAppBundle ? 24 : 23
+        // 硬编码 36(Android 16):Google Play 自 2026-11-01 起要求 targetSdk >= 36,
+        // 而当前锁定的 Flutter 3.27.3 内置 flutter.targetSdkVersion 仍为 35。
+        // 升 Flutter 后可考虑改回 flutter.targetSdkVersion。
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders += [appName: "@string/app_name"]
     // 当未在命令行指定 --flavor 时，默认选择 dev 风味，避免 Flutter 调试找不到 APK。
     missingDimensionStrategy "env", "dev"
     }
@@ -48,11 +55,10 @@ android {
         dev {
             dimension "env"
             applicationIdSuffix ".dev"
-            resValue "string", "app_name", "蜜蜂记账测试版"
+            manifestPlaceholders += [appName: "@string/app_name_test"]
         }
         prod {
             dimension "env"
-            resValue "string", "app_name", "蜜蜂记账"
         }
     }
 
@@ -72,7 +78,7 @@ android {
     // - bundleProdRelease(AAB):splits 关,正常 AAB
     splits {
         abi {
-            enable = !gradle.startParameter.taskNames.any { it.toLowerCase().contains("bundle") }
+            enable = !buildingAppBundle
             reset()
             include 'arm64-v8a', 'armeabi-v7a', 'x86_64'
             universalApk true
@@ -140,7 +146,7 @@ android {
             // Debug 构建追加独立后缀，名称显示为测试版，便于与生产包共存
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
-            resValue "string", "app_name", "蜜蜂记账测试版"
+            manifestPlaceholders += [appName: "@string/app_name_test"]
         }
         release {
             // Use a stable release keystore so upgrades don't require uninstall

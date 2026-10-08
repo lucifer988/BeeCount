@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../ai/providers/ai_provider_manager.dart';
 import 'database_providers.dart';
 import 'theme_providers.dart';
+import 'feature_highlight_providers.dart';
 import 'currency_providers.dart';
 import 'statistics_providers.dart';
 import 'budget_providers.dart';
@@ -27,6 +28,14 @@ final pendingAppLinkActionProvider = StateProvider<AppLinkAction?>((ref) => null
 
 // 手动记账待处理类型（expense/income，配合 newTransaction action 使用）
 final pendingNewTransactionTypeProvider = StateProvider<String?>((ref) => null);
+
+// 手动记账待处理的预填分类 id（配合 newTransaction action 使用，来自小组件
+// 「快速记账」深链 beecount://new?type=...&category=<id>）
+final pendingNewTransactionCategoryIdProvider = StateProvider<int?>((ref) => null);
+
+// beecount://open?page=... 深链的待处理目标页面（assets/budget/detail），
+// 配合 AppLinkAction.open 使用
+final pendingOpenPageProvider = StateProvider<String?>((ref) => null);
 
 // 首页滚动到顶部触发器（每次改变值时触发滚动）
 final homeScrollToTopProvider = StateProvider<int>((ref) => 0);
@@ -196,6 +205,8 @@ final appSplashInitProvider = FutureProvider<void>((ref) async {
       ref.watch(fontScaleInitProvider.future),
       ref.watch(hideAmountsInitProvider.future),
       ref.watch(compactAmountInitProvider.future),
+      ref.watch(skinAnimationInitProvider.future),
+      ref.watch(featureHighlightInitProvider.future),
       ref.watch(showTransactionTimeInitProvider.future),
       ref.watch(noteDisplayModeInitProvider.future),
       ref.watch(noteHistoryPreferencesInitProvider.future),

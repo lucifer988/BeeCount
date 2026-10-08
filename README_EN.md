@@ -28,7 +28,7 @@ Sync via BeeCount Cloud (self-hosted) / iCloud / Supabase / WebDAV / S3
 <br/>
 <br/>
 
-[🌐 Website](https://count.beejz.com/en/) · [📖 Docs](https://count.beejz.com/en/docs/intro) · [💝 Donate](#-donate) · [💬 Telegram](https://t.me/beecount) · [📦 APK](https://github.com/TNT-Likely/BeeCount/releases/latest) · [🚀 TestFlight](https://testflight.apple.com/join/Eaw2rWxa)
+[🌐 Website](https://count.beejz.com/en/) · [📖 Docs](https://count.beejz.com/en/docs/intro) · [💝 Donate](#-donate) · [🤝 Business](mailto:sunxiaoyes@outlook.com?subject=BeeCount%20Business%20Inquiry) · [💬 Telegram](https://t.me/beecount) · [📦 APK](https://github.com/TNT-Likely/BeeCount/releases/latest) · [🚀 TestFlight](https://testflight.apple.com/join/Eaw2rWxa)
 
 </div>
 
@@ -50,7 +50,7 @@ A lightweight, open-source, privacy-first **personal finance** and **expense tra
 | ❌ Premium features behind paywalls | ✅ **Completely free** (including AI / OCR / voice input) |
 | ❌ Ads / financial product recommendations | ✅ **Zero ads / zero tracking / zero data collection** |
 
-> **Platform support**: 🤖 Android 5.0+ · 🍎 iOS 15.5+ · 🌐 Web (built into BeeCount Cloud, see below)
+> **Platform support**: 🤖 Android 6.0+ (GitHub APK) / Android 7.0+ (Google Play) · 🍎 iOS 15.5+ · 🌐 Web (built into BeeCount Cloud, see below)
 >
 > ~~📱 HarmonyOS — [Discontinued](https://github.com/TNT-Likely/beecount-openharmony)~~
 
@@ -87,7 +87,7 @@ A lightweight, open-source, privacy-first **personal finance** and **expense tra
 
 - **Dark mode** — Pure black + theme accent borders, OLED-friendly
 - **Multi-language** — official Simplified/Traditional Chinese & English, community-contributed Korean, with localized formatting
-- **Home widgets** — iOS / Android quick-record widgets
+- **Home widgets** — 6 types × 12 variants (overview / net assets / quick add / budget / recent / dashboard), dark-mode, multi-language & theme-color aware, [see the full lineup](#home-widgets)
 - **Theme customization** — Multiple primary colors
 
 </details>
@@ -101,6 +101,19 @@ A lightweight, open-source, privacy-first **personal finance** and **expense tra
   <img src="demo/videos/en/02-ocr-recognition.gif" alt="AI OCR" width="200" />
   <img src="demo/videos/en/04-data-analysis.gif" alt="Analytics" width="200" />
 </div>
+
+### Home Widgets
+
+6 content types × 12 variants — check your books and add records right from the home screen:
+
+<details>
+<summary>View the widget lineup (6 types × 12 variants)</summary>
+
+<div align="center">
+  <img src="demo/widgets/widgets-showcase-en.png" alt="Home widget lineup: overview / net assets / quick add / budget / recent transactions / dashboard" width="820" />
+</div>
+
+</details>
 
 <details>
 <summary>More screenshots (9 themes / dark mode)</summary>
@@ -291,11 +304,12 @@ For more details, see [docs/cloud-setup_EN.md](docs/cloud-setup_EN.md) or [Issue
 
 ## 💝 Donate
 
-BeeCount is completely free and open-source — **no ads, no paid features**. If you find it useful, buy the developer a coffee ☕ to support continued development.
+BeeCount and BeeCount Cloud are maintained by the same developer. If these projects help you, consider buying the developer a coffee ☕ to support continued development.
 
 ### How to Donate
 
 [![PayPal](https://img.shields.io/badge/PayPal-Donate-0070BA?logo=paypal&logoColor=white&style=for-the-badge)](https://paypal.me/sunxiaoyes)
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/sunxiao)
 
 <details><summary>Alipay / WeChat QR codes</summary>
 
@@ -305,26 +319,41 @@ BeeCount is completely free and open-source — **no ads, no paid features**. If
 
 </details>
 
-**USDT (TRC20)**: `TKBV69B2AoU67p3vDhnJUbMJtZ1DxuUF5C` · <details><summary>Binance QR code</summary>![Binance](docs/donate/binance.png)</details>
+<details>
+<summary>USDT</summary>
 
-### Cost Transparency
+**Binance Pay** — scan with the Binance app:
 
-| Item | Amount |
-|---|---|
-| Apple Developer Account renewal | ¥688 / year |
-| Lightweight cloud server (ICP filing) | ¥79 / year |
-| Domain | ¥80 / year |
-| Google Play Developer Account (one-time) | ¥177 |
-| **Annual recurring cost** | **¥847 / year** |
+<img src="docs/donate/binance.png" width="220" alt="Binance Pay QR code"/>
+
+**On-chain USDT (TRC20)** — scan with any TRON wallet:
+
+Address: `TKBV69B2AoU67p3vDhnJUbMJtZ1DxuUF5C`
+
+<img src="docs/donate/trc20.png" width="220" alt="USDT TRC20 address QR code"/>
+
+</details>
 
 ### Supporters
 
-| | | | | | | | | | | | |
-|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| <img src="assets/avatars/qiao.svg" width="44"/> | <img src="assets/avatars/rui.svg" width="44"/> | <a href="https://github.com/fishdivinity"><img src="assets/avatars/fishdivinity.png" width="44"/></a> | <img src="assets/avatars/shao.svg" width="44"/> | <img src="assets/avatars/ge.svg" width="44"/> | <img src="assets/avatars/te.svg" width="44"/> | <img src="assets/avatars/wen.svg" width="44"/> | <img src="assets/avatars/anon.svg" width="44"/> | <a href="https://github.com/birdnofoots"><img src="https://github.com/birdnofoots.png" width="44"/></a> | <a href="https://github.com/charieswang72-pro"><img src="https://github.com/charieswang72-pro.png" width="44"/></a> | <a href="https://github.com/542474846"><img src="https://github.com/542474846.png" width="44"/></a> | <a href="https://github.com/JOHN-2025"><img src="https://github.com/JOHN-2025.png" width="44"/></a> |
-| *Qiao ¥12 | *Rui ¥720 | fishdivinity ¥100 | *Shao ¥15 | *Ge ¥6 | *Te ¥15 | *Wen ¥50 | Anonymous ¥50 | birdnofoots ¥10 | Charies ¥10 | 542474846 ¥66 | JOHN-2025 ¥30 |
+<p>
+  <a href="https://github.com/fishdivinity"><img src="assets/avatars/fishdivinity.png" width="44" height="44" alt="fishdivinity" /></a>
+  <a href="https://github.com/birdnofoots"><img src="https://github.com/birdnofoots.png" width="44" height="44" alt="birdnofoots" /></a>
+  <a href="https://github.com/charieswang72-pro"><img src="https://github.com/charieswang72-pro.png" width="44" height="44" alt="charieswang72-pro" /></a>
+  <a href="https://github.com/542474846"><img src="https://github.com/542474846.png" width="44" height="44" alt="542474846" /></a>
+  <a href="https://github.com/JOHN-2025"><img src="https://github.com/JOHN-2025.png" width="44" height="44" alt="JOHN-2025" /></a>
+  <a href="https://github.com/HowcanoeWang"><img src="https://github.com/HowcanoeWang.png" width="44" height="44" alt="HowcanoeWang" /></a>
+</p>
 
-> 💡 Already donated? [Submit info](https://github.com/TNT-Likely/BeeCount/issues/new?template=donation_info.yml) to be displayed in the list.
+> 💡 Already donated? [Submit info](https://github.com/TNT-Likely/BeeCount/issues/new?template=donation_info.yml) with a link to your profile to appear in the supporter list.
+
+---
+
+## 🤝 Business Inquiries
+
+For commercial licensing, deployment assistance, custom development, or partnerships, email us with a brief description of your needs and use case.
+
+**[📧 sunxiaoyes@outlook.com](mailto:sunxiaoyes@outlook.com?subject=BeeCount%20Business%20Inquiry)**
 
 ---
 
@@ -345,7 +374,7 @@ This project uses the **Business Source License (BSL)**.
 - Building commercial products on top of this software
 - Offering paid cloud services based on this software
 
-For commercial licensing, please contact via [GitHub Issues](https://github.com/TNT-Likely/BeeCount/issues). See [LICENSE](LICENSE) for details.
+For commercial licensing pricing and process, see [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) or contact **sunxiaoyes@outlook.com**. See [LICENSE_EN](LICENSE_EN) for details.
 
 </details>
 
@@ -358,25 +387,7 @@ For commercial licensing, please contact via [GitHub Issues](https://github.com/
 | [BeeCount-Cloud](https://github.com/TNT-Likely/BeeCount-Cloud) | Self-hosted sync server + Web admin (FastAPI + React) |
 | [BeeCount-Website](https://github.com/TNT-Likely/BeeCount-Website) | Website / docs repo |
 | [beecount-openharmony](https://github.com/TNT-Likely/beecount-openharmony) | HarmonyOS version (discontinued) |
-| [BeeShot](https://github.com/TNT-Likely/BeeShot) | App Store screenshot generator |
 | [honeycomb](https://github.com/TNT-Likely/honeycomb) | Claude Code plugin marketplace (skills/agents used for developing this project) |
-
----
-
-## ⭐ Star History
-
-<details>
-<summary>View Star history chart</summary>
-
-<a href="https://www.star-history.com/?repos=tnt-likely%2Fbeecount&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=tnt-likely/beecount&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=tnt-likely/beecount&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=tnt-likely/beecount&type=date&legend=top-left" />
- </picture>
-</a>
-
-</details>
 
 ---
 

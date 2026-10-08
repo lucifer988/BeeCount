@@ -1,5 +1,20 @@
 import '../db.dart';
 
+/// 账户余额修改后的落库结果。
+class AccountBalanceUpdateResult {
+  final double oldBalance;
+  final double newBalance;
+  final double difference;
+  final int? transactionId;
+
+  const AccountBalanceUpdateResult({
+    required this.oldBalance,
+    required this.newBalance,
+    required this.difference,
+    this.transactionId,
+  });
+}
+
 /// 账户Repository接口
 /// 定义账户相关的所有数据操作
 abstract class AccountRepository {
@@ -56,6 +71,9 @@ abstract class AccountRepository {
   });
 
   /// 更新账户
+  ///
+  /// [hidden] 为 null 表示不改动(见 [setAccountHidden] 便捷法)。true/false
+  /// 显式传入才会写库,配合同步 apply 的「缺键保留」语义(账户隐藏 #240)。
   Future<void> updateAccount(
     int id, {
     String? name,
@@ -70,7 +88,14 @@ abstract class AccountRepository {
     String? cardLastFour,
     String? note,
     bool clearMetadataFields = false,
+    bool? hidden,
   });
+
+  /// 隐藏 / 恢复账户(账户隐藏 #240)。内部走 [updateAccount] → 记
+  /// user-global 'update' change → 同步。**不要**绕过它直接改列,否则隐藏
+  /// 状态不会 push 到云端(同 `updateAccountSortOrders` / `updateAccountValuation`
+  /// 的教训)。
+  Future<void> setAccountHidden(int id, bool hidden);
 
   /// 获取所有信用卡账户
   Future<List<Account>> getCreditCardAccounts();

@@ -5,11 +5,14 @@ import '../../providers.dart';
 import '../../providers/theme_providers.dart';
 import '../../styles/tokens.dart';
 import '../../styles/header_skins.dart';
+import 'skin_animation_scope.dart';
 
 class PrimaryHeader extends ConsumerWidget {
   final String title;
   final String? subtitle;
   final bool showBack;
+  final VoidCallback? onBack;
+  final Key? backButtonKey;
   final List<Widget>? actions;
   final Widget? bottom;
   final Widget? content;
@@ -30,6 +33,8 @@ class PrimaryHeader extends ConsumerWidget {
     required this.title,
     this.subtitle,
     this.showBack = false,
+    this.onBack,
+    this.backButtonKey,
     this.actions,
     this.bottom,
     this.content,
@@ -89,7 +94,9 @@ class PrimaryHeader extends ConsumerWidget {
             children: [
               // ⭐ 头部皮肤层(主题色之上的装饰);未选皮肤时为纯主题色 / 纯黑
               if (skin != null)
-                Positioned.fill(child: skin.builder(primary, isDark)),
+                Positioned.fill(
+                    child: SkinAnimationScope(
+                        child: skin.builder(primary, isDark))),
               // 主内容
               SafeArea(
                 bottom: false,
@@ -103,8 +110,9 @@ class PrimaryHeader extends ConsumerWidget {
                       children: [
                         if (showBack) ...[
                           IconButton(
+                            key: backButtonKey,
                             icon: Icon(Icons.arrow_back, color: iconColor), // ⭐ 自适应颜色
-                            onPressed: () => Navigator.of(context).maybePop(),
+                            onPressed: onBack ?? () => Navigator.of(context).maybePop(),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                             style: IconButton.styleFrom(

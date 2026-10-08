@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5,6 +7,154 @@ import 'app_localizations.dart';
 /// The translations for Korean (`ko`).
 class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
+
+  @override
+  String get agentActivityPreparing => 'Preparing your answer…';
+
+  @override
+  String get agentActivityAwaitingModel => 'Waiting for the model…';
+
+  @override
+  String get agentActivityThinking => 'Model is thinking…';
+
+  @override
+  String get agentActivityGenerating => 'Composing the answer…';
+
+  @override
+  String agentExecutionCompletedSummary(int count) {
+    return 'Completed $count operations';
+  }
+
+  @override
+  String get agentExecutionFailedSummary => 'Some operations did not complete';
+
+  @override
+  String get agentActivityUnknownTool => 'Local operation';
+
+  @override
+  String get agentActivityOverview => 'Income and expense overview';
+
+  @override
+  String get agentActivityTrend => 'Spending trend';
+
+  @override
+  String get agentActivityCategories => 'Spending categories';
+
+  @override
+  String get agentActivityLeafCategories => 'Detailed categories';
+
+  @override
+  String agentActivityCategoryScope(String categories) {
+    return 'Categories: $categories';
+  }
+
+  @override
+  String agentActivityReturnedRows(int count) {
+    return 'Returned $count transactions';
+  }
+
+  @override
+  String agentActivityReturnedGroups(int count) {
+    return 'Returned $count groups';
+  }
+
+  @override
+  String get agentActivityTruncated => 'Only part of the results was returned';
+
+  @override
+  String get agentFollowUpRotate => 'Another set';
+
+  @override
+  String get agentScrollToLatest => 'Back to the latest message';
+
+  @override
+  String get agentSuggestionHealthTitle => 'Financial health';
+
+  @override
+  String get agentSuggestionHealthPrompt => 'Analyze this month\'s income, expenses, balance and savings rate, and list monthly spending for the last six months. Give financial health observations and suggestions based on tool results; explain any data limitations.';
+
+  @override
+  String get agentSuggestionSummaryTitle => 'Monthly spending summary';
+
+  @override
+  String get agentSuggestionSummaryPrompt => 'Summarize this month\'s spending, analyze the main top-level categories and their shares, and suggest ways to save. Use actual tool results and explain any data limitations.';
+
+  @override
+  String get agentSuggestionAnalysisTitle => 'Category analysis';
+
+  @override
+  String get agentSuggestionAnalysisPrompt => 'Analyze this month\'s top-level spending categories and shares, and suggest improvements. Do not judge spending as unreasonable from its share alone; explain any data limitations.';
+
+  @override
+  String get agentSuggestionBudgetTitle => 'Budget planning';
+
+  @override
+  String get agentSuggestionBudgetPrompt => 'Use this month\'s income, expenses and balance, top-level category spending shares, and monthly spending trend for the last six months to suggest next month\'s category budgets. Give advice only; do not create or modify budgets. Explain any data limitations.';
+
+  @override
+  String get agentSuggestionAnomalyTitle => 'Spending check';
+
+  @override
+  String get agentSuggestionAnomalyPrompt => 'Review transaction details and the income and expense overview for the last thirty days. Flag large or repeated transactions worth reviewing and explain the evidence. This is only a preliminary check of returned details, not a scan of all transactions; do not label normal purchases as abnormal.';
+
+  @override
+  String get agentSuggestionSavingTitle => 'Saving tips';
+
+  @override
+  String get agentSuggestionSavingPrompt => 'Analyze this month\'s top-level spending categories and shares and the monthly spending trend for the last six months. Offer three to five practical saving tips based on tool results, without inferring personal circumstances. Explain any data limitations.';
+
+  @override
+  String get agentFollowUpTitle => 'Explore further';
+
+  @override
+  String agentFollowUpRange(String start, String end) {
+    return '$start to $end (end exclusive)';
+  }
+
+  @override
+  String get agentFollowUpAllCategories => 'all spending categories';
+
+  @override
+  String get agentFollowUpCategoryTitle => 'View category shares';
+
+  @override
+  String agentFollowUpCategoryPrompt(String range) {
+    return 'Show top-level spending category shares for $range.';
+  }
+
+  @override
+  String get agentFollowUpTrendTitle => 'View spending trend';
+
+  @override
+  String agentFollowUpTrendPrompt(String category, String range) {
+    return 'List monthly spending for $category during $range, without month-over-month or year-over-year comparison.';
+  }
+
+  @override
+  String get agentFollowUpCompareTitle => 'Compare adjacent months';
+
+  @override
+  String agentFollowUpComparePrompt(String category, String range) {
+    return 'List monthly spending for $category during $range, with month-over-month changes between adjacent months.';
+  }
+
+  @override
+  String agentFollowUpLeafTitle(String category) {
+    return 'Explore $category';
+  }
+
+  @override
+  String agentFollowUpLeafPrompt(String category, String range) {
+    return 'Show subcategory spending shares within the category “$category” for $range.';
+  }
+
+  @override
+  String get agentFollowUpOverviewTitle => 'View income and expenses';
+
+  @override
+  String agentFollowUpOverviewPrompt(String range) {
+    return 'Show total income, expenses and balance for $range.';
+  }
 
   @override
   String get aiConsentTitle => 'AI 기능을 켜기 전에';
@@ -17,6 +167,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get aboutPrivacyPolicy => '개인정보 처리방침';
+
+  @override
+  String get aboutChangelog => 'Changelog';
 
   @override
   String get appTitle => '꿀벌 가계부';
@@ -320,6 +473,30 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get widgetMonthSuffix => '';
+
+  @override
+  String get widgetToday => 'Today';
+
+  @override
+  String get widgetQuickAddLabel => 'Add';
+
+  @override
+  String get widgetBudgetTotal => 'Total';
+
+  @override
+  String get widgetBudgetRemaining => 'Left';
+
+  @override
+  String get widgetNoBudget => 'No Budget';
+
+  @override
+  String get widgetNoTransactions => 'No Transactions';
+
+  @override
+  String get widgetRecentTransactions => 'Recent Transactions';
+
+  @override
+  String get widgetNoAccounts => 'No Accounts';
 
   @override
   String get searchTitle => '검색';
@@ -707,6 +884,80 @@ class AppLocalizationsKo extends AppLocalizations {
   String get categoryTitle => '카테고리 관리';
 
   @override
+  String get categoryIconGroupBasic => 'Basics';
+
+  @override
+  String get categoryIconGroupFoodDining => 'Food & Dining';
+
+  @override
+  String get categoryIconGroupTransportation => 'Transportation';
+
+  @override
+  String get categoryIconGroupShopping => 'Shopping';
+
+  @override
+  String get categoryIconGroupHomeLiving => 'Home & Living';
+
+  @override
+  String get categoryIconGroupCommunicationDevices => 'Communication & Devices';
+
+  @override
+  String get categoryIconGroupEntertainmentLeisure => 'Entertainment & Leisure';
+
+  @override
+  String get categoryIconGroupHealthMedical => 'Health & Medicine';
+
+  @override
+  String get categoryIconGroupEducationLearning => 'Education & Learning';
+
+  @override
+  String get categoryIconGroupPetsAnimals => 'Pets & Animals';
+
+  @override
+  String get categoryIconGroupClothingBeauty => 'Clothing & Beauty';
+
+  @override
+  String get categoryIconGroupOtherMiscellaneous => 'Other';
+
+  @override
+  String get categoryIconGroupWorkCareer => 'Work & Career';
+
+  @override
+  String get categoryIconGroupFinance => 'Finance';
+
+  @override
+  String get categoryIconGroupRewardsGifts => 'Rewards & Gifts';
+
+  @override
+  String get categoryIconGroupInvestmentReturns => 'Investment Returns';
+
+  @override
+  String get categoryIconGroupOtherIncome => 'Other Income';
+
+  @override
+  String get categoryGenerateDefault => '기본 카테고리 생성';
+
+  @override
+  String get categoryGenerateDefaultFlat => '1단계 카테고리';
+
+  @override
+  String get categoryGenerateDefaultHierarchical => '2단계 카테고리';
+
+  @override
+  String get categoryGenerateDefaultHint => '기존 카테고리는 유지하고 이름이 같은 기본 카테고리는 건너뜁니다.';
+
+  @override
+  String categoryGenerateDefaultSuccess(int count) {
+    return '기본 카테고리 $count개를 생성했습니다';
+  }
+
+  @override
+  String get categoryGenerateDefaultNoChanges => '기본 카테고리가 이미 있습니다';
+
+  @override
+  String get categoryGenerateDefaultFailed => '기본 카테고리를 생성하지 못했습니다. 다시 시도하세요.';
+
+  @override
   String get categoryNew => '새 카테고리';
 
   @override
@@ -985,7 +1236,54 @@ class AppLocalizationsKo extends AppLocalizations {
   String get headerSkinSubtitle => '테마 색상을 따르며 헤더 위에 겹쳐 표시됩니다';
 
   @override
+  String get headerSkinGroupBasic => 'Basic';
+
+  @override
+  String get headerSkinGroupAnniversary => 'Anniversary';
+
+  @override
+  String get headerSkinGroupGradient => 'Gradient';
+
+  @override
+  String get headerSkinGroupScene => 'Scenery';
+
+  @override
+  String get headerSkinGroupPattern => 'Patterns';
+
+  @override
+  String get headerSkinGroupGeometric => 'Geometric';
+
+  @override
   String get headerSkinNone => '단색';
+
+  @override
+  String get headerSkinAnniversary => 'Constellation No.1';
+
+  @override
+  String get headerSkinAnnivCake => 'Birthday Cake';
+
+  @override
+  String get headerSkinTabAll => 'All';
+
+  @override
+  String get headerSkinTabAnimated => 'Animated';
+
+  @override
+  String get headerSkinTabStatic => 'Static';
+
+  @override
+  String get headerSkinAnimatedBadge => 'LIVE';
+
+  @override
+  String get headerSkinFixedPalette => 'Own palette';
+
+  @override
+  String personalizeLockedBySkin(String skin) {
+    return 'The skin \"$skin\" comes with its own palette, so the theme color is set by the skin and can\'t be changed. Switch to another skin to get your color back.';
+  }
+
+  @override
+  String get personalizeFixedSkinAction => 'Change skin';
 
   @override
   String get headerSkinAurora => '오로라';
@@ -2083,6 +2381,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get appearanceAmountFormatCompactDesc => '큰 금액을 축약합니다. 예: 12.3K (계좌 잔액에만 적용)';
+
+  @override
+  String get appearanceSkinAnimation => 'Skin Animation';
+
+  @override
+  String get appearanceSkinAnimationDesc => 'Turn off to freeze animated skins on a still frame and save power';
 
   @override
   String get appearanceShowTransactionTime => '거래 시간 표시';
@@ -3759,6 +4063,45 @@ class AppLocalizationsKo extends AppLocalizations {
   String get accountBalance => '잔액';
 
   @override
+  String get accountUpdateBalance => 'Update Balance';
+
+  @override
+  String get accountBalanceAdjustmentTitle => 'Confirm balance change';
+
+  @override
+  String get accountBalanceAdjustmentChooseAction => 'Choose how to save this balance change';
+
+  @override
+  String get accountBalanceAdjustmentOnly => 'Balance only';
+
+  @override
+  String get accountBalanceAdjustmentOnlyMessage => 'No transaction will be created. Historical balance trends will use the new balance as their baseline.';
+
+  @override
+  String get accountBalanceAdjustmentCreate => 'Create transaction';
+
+  @override
+  String get accountBalanceAdjustmentCreateMessage => 'Also add a regular income or expense under the Balance category, included in income, expense, and budget statistics.';
+
+  @override
+  String get accountBalanceAdjustmentConfirmOnly => 'Confirm balance only';
+
+  @override
+  String get accountBalanceAdjustmentConfirmCreate => 'Confirm and create transaction';
+
+  @override
+  String get accountBalanceCurrent => 'Current balance';
+
+  @override
+  String get accountBalanceAfterAdjustment => 'Adjusted balance';
+
+  @override
+  String get accountBalanceDifference => 'Difference';
+
+  @override
+  String get accountBalanceUnchanged => 'The balance has not changed';
+
+  @override
   String get accountEditTitle => '계정 편집';
 
   @override
@@ -3824,6 +4167,46 @@ class AppLocalizationsKo extends AppLocalizations {
   String get accountsEnableFeature => '계정 기능 활성화';
 
   @override
+  String get accountHide => 'Hide account';
+
+  @override
+  String get accountUnhide => 'Restore account';
+
+  @override
+  String get accountRestore => 'Restore';
+
+  @override
+  String get accountHiddenTag => 'Hidden';
+
+  @override
+  String get accountHiddenSection => 'Hidden';
+
+  @override
+  String accountHiddenSectionSummary(int count, String total) {
+    return '$count hidden · $total';
+  }
+
+  @override
+  String get accountHideConfirmTitle => 'Hide this account?';
+
+  @override
+  String get accountHideConfirmBody => 'It won\'t be selectable for new records; history and balance are kept and you can restore it anytime.';
+
+  @override
+  String accountHideRecurringWarn(int count) {
+    return '$count recurring bills use this account; they\'ll be skipped while hidden.';
+  }
+
+  @override
+  String get accountHideClearedDefault => 'Cleared its default-account setting';
+
+  @override
+  String get accountHiddenToast => 'Hidden';
+
+  @override
+  String get accountRestoredToast => 'Restored';
+
+  @override
   String get privacyOpenSourceUrlError => '링크를 열 수 없습니다';
 
   @override
@@ -3885,6 +4268,87 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get widgetPreviewDesc => '위젯은 현재 가계부의 실제 데이터를 자동으로 표시하며, 테마 색상은 앱 설정을 따릅니다';
+
+  @override
+  String get widgetGalleryTitle => 'Widget Gallery';
+
+  @override
+  String get widgetGalleryDesc => 'Previews use sample data — the real widget shows your current ledger and follows your theme color.';
+
+  @override
+  String get widgetGalleryGlanceTitle => 'Overview';
+
+  @override
+  String get widgetGalleryGlanceDesc => 'Today\'s and this month\'s income and expenses at a glance';
+
+  @override
+  String get widgetGalleryNetWorthDesc => 'Total assets, liabilities and net worth trend';
+
+  @override
+  String get widgetGalleryQuickAddTitle => 'Quick Add';
+
+  @override
+  String get widgetGalleryQuickAddDesc => 'One-tap entry for your frequent categories';
+
+  @override
+  String get widgetGalleryBudgetDesc => 'Track your budget progress at a glance';
+
+  @override
+  String get widgetGalleryRecentDesc => 'See your latest transactions';
+
+  @override
+  String get widgetGalleryDashboardTitle => 'Dashboard';
+
+  @override
+  String get widgetDashboardTitle => 'This Month';
+
+  @override
+  String get widgetGalleryDashboardDesc => 'Income, trend and recent transactions in one view';
+
+  @override
+  String get widgetConsumptionRhythmTitle => '소비 리듬';
+
+  @override
+  String get widgetConsumptionRhythmRange => '최근 30일';
+
+  @override
+  String get widgetConsumptionRhythmStable => '소비가 안정적이에요';
+
+  @override
+  String get widgetConsumptionRhythmIncrease => '지난주보다 빨라요';
+
+  @override
+  String get widgetConsumptionRhythmDecrease => '지난주보다 안정적이에요';
+
+  @override
+  String get widgetConsumptionRhythmEmpty => '최근 30일 지출이 없어요';
+
+  @override
+  String get widgetBeeTrailTitle => '기록 꿀벌 궤적';
+
+  @override
+  String get widgetBeeTrailStreakSuffix => '일';
+
+  @override
+  String get widgetBeeTrailCompletion => '최근 28일 완료율';
+
+  @override
+  String get widgetBeeTrailEmpty => '첫 칸을 밝히려면 기록을 추가하세요';
+
+  @override
+  String get widgetGalleryConsumptionRhythmDesc => '최근 30일의 소비 흐름을 확인하세요';
+
+  @override
+  String get widgetGalleryBeeTrailDesc => '벌집 칸으로 매일 기록하는 습관을 만드세요';
+
+  @override
+  String get widgetSizeSmall => 'Small';
+
+  @override
+  String get widgetSizeMedium => 'Medium';
+
+  @override
+  String get widgetSizeLarge => 'Large';
 
   @override
   String get howToAddWidget => '위젯 추가 방법';
@@ -4230,6 +4694,32 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get aiOcrNoLedger => '가계부를 찾을 수 없습니다';
+
+  @override
+  String aiBillingRateMissingHint(String currency) {
+    return '⚠️ No $currency rate available — recorded 1:1 for now; use “Reconvert” on the stats page to fix.';
+  }
+
+  @override
+  String get aiPromptVarCurrencies => 'Ledger base currency + foreign-currency accounts in use';
+
+  @override
+  String get aiPromptVarBillGuard => 'Non-bill filter (injected for screenshot / auto bookkeeping only)';
+
+  @override
+  String aiPromptMissingVarsHint(String vars) {
+    return 'Your custom template is missing these variables, so the matching features stop working: $vars';
+  }
+
+  @override
+  String aiPromptInsertVarSection(String name) {
+    return 'Insert $name section';
+  }
+
+  @override
+  String aiPromptVarSectionInserted(String name) {
+    return '$name section appended — review, then save';
+  }
 
   @override
   String aiOcrSuccess(String type, String amount) {
@@ -4992,6 +5482,64 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiChatInputHint => '예: 커피 한 잔에 3,500원 썼어';
 
   @override
+  String get aiQuickCommandsTitle => 'Try a task';
+
+  @override
+  String get agentSuggestionOverviewTitle => 'This month\'s totals';
+
+  @override
+  String get agentSuggestionOverviewPrompt => 'Summarize this month\'s income, expenses and balance.';
+
+  @override
+  String get agentSuggestionCategoryTitle => 'Category shares';
+
+  @override
+  String get agentSuggestionCategoryPrompt => 'What are this month\'s spending shares by top-level category?';
+
+  @override
+  String get aiQuickCommandsOpen => 'Open suggestions';
+
+  @override
+  String get aiChatEmptyMessages => 'No messages yet';
+
+  @override
+  String get aiChatEmptyCurrentLedger => 'Current ledger';
+
+  @override
+  String get aiChatEmptyStartTitle => 'Start with a transaction or a question';
+
+  @override
+  String get aiChatEmptyStartDescription => 'I\'ll answer from this ledger and ask for permission when needed.';
+
+  @override
+  String get aiChatEmptyMonthExpense => 'This month\'s spending';
+
+  @override
+  String get aiChatEmptyRecordedTransactions => 'Recorded transactions';
+
+  @override
+  String aiChatEmptyTransactionCount(int count) {
+    return '$count recorded';
+  }
+
+  @override
+  String get aiChatEmptyQuestionExample => 'Try asking: What did I spend the most on this month?';
+
+  @override
+  String get aiChatEmptyFirstTransactionTitle => 'Start with today\'s first transaction';
+
+  @override
+  String get aiChatEmptyFirstTransactionDescription => 'Tell me the amount and purpose, and I\'ll help record it.';
+
+  @override
+  String get aiChatEmptyFirstTransactionExample => 'For example: Lunch cost 28';
+
+  @override
+  String aiChatMessagesLoadFailed(String error) {
+    return 'Failed to load messages: $error';
+  }
+
+  @override
   String get aiChatThinking => '생각 중...';
 
   @override
@@ -5025,6 +5573,204 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiChatSendFailed => '전송 실패';
 
   @override
+  String get agentRunFailed => 'AI service is temporarily unavailable. Please try again later.';
+
+  @override
+  String get agentNativeToolsUnsupported => 'This model can chat normally, but it does not support the native tool calls required to read or change ledger data. Open Settings > AI Settings > Provider Management to test or switch models.';
+
+  @override
+  String get agentTurnTimedOut => 'The AI response timed out. Please try again shortly.';
+
+  @override
+  String get agentRecordIncomplete => 'The transaction details are incomplete. Please include an amount and purpose, then try again.';
+
+  @override
+  String agentRecordCreated(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transactions',
+      one: '1 transaction',
+    );
+    return 'Created $_temp0.';
+  }
+
+  @override
+  String get agentStepsExceeded => 'This request took too many steps. Please simplify it and try again.';
+
+  @override
+  String agentExecutingTool(Object tool) {
+    return 'Working: $tool';
+  }
+
+  @override
+  String agentToolCompleted(Object tool) {
+    return 'Done: $tool';
+  }
+
+  @override
+  String agentToolFailed(Object tool) {
+    return 'Could not complete: $tool';
+  }
+
+  @override
+  String get agentToolQueryTransactions => 'query transactions';
+
+  @override
+  String get agentToolSpendingSummary => 'summarize spending';
+
+  @override
+  String get agentToolTransactionSummary => 'summarize transactions';
+
+  @override
+  String get agentToolBudgetStatus => 'check budget';
+
+  @override
+  String get agentToolRecurringTransactions => 'view recurring transactions';
+
+  @override
+  String get agentToolRecordTransaction => 'record transaction';
+
+  @override
+  String get agentToolSaveMemory => 'save memory';
+
+  @override
+  String get agentToolForgetMemory => 'forget memory';
+
+  @override
+  String get agentPermissionsTitle => 'AI Assistant permissions';
+
+  @override
+  String get agentPermissionsIntro => 'Choose what AI Assistant can do here. Read-only tools only view data; tools that change data ask for authorization before running.';
+
+  @override
+  String get agentPermissionsReadOnlySection => 'Read-only tools';
+
+  @override
+  String get agentPermissionsReadOnlySectionDescription => 'View ledger information without changing anything.';
+
+  @override
+  String get agentPermissionsWriteSection => 'Data-changing tools';
+
+  @override
+  String get agentPermissionsWriteSectionDescription => 'These can change your ledger or local memories; asking every time is recommended.';
+
+  @override
+  String get agentPermissionsDefaultsActive => 'All tools are using their default policies';
+
+  @override
+  String agentPermissionsModifiedCount(int count) {
+    return '$count custom settings';
+  }
+
+  @override
+  String get agentPermissionsRestoreDefaults => 'Restore defaults';
+
+  @override
+  String get agentPermissionsRestoreTitle => 'Restore default permissions?';
+
+  @override
+  String get agentPermissionsRestoreDescription => 'This clears every Always allow setting and restores each tool\'s default permission.';
+
+  @override
+  String get agentPermissionsRestoreConfirm => 'Restore';
+
+  @override
+  String get agentPermissionAsk => 'Ask every time';
+
+  @override
+  String get agentPermissionAlwaysAllow => 'Always allow';
+
+  @override
+  String get agentPermissionWaiting => 'Waiting for your authorization';
+
+  @override
+  String get agentPermissionWriteFailed => 'Could not save permission settings. Please try again.';
+
+  @override
+  String get agentAuthorizationPersistenceFailed => 'Permission could not be saved; this operation still follows your choice.';
+
+  @override
+  String get agentToolQueryTransactionsDescription => 'View transactions in the current ledger for a selected time range.';
+
+  @override
+  String get agentToolSpendingSummaryDescription => 'Summarize spending in the current ledger for a selected time range.';
+
+  @override
+  String get agentToolTransactionSummaryDescription => 'Aggregate transactions in the current ledger by type, category, tag, account, or time period.';
+
+  @override
+  String get agentToolBudgetStatusDescription => 'View the budget status for the current ledger.';
+
+  @override
+  String get agentToolRecurringTransactionsDescription => 'View enabled recurring transactions in the current ledger.';
+
+  @override
+  String get agentToolRecordTransactionDescription => 'Record a transaction from the original text you sent.';
+
+  @override
+  String get agentToolSaveMemoryDescription => 'Save something you explicitly asked the assistant to remember.';
+
+  @override
+  String get agentToolForgetMemoryDescription => 'Delete a saved local memory.';
+
+  @override
+  String get agentToolUnknownDescription => 'Run a local Agent tool.';
+
+  @override
+  String get agentAuthorizationTitle => 'Allow Agent action?';
+
+  @override
+  String agentAuthorizationCurrentLedger(int ledgerId) {
+    return 'Ledger: current ledger (ID $ledgerId)';
+  }
+
+  @override
+  String get agentAuthorizationAllLedgers => 'Ledger: all accessible ledgers';
+
+  @override
+  String get agentAuthorizationParameters => 'Information used this time';
+
+  @override
+  String get agentAuthorizationNoParameters => 'No parameters need to be shown.';
+
+  @override
+  String get agentAuthorizationSourceText => 'Original transaction text';
+
+  @override
+  String get agentAuthorizationTimeRange => 'Query time range';
+
+  @override
+  String get agentAuthorizationSummaryTypes => 'Transaction types';
+
+  @override
+  String get agentAuthorizationSummaryGroupBy => 'Group by';
+
+  @override
+  String get agentAuthorizationCategoryIds => 'Category IDs';
+
+  @override
+  String get agentAuthorizationTagIds => 'Tag IDs';
+
+  @override
+  String get agentAuthorizationAccountIds => 'Account IDs';
+
+  @override
+  String get agentAuthorizationMemoryContent => 'Memory content';
+
+  @override
+  String get agentAuthorizationMemoryId => 'Memory ID';
+
+  @override
+  String get agentAuthorizationDeny => 'Deny';
+
+  @override
+  String get agentAuthorizationAllowOnce => 'Allow once';
+
+  @override
+  String get agentAuthorizationAlwaysAllow => 'Always allow';
+
+  @override
   String get billCardSuccess => '기록 성공';
 
   @override
@@ -5044,6 +5790,27 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get billCardAccount => '💳 계정';
+
+  @override
+  String get billCardTransferAccounts => '🔁 Transfer accounts';
+
+  @override
+  String get billCardType => '↕️ Type';
+
+  @override
+  String get billCardExpense => 'Expense';
+
+  @override
+  String get billCardIncome => 'Income';
+
+  @override
+  String get billCardTransfer => 'Transfer';
+
+  @override
+  String get billCardCurrency => '💱 Currency';
+
+  @override
+  String get billCardTags => '🏷️ Tags';
 
   @override
   String get billCardUndo => '실행 취소';
@@ -5308,6 +6075,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get tagSelectCreateNew => '새 태그 만들기';
+
+  @override
+  String get tagSelectOwnerManaged => '공유 원장의 태그는 소유자가 관리합니다';
 
   @override
   String get tagSelectRecentlyUsed => '최근 사용';
@@ -6271,9 +7041,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get accountGroupValuation => '자산/부채';
 
   @override
-  String get adjustmentTransaction => '평가액 조정';
-
-  @override
   String creditCardBillingInfo(int billingDay, int paymentDueDay) {
     return '매월 $billingDay일 결제 · $paymentDueDay일 만기';
   }
@@ -6300,90 +7067,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get budgetSetupAction => '설정하기';
-
-  @override
-  String get cloudCollabDevicesPageTitle => '기기 세션';
-
-  @override
-  String get cloudCollabDevicesPageSubtitle => '활성 기기를 관리하세요';
-
-  @override
-  String get cloudCollabDevicesViewAllSessions => '모든 세션 표시';
-
-  @override
-  String get cloudCollabDevicesViewModeHint => '기본 화면은 최근 30일 이내 활성화된 기기를 중복 제거해 표시합니다.';
-
-  @override
-  String get cloudCollabNoDevices => '활성 기기가 없습니다';
-
-  @override
-  String get cloudCollabUnknownDeviceName => '알 수 없는 기기';
-
-  @override
-  String get cloudCollabDeviceCurrentTag => '현재 기기';
-
-  @override
-  String get cloudCollabCurrentDeviceCannotRevoke => '현재 기기는 취소할 수 없습니다.';
-
-  @override
-  String cloudCollabDeviceAppVersion(String version) {
-    return '앱: $version';
-  }
-
-  @override
-  String cloudCollabDeviceOsVersion(String version) {
-    return 'OS: $version';
-  }
-
-  @override
-  String cloudCollabDeviceModel(String model) {
-    return '모델: $model';
-  }
-
-  @override
-  String cloudCollabDeviceLastIp(String ip) {
-    return 'IP: $ip';
-  }
-
-  @override
-  String cloudCollabDeviceSessionCount(String count) {
-    return '세션: $count개';
-  }
-
-  @override
-  String cloudCollabDeviceLastSeen(String time) {
-    return '마지막 접속: $time';
-  }
-
-  @override
-  String cloudCollabDeviceCreatedAt(String time) {
-    return '생성: $time';
-  }
-
-  @override
-  String get cloudCollabDeviceRevokeTitle => '기기 취소';
-
-  @override
-  String cloudCollabDeviceRevokeMessage(String name, String id) {
-    return '$name ($id) 기기를 취소하시겠습니까?';
-  }
-
-  @override
-  String cloudCollabDeviceRevokeMultipleMessage(String name, String count) {
-    return '$name 기기의 세션 $count개를 취소하시겠습니까?';
-  }
-
-  @override
-  String get cloudCollabDeviceRevoked => '기기가 취소되었습니다';
-
-  @override
-  String get cloudCollabUnavailableMessage => '클라우드 동기화를 사용할 수 없습니다.';
-
-  @override
-  String get cloudCollabScopeDeniedHint => '서버에서 ALLOW_APP_RW_SCOPES가 활성화되어 있지 않아 기기 세션을 사용할 수 없습니다.';
-
-  @override
-  String get cloudCollabScopeDeniedAction => '서버 .env에서 ALLOW_APP_RW_SCOPES=true로 설정하고 서비스를 재시작한 후 다시 로그인하세요.';
 
   @override
   String get syncHealthTitle => '동기화 상태';
@@ -6958,6 +7641,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get txRateLabel => 'Rate';
 
   @override
+  String get transactionDoubleTapHint => 'Double tap';
+
+  @override
+  String get transactionSavedNextCategory => 'Saved. Choose another category.';
+
+  @override
   String txConvertedPreview(Object amount, Object currency) {
     return '≈ $amount $currency';
   }
@@ -7318,4 +8007,232 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get currencyMRU => 'Mauritanian Ouguiya';
+
+  @override
+  String get agentAssistantSettingsTitle => 'AI Assistant';
+
+  @override
+  String get agentAssistantSettingsSubtitle => 'Manage how the assistant uses local data and tools.';
+
+  @override
+  String get agentAssistantPermissionsEntry => 'Permissions';
+
+  @override
+  String get agentAssistantPermissionsEntryDescription => 'Choose when data-changing tools need your approval.';
+
+  @override
+  String get agentAssistantMemoryEntry => 'Local memory';
+
+  @override
+  String get agentAssistantMemoryEntryDescription => 'View and remove memories kept only on this device.';
+
+  @override
+  String get agentAssistantActivityEntry => 'Recent activity';
+
+  @override
+  String get agentAssistantActivityEntryDescription => 'Review local tool calls and their outcomes.';
+
+  @override
+  String get agentExecutionDepthEntry => 'Execution depth';
+
+  @override
+  String get agentExecutionDepthEntryDescription => 'Higher limits can handle more steps but may take longer.';
+
+  @override
+  String agentExecutionDepthSelected(int turns) {
+    return 'Up to $turns model turns';
+  }
+
+  @override
+  String get agentExecutionDepthChooseTitle => 'Execution depth';
+
+  @override
+  String get agentExecutionDepthQuick => 'Quick';
+
+  @override
+  String get agentExecutionDepthStandard => 'Standard';
+
+  @override
+  String get agentExecutionDepthDeep => 'Deep';
+
+  @override
+  String get agentExecutionDepthCustom => 'Custom';
+
+  @override
+  String get agentMemoryTitle => 'Local memory';
+
+  @override
+  String get agentMemoryIntro => 'These memories stay on this device and apply only to the current ledger.';
+
+  @override
+  String get agentMemoryEmpty => 'No local memories yet.';
+
+  @override
+  String get agentMemoryDeleteTitle => 'Delete this memory?';
+
+  @override
+  String get agentMemoryDeleteDescription => 'The assistant will no longer use this memory.';
+
+  @override
+  String get agentMemoryClear => 'Clear current ledger memories';
+
+  @override
+  String get agentMemoryClearTitle => 'Clear all current ledger memories?';
+
+  @override
+  String get agentMemoryClearDescription => 'This removes every local memory for this ledger and cannot be undone.';
+
+  @override
+  String get agentActivityTitle => 'Recent activity';
+
+  @override
+  String get agentActivityIntro => 'This activity history is stored locally and is never synced.';
+
+  @override
+  String get agentActivityEmpty => 'No assistant activity yet.';
+
+  @override
+  String get agentActivityCompleted => 'Completed';
+
+  @override
+  String get agentActivityFailed => 'Failed';
+
+  @override
+  String get agentActivityRunning => 'Running';
+
+  @override
+  String get agentActivityCancelled => 'Cancelled';
+
+  @override
+  String get agentActivityTools => 'Tools';
+
+  @override
+  String get agentActivityToolCompleted => 'Completed';
+
+  @override
+  String get agentActivityToolDenied => 'Denied';
+
+  @override
+  String get agentActivityToolFailed => 'Failed';
+
+  @override
+  String get agentRunCancelled => 'This run was stopped.';
+
+  @override
+  String get agentRunStop => 'Stop';
+
+  @override
+  String get agentQueryValidationFailed => 'The query parameters could not be corrected, so a reliable result is unavailable. Please try again.';
+
+  @override
+  String get annualReportInsightsTitle => 'Annual Insights';
+
+  @override
+  String get annualReportInsightsSubtitle => 'Discover your spending habits through data';
+
+  @override
+  String get annualReportAveragePerRecord => 'Average Spending per Record';
+
+  @override
+  String get annualReportAveragePerRecordDesc => 'Average amount per bookkeeping record';
+
+  @override
+  String get annualReportDailyAverage => 'Daily Average Spending';
+
+  @override
+  String get annualReportDailyAverageDesc => 'Average amount spent each day';
+
+  @override
+  String get annualReportMonthlyAverage => 'Monthly Average Spending';
+
+  @override
+  String get annualReportMonthlyAverageDesc => 'Average amount spent each month';
+
+  @override
+  String get annualReportBusiestMonth => 'Most Active Month';
+
+  @override
+  String get annualReportBusiestMonthDesc => 'Month with the most bookkeeping activity';
+
+  @override
+  String get annualReportCategoryCount => 'Spending Categories';
+
+  @override
+  String get annualReportCategoryCountDesc => 'Number of spending categories used';
+
+  @override
+  String annualReportCategoryCountValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count categories',
+      one: '1 category',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get annualReportSavingsRate => 'Savings Rate';
+
+  @override
+  String get annualReportSavingsRatePositive => 'The share of your income saved this year';
+
+  @override
+  String get annualReportSavingsRateNegative => 'Spending exceeded income this year';
+
+  @override
+  String get annualReportComparisonTitle => 'Income vs. Expense';
+
+  @override
+  String get annualReportComparisonSubtitle => 'Compare monthly income and expenses';
+
+  @override
+  String get annualReportHighestIncome => 'Highest Income';
+
+  @override
+  String get annualReportHighestExpense => 'Highest Expense';
+
+  @override
+  String get annualReportConsistency => 'Bookkeeping Streak';
+
+  @override
+  String annualReportDaysValue(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get annualReportSavingsPositive => 'Congratulations on your savings';
+
+  @override
+  String get annualReportSavingsNegative => 'Spending exceeded income this year';
+
+  @override
+  String get annualReportMonthlyExpenseTrend => 'Monthly Spending Trend';
+
+  @override
+  String get annualReportAchieved => 'Achieved';
+
+  @override
+  String get annualReportNotAchieved => 'Not Achieved';
+
+  @override
+  String get annualReportDownloadHint => 'Scan to download BeeCount and start bookkeeping';
+
+  @override
+  String get attachmentKeepOriginal => 'Keep Original Attachments';
+
+  @override
+  String get attachmentKeepOriginalDesc => 'Uses more storage and sync data';
+
+  @override
+  String get transactionCopyAction => 'Copy as new transaction';
+
+  @override
+  String get transactionCopyUnavailable => 'This transaction cannot be copied. Check the ledger and your access.';
 }

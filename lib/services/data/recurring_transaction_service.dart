@@ -192,6 +192,22 @@ class RecurringTransactionService {
       for (final recurring in recurringList) {
         logger.info(_tag,
             '处理周期交易 id=${recurring.id} freq=${recurring.frequency} interval=${recurring.interval} start=${recurring.startDate} end=${recurring.endDate} lastGen=${recurring.lastGeneratedDate}');
+
+        // 账户隐藏(#240 E2):关联账户(转账含转出/转入两端)任一被隐藏,本次
+        // 扫描整体跳过 —— 不推进 lastGeneratedDate,账户恢复后靠现有"补生成"
+        // 机制(calculateNextDate 按 lastGeneratedDate 续算)自动追上遗漏周期。
+        final fromAccount = recurring.accountId != null
+            ? await repository.getAccount(recurring.accountId)
+            : null;
+        final toAccount = recurring.toAccountId != null
+            ? await repository.getAccount(recurring.toAccountId)
+            : null;
+        if ((fromAccount?.hidden ?? false) || (toAccount?.hidden ?? false)) {
+          logger.info(_tag,
+              '周期交易 id=${recurring.id} 跳过:关联账户已隐藏(accountId=${recurring.accountId}, toAccountId=${recurring.toAccountId})');
+          continue;
+        }
+
         // 循环生成所有缺失的交易记录
         var currentRecurring = recurring;
         var loopGuard = 0;
@@ -209,6 +225,17 @@ class RecurringTransactionService {
               '周期交易 id=${currentRecurring.id} 生成一笔: happenedAt=$nextDate amount=${currentRecurring.amount} type=${currentRecurring.type}');
 
           // 生成交易记录
+          //
+          // 币种(v32 / issue #444):
+          // - 挂了账户 → 传 null,让 repo 从账户解析(账户内不混币,
+          //   .docs/multi-currency-ledger 01 §4.1);账户事后被改币种时模板值
+          //   可能已漂移,以账户为准才不会往账户里塞异币种交易。
+          // - 无账户 → 用模板币种(L12 手选;null 即账本本位币,存量行为不变)。
+          // nativeAmount 一律不传:由 repo 按**本次生成当日**的有效汇率折算 ——
+          // 周期账单的语义是"每月 10 美元",不是"每月固定 72 元"。
+          final txCurrency = currentRecurring.accountId != null
+              ? null
+              : currentRecurring.currencyCode;
           final transactionId = await repository.addTransaction(
             ledgerId: currentRecurring.ledgerId,
             type: currentRecurring.type,
@@ -218,6 +245,7 @@ class RecurringTransactionService {
             toAccountId: currentRecurring.toAccountId,
             happenedAt: nextDate,
             note: currentRecurring.note,
+            currencyCode: txCurrency,
           );
 
           // 更新最后生成日期

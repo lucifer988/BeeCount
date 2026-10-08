@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5,6 +7,154 @@ import 'app_localizations.dart';
 /// The translations for Chinese (`zh`).
 class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
+
+  @override
+  String get agentActivityPreparing => '正在处理你的问题…';
+
+  @override
+  String get agentActivityAwaitingModel => '正在等待模型响应…';
+
+  @override
+  String get agentActivityThinking => '模型正在思考…';
+
+  @override
+  String get agentActivityGenerating => '正在整理回答…';
+
+  @override
+  String agentExecutionCompletedSummary(int count) {
+    return '已完成 $count 项操作';
+  }
+
+  @override
+  String get agentExecutionFailedSummary => '部分操作未完成';
+
+  @override
+  String get agentActivityUnknownTool => '本地操作';
+
+  @override
+  String get agentActivityOverview => '收支概览';
+
+  @override
+  String get agentActivityTrend => '支出趋势';
+
+  @override
+  String get agentActivityCategories => '支出分类';
+
+  @override
+  String get agentActivityLeafCategories => '明细分类';
+
+  @override
+  String agentActivityCategoryScope(String categories) {
+    return '分类：$categories';
+  }
+
+  @override
+  String agentActivityReturnedRows(int count) {
+    return '已返回 $count 笔交易';
+  }
+
+  @override
+  String agentActivityReturnedGroups(int count) {
+    return '已返回 $count 个分组';
+  }
+
+  @override
+  String get agentActivityTruncated => '仅返回部分结果';
+
+  @override
+  String get agentFollowUpRotate => '换一组';
+
+  @override
+  String get agentScrollToLatest => '回到最新消息';
+
+  @override
+  String get agentSuggestionHealthTitle => '财务健康分析';
+
+  @override
+  String get agentSuggestionHealthPrompt => '分析本月收支平衡和储蓄率，并按月列出最近六个月的支出趋势。基于查询结果给出财务健康分析和建议，数据不足时说明限制。';
+
+  @override
+  String get agentSuggestionSummaryTitle => '本月支出总结';
+
+  @override
+  String get agentSuggestionSummaryPrompt => '总结本月支出，分析主要一级分类及占比，并给出节约开支的建议。请依据实际查询结果，数据不足时说明限制。';
+
+  @override
+  String get agentSuggestionAnalysisTitle => '分类占比分析';
+
+  @override
+  String get agentSuggestionAnalysisPrompt => '分析本月一级分类支出占比和主要支出类别，给出优化建议。不要仅凭占比断言某项消费不合理，数据不足时说明限制。';
+
+  @override
+  String get agentSuggestionBudgetTitle => '预算规划建议';
+
+  @override
+  String get agentSuggestionBudgetPrompt => '根据本月收支、一级分类支出占比和最近六个月的月度支出趋势，提供下月分类预算规划建议。仅提供建议，不创建或修改预算；数据不足时说明限制。';
+
+  @override
+  String get agentSuggestionAnomalyTitle => '异常支出检查';
+
+  @override
+  String get agentSuggestionAnomalyPrompt => '查看最近三十天的交易明细及收支概览，指出其中值得关注的大额或重复交易，并说明判断依据。这只是返回明细范围内的初步检查，不代表全部交易的异常扫描，不把正常消费直接定性为异常。';
+
+  @override
+  String get agentSuggestionSavingTitle => '省钱小贴士';
+
+  @override
+  String get agentSuggestionSavingPrompt => '分析本月一级分类支出占比和最近六个月的月度支出趋势，给出三到五条实用的省钱建议。依据实际查询结果，不推断未提供的个人情况；数据不足时说明限制。';
+
+  @override
+  String get agentFollowUpTitle => '继续了解';
+
+  @override
+  String agentFollowUpRange(String start, String end) {
+    return '$start 至 $end（不含结束时间）';
+  }
+
+  @override
+  String get agentFollowUpAllCategories => '全部支出分类';
+
+  @override
+  String get agentFollowUpCategoryTitle => '查看分类占比';
+
+  @override
+  String agentFollowUpCategoryPrompt(String range) {
+    return '查询 $range 的一级分类支出占比。';
+  }
+
+  @override
+  String get agentFollowUpTrendTitle => '查看支出趋势';
+
+  @override
+  String agentFollowUpTrendPrompt(String category, String range) {
+    return '按月列出 $range 中$category的支出，不做同比或环比比较。';
+  }
+
+  @override
+  String get agentFollowUpCompareTitle => '查看环比变化';
+
+  @override
+  String agentFollowUpComparePrompt(String category, String range) {
+    return '按月列出 $range 中$category的支出及相邻月份环比变化。';
+  }
+
+  @override
+  String agentFollowUpLeafTitle(String category) {
+    return '细看$category';
+  }
+
+  @override
+  String agentFollowUpLeafPrompt(String category, String range) {
+    return '查询 $range 中「$category」的明细分类支出占比。';
+  }
+
+  @override
+  String get agentFollowUpOverviewTitle => '查看收支概览';
+
+  @override
+  String agentFollowUpOverviewPrompt(String range) {
+    return '查询 $range 的总收入、总支出和结余。';
+  }
 
   @override
   String get aiConsentTitle => '开启 AI 功能前,请知悉';
@@ -17,6 +167,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aboutPrivacyPolicy => '隐私政策';
+
+  @override
+  String get aboutChangelog => '更新日志';
 
   @override
   String get appTitle => '蜜蜂记账';
@@ -320,6 +473,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get widgetMonthSuffix => '月';
+
+  @override
+  String get widgetToday => '今日';
+
+  @override
+  String get widgetQuickAddLabel => '记一笔';
+
+  @override
+  String get widgetBudgetTotal => '总额';
+
+  @override
+  String get widgetBudgetRemaining => '剩';
+
+  @override
+  String get widgetNoBudget => '未设预算';
+
+  @override
+  String get widgetNoTransactions => '暂无交易';
+
+  @override
+  String get widgetRecentTransactions => '最近交易';
+
+  @override
+  String get widgetNoAccounts => '暂无账户';
 
   @override
   String get searchTitle => '搜索';
@@ -707,6 +884,80 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryTitle => '分类管理';
 
   @override
+  String get categoryIconGroupBasic => '基础';
+
+  @override
+  String get categoryIconGroupFoodDining => '餐饮美食';
+
+  @override
+  String get categoryIconGroupTransportation => '交通出行';
+
+  @override
+  String get categoryIconGroupShopping => '购物消费';
+
+  @override
+  String get categoryIconGroupHomeLiving => '居住生活';
+
+  @override
+  String get categoryIconGroupCommunicationDevices => '通讯设备';
+
+  @override
+  String get categoryIconGroupEntertainmentLeisure => '娱乐休闲';
+
+  @override
+  String get categoryIconGroupHealthMedical => '健康医疗';
+
+  @override
+  String get categoryIconGroupEducationLearning => '教育学习';
+
+  @override
+  String get categoryIconGroupPetsAnimals => '宠物动物';
+
+  @override
+  String get categoryIconGroupClothingBeauty => '服装美容';
+
+  @override
+  String get categoryIconGroupOtherMiscellaneous => '其他杂项';
+
+  @override
+  String get categoryIconGroupWorkCareer => '工作职业';
+
+  @override
+  String get categoryIconGroupFinance => '金融理财';
+
+  @override
+  String get categoryIconGroupRewardsGifts => '奖励礼品';
+
+  @override
+  String get categoryIconGroupInvestmentReturns => '投资收益';
+
+  @override
+  String get categoryIconGroupOtherIncome => '其他收入';
+
+  @override
+  String get categoryGenerateDefault => '生成默认分类';
+
+  @override
+  String get categoryGenerateDefaultFlat => '一级分类';
+
+  @override
+  String get categoryGenerateDefaultHierarchical => '二级分类';
+
+  @override
+  String get categoryGenerateDefaultHint => '已有分类会保留，同名的默认分类会跳过。';
+
+  @override
+  String categoryGenerateDefaultSuccess(int count) {
+    return '已生成 $count 个默认分类';
+  }
+
+  @override
+  String get categoryGenerateDefaultNoChanges => '默认分类已存在，无需生成';
+
+  @override
+  String get categoryGenerateDefaultFailed => '生成默认分类失败，请重试';
+
+  @override
   String get categoryNew => '新建分类';
 
   @override
@@ -985,7 +1236,54 @@ class AppLocalizationsZh extends AppLocalizations {
   String get headerSkinSubtitle => '跟随主题色,叠在头部之上';
 
   @override
+  String get headerSkinGroupBasic => '基础';
+
+  @override
+  String get headerSkinGroupAnniversary => '周年纪念';
+
+  @override
+  String get headerSkinGroupGradient => '渐变';
+
+  @override
+  String get headerSkinGroupScene => '场景';
+
+  @override
+  String get headerSkinGroupPattern => '图案';
+
+  @override
+  String get headerSkinGroupGeometric => '几何艺术';
+
+  @override
   String get headerSkinNone => '纯色';
+
+  @override
+  String get headerSkinAnniversary => '一岁星座';
+
+  @override
+  String get headerSkinAnnivCake => '周年蛋糕';
+
+  @override
+  String get headerSkinTabAll => '全部';
+
+  @override
+  String get headerSkinTabAnimated => '动态';
+
+  @override
+  String get headerSkinTabStatic => '静态';
+
+  @override
+  String get headerSkinAnimatedBadge => '动';
+
+  @override
+  String get headerSkinFixedPalette => '自带配色';
+
+  @override
+  String personalizeLockedBySkin(String skin) {
+    return '当前皮肤「$skin」自带配色,主题色已随皮肤设定,暂不可更改。换回其它皮肤即可恢复你原来的颜色。';
+  }
+
+  @override
+  String get personalizeFixedSkinAction => '换皮肤';
 
   @override
   String get headerSkinAurora => '极光';
@@ -1389,7 +1687,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mineTotalRecords => '总笔数';
 
   @override
-  String get mineCurrentBalance => '当前余额';
+  String get mineCurrentBalance => '账本结余';
 
   @override
   String get mineCloudService => '云服务';
@@ -2083,6 +2381,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get appearanceAmountFormatCompactDesc => '大金额缩写，如 12.3万（仅对账户余额生效）';
+
+  @override
+  String get appearanceSkinAnimation => '皮肤动效';
+
+  @override
+  String get appearanceSkinAnimationDesc => '关闭后动态皮肤停在静止画面，更省电';
 
   @override
   String get appearanceShowTransactionTime => '显示交易时间';
@@ -3759,6 +4063,45 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountBalance => '余额';
 
   @override
+  String get accountUpdateBalance => '修改余额';
+
+  @override
+  String get accountBalanceAdjustmentTitle => '确认余额变更';
+
+  @override
+  String get accountBalanceAdjustmentChooseAction => '请选择这次余额变更的保存方式';
+
+  @override
+  String get accountBalanceAdjustmentOnly => '仅修改余额';
+
+  @override
+  String get accountBalanceAdjustmentOnlyMessage => '不创建交易；历史余额趋势会按新的余额基线重新计算。';
+
+  @override
+  String get accountBalanceAdjustmentCreate => '生成平账交易';
+
+  @override
+  String get accountBalanceAdjustmentCreateMessage => '同时新增一笔普通收入或支出，归入“平账”分类，并计入收支和预算统计。';
+
+  @override
+  String get accountBalanceAdjustmentConfirmOnly => '确认仅修改余额';
+
+  @override
+  String get accountBalanceAdjustmentConfirmCreate => '确认并生成平账交易';
+
+  @override
+  String get accountBalanceCurrent => '当前余额';
+
+  @override
+  String get accountBalanceAfterAdjustment => '调整后余额';
+
+  @override
+  String get accountBalanceDifference => '本次差额';
+
+  @override
+  String get accountBalanceUnchanged => '余额未发生变化';
+
+  @override
   String get accountEditTitle => '编辑账户';
 
   @override
@@ -3824,6 +4167,46 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountsEnableFeature => '启用账户功能';
 
   @override
+  String get accountHide => '隐藏账户';
+
+  @override
+  String get accountUnhide => '恢复账户';
+
+  @override
+  String get accountRestore => '恢复';
+
+  @override
+  String get accountHiddenTag => '已隐藏';
+
+  @override
+  String get accountHiddenSection => '已隐藏';
+
+  @override
+  String accountHiddenSectionSummary(int count, String total) {
+    return '已隐藏 $count · 合计 $total';
+  }
+
+  @override
+  String get accountHideConfirmTitle => '隐藏此账户？';
+
+  @override
+  String get accountHideConfirmBody => '隐藏后无法再记账到它，新增记账时也不再显示；历史交易与余额保留，可随时恢复。';
+
+  @override
+  String accountHideRecurringWarn(int count) {
+    return '有 $count 个周期账单在用此账户，隐藏后这些账单将跳过生成，建议先改到其他账户。';
+  }
+
+  @override
+  String get accountHideClearedDefault => '已取消其默认账户设置';
+
+  @override
+  String get accountHiddenToast => '已隐藏';
+
+  @override
+  String get accountRestoredToast => '已恢复';
+
+  @override
   String get privacyOpenSourceUrlError => '无法打开链接';
 
   @override
@@ -3885,6 +4268,87 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get widgetPreviewDesc => '小组件会自动显示当前账本的实际数据，主题色跟随应用设置';
+
+  @override
+  String get widgetGalleryTitle => '组件库';
+
+  @override
+  String get widgetGalleryDesc => '以下为示例效果，实际将显示当前账本的真实数据，主题色跟随 App 设置';
+
+  @override
+  String get widgetGalleryGlanceTitle => '收支速览';
+
+  @override
+  String get widgetGalleryGlanceDesc => '今日和本月收支一目了然';
+
+  @override
+  String get widgetGalleryNetWorthDesc => '总资产、总负债与净值趋势';
+
+  @override
+  String get widgetGalleryQuickAddTitle => '快速记账';
+
+  @override
+  String get widgetGalleryQuickAddDesc => '常用分类一键速记';
+
+  @override
+  String get widgetGalleryBudgetDesc => '预算进度实时掌握';
+
+  @override
+  String get widgetGalleryRecentDesc => '快速查看最近几笔账单';
+
+  @override
+  String get widgetGalleryDashboardTitle => '综合仪表盘';
+
+  @override
+  String get widgetDashboardTitle => '本月概览';
+
+  @override
+  String get widgetGalleryDashboardDesc => '收支、趋势与最近交易一屏看尽';
+
+  @override
+  String get widgetConsumptionRhythmTitle => '消费节奏';
+
+  @override
+  String get widgetConsumptionRhythmRange => '近 30 天';
+
+  @override
+  String get widgetConsumptionRhythmStable => '消费很均匀';
+
+  @override
+  String get widgetConsumptionRhythmIncrease => '比上周更快';
+
+  @override
+  String get widgetConsumptionRhythmDecrease => '比上周更稳';
+
+  @override
+  String get widgetConsumptionRhythmEmpty => '近 30 天还没有支出';
+
+  @override
+  String get widgetBeeTrailTitle => '记账连续蜂迹';
+
+  @override
+  String get widgetBeeTrailStreakSuffix => '天';
+
+  @override
+  String get widgetBeeTrailCompletion => '近 28 天完成率';
+
+  @override
+  String get widgetBeeTrailEmpty => '今天记一笔，点亮第一格';
+
+  @override
+  String get widgetGalleryConsumptionRhythmDesc => '近 30 天消费节奏一眼看清';
+
+  @override
+  String get widgetGalleryBeeTrailDesc => '用蜂巢格养成每日记账习惯';
+
+  @override
+  String get widgetSizeSmall => '小号';
+
+  @override
+  String get widgetSizeMedium => '中号';
+
+  @override
+  String get widgetSizeLarge => '大号';
 
   @override
   String get howToAddWidget => '如何添加小组件';
@@ -4230,6 +4694,32 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiOcrNoLedger => '未找到账本';
+
+  @override
+  String aiBillingRateMissingHint(String currency) {
+    return '⚠️ 未取到 $currency 汇率，已按 1:1 暂记，可在统计页「补折算」修正';
+  }
+
+  @override
+  String get aiPromptVarCurrencies => '账本主币种 + 已在用的外币账户';
+
+  @override
+  String get aiPromptVarBillGuard => '账单过滤段（仅截图 / 自动记账时注入）';
+
+  @override
+  String aiPromptMissingVarsHint(String vars) {
+    return '你的自定义模板缺少这些变量，对应能力会失效：$vars';
+  }
+
+  @override
+  String aiPromptInsertVarSection(String name) {
+    return '插入 $name 段落';
+  }
+
+  @override
+  String aiPromptVarSectionInserted(String name) {
+    return '已追加 $name 段落，确认后保存';
+  }
 
   @override
   String aiOcrSuccess(String type, String amount) {
@@ -4992,6 +5482,64 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatInputHint => '例如: 买了杯咖啡35块';
 
   @override
+  String get aiQuickCommandsTitle => '试试这些';
+
+  @override
+  String get agentSuggestionOverviewTitle => '本月收支';
+
+  @override
+  String get agentSuggestionOverviewPrompt => '总结本月收入、支出和结余。';
+
+  @override
+  String get agentSuggestionCategoryTitle => '分类占比';
+
+  @override
+  String get agentSuggestionCategoryPrompt => '本月一级分类支出占比是多少？';
+
+  @override
+  String get aiQuickCommandsOpen => '打开快捷指令';
+
+  @override
+  String get aiChatEmptyMessages => '暂无消息';
+
+  @override
+  String get aiChatEmptyCurrentLedger => '当前账本';
+
+  @override
+  String get aiChatEmptyStartTitle => '从一笔账，或一个问题开始';
+
+  @override
+  String get aiChatEmptyStartDescription => '我会基于当前账本回答，并在需要时请求你的授权。';
+
+  @override
+  String get aiChatEmptyMonthExpense => '本月支出';
+
+  @override
+  String get aiChatEmptyRecordedTransactions => '已记录交易';
+
+  @override
+  String aiChatEmptyTransactionCount(int count) {
+    return '$count 笔';
+  }
+
+  @override
+  String get aiChatEmptyQuestionExample => '试着问：本月哪项花得最多？';
+
+  @override
+  String get aiChatEmptyFirstTransactionTitle => '从今天的第一笔开始';
+
+  @override
+  String get aiChatEmptyFirstTransactionDescription => '直接告诉我金额和用途，我会帮你完成记账。';
+
+  @override
+  String get aiChatEmptyFirstTransactionExample => '例如：午饭花了 28 元';
+
+  @override
+  String aiChatMessagesLoadFailed(String error) {
+    return '加载失败: $error';
+  }
+
+  @override
   String get aiChatThinking => '思考中...';
 
   @override
@@ -5025,6 +5573,198 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatSendFailed => '发送失败';
 
   @override
+  String get agentRunFailed => 'AI 服务暂时不可用，请稍后重试。';
+
+  @override
+  String get agentNativeToolsUnsupported => '当前模型可以进行普通对话，但不支持读取或操作账本所需的原生工具调用。请前往“设置 > AI 设置 > 服务商管理”切换模型或运行文本模型测试。';
+
+  @override
+  String get agentTurnTimedOut => 'AI 响应超时，请稍后重试。';
+
+  @override
+  String get agentRecordIncomplete => '未识别到完整的记账信息，请补充金额和用途后重试。';
+
+  @override
+  String agentRecordCreated(int count) {
+    return '已创建 $count 笔账单。';
+  }
+
+  @override
+  String get agentStepsExceeded => '这次操作步骤过多，请简化后重试。';
+
+  @override
+  String agentExecutingTool(Object tool) {
+    return '正在执行：$tool';
+  }
+
+  @override
+  String agentToolCompleted(Object tool) {
+    return '已完成：$tool';
+  }
+
+  @override
+  String agentToolFailed(Object tool) {
+    return '执行失败：$tool';
+  }
+
+  @override
+  String get agentToolQueryTransactions => '查询交易';
+
+  @override
+  String get agentToolSpendingSummary => '汇总支出';
+
+  @override
+  String get agentToolTransactionSummary => '汇总交易';
+
+  @override
+  String get agentToolBudgetStatus => '查询预算';
+
+  @override
+  String get agentToolRecurringTransactions => '查看周期账单';
+
+  @override
+  String get agentToolRecordTransaction => '记录交易';
+
+  @override
+  String get agentToolSaveMemory => '保存记忆';
+
+  @override
+  String get agentToolForgetMemory => '遗忘记忆';
+
+  @override
+  String get agentPermissionsTitle => 'AI助手权限';
+
+  @override
+  String get agentPermissionsIntro => '在这里管理 AI助手可以执行的操作。查询类工具只读取数据，修改类工具会在执行前请求授权。';
+
+  @override
+  String get agentPermissionsReadOnlySection => '只读工具';
+
+  @override
+  String get agentPermissionsReadOnlySectionDescription => '查看账本信息，不会修改任何数据。';
+
+  @override
+  String get agentPermissionsWriteSection => '数据修改工具';
+
+  @override
+  String get agentPermissionsWriteSectionDescription => '会改变账本或本地记忆，建议保持每次询问。';
+
+  @override
+  String get agentPermissionsDefaultsActive => '所有工具都在使用默认策略';
+
+  @override
+  String agentPermissionsModifiedCount(int count) {
+    return '已自定义 $count 项设置';
+  }
+
+  @override
+  String get agentPermissionsRestoreDefaults => '恢复默认';
+
+  @override
+  String get agentPermissionsRestoreTitle => '恢复默认权限？';
+
+  @override
+  String get agentPermissionsRestoreDescription => '这会清除所有“始终允许”设置，并恢复每个工具的默认权限。';
+
+  @override
+  String get agentPermissionsRestoreConfirm => '恢复';
+
+  @override
+  String get agentPermissionAsk => '每次询问';
+
+  @override
+  String get agentPermissionAlwaysAllow => '始终允许';
+
+  @override
+  String get agentPermissionWaiting => '等待你的授权';
+
+  @override
+  String get agentPermissionWriteFailed => '权限设置保存失败，请重试。';
+
+  @override
+  String get agentAuthorizationPersistenceFailed => '权限保存失败，本次操作仍按你的选择处理。';
+
+  @override
+  String get agentToolQueryTransactionsDescription => '查看当前账本内指定时间范围的交易。';
+
+  @override
+  String get agentToolSpendingSummaryDescription => '汇总当前账本在指定时间范围内的支出。';
+
+  @override
+  String get agentToolTransactionSummaryDescription => '按类型、分类、标签、账户或时间周期汇总当前账本的交易。';
+
+  @override
+  String get agentToolBudgetStatusDescription => '查看当前账本的预算状态。';
+
+  @override
+  String get agentToolRecurringTransactionsDescription => '查看当前账本启用中的周期账单。';
+
+  @override
+  String get agentToolRecordTransactionDescription => '根据你发送的原始文本记录一笔交易。';
+
+  @override
+  String get agentToolSaveMemoryDescription => '保存你明确要求助手记住的内容。';
+
+  @override
+  String get agentToolForgetMemoryDescription => '删除一条已保存的本地记忆。';
+
+  @override
+  String get agentToolUnknownDescription => '执行本地 Agent 工具。';
+
+  @override
+  String get agentAuthorizationTitle => '允许 Agent 执行操作？';
+
+  @override
+  String agentAuthorizationCurrentLedger(int ledgerId) {
+    return '账本：当前账本（ID $ledgerId）';
+  }
+
+  @override
+  String get agentAuthorizationAllLedgers => '账本：所有可访问账本';
+
+  @override
+  String get agentAuthorizationParameters => '本次会使用的信息';
+
+  @override
+  String get agentAuthorizationNoParameters => '没有需要展示的参数。';
+
+  @override
+  String get agentAuthorizationSourceText => '原始记账文本';
+
+  @override
+  String get agentAuthorizationTimeRange => '查询时间范围';
+
+  @override
+  String get agentAuthorizationSummaryTypes => '交易类型';
+
+  @override
+  String get agentAuthorizationSummaryGroupBy => '分组方式';
+
+  @override
+  String get agentAuthorizationCategoryIds => '分类编号';
+
+  @override
+  String get agentAuthorizationTagIds => '标签编号';
+
+  @override
+  String get agentAuthorizationAccountIds => '账户编号';
+
+  @override
+  String get agentAuthorizationMemoryContent => '记忆内容';
+
+  @override
+  String get agentAuthorizationMemoryId => '记忆编号';
+
+  @override
+  String get agentAuthorizationDeny => '拒绝';
+
+  @override
+  String get agentAuthorizationAllowOnce => '本次允许';
+
+  @override
+  String get agentAuthorizationAlwaysAllow => '始终允许';
+
+  @override
   String get billCardSuccess => '记账成功';
 
   @override
@@ -5044,6 +5784,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get billCardAccount => '💳 账户';
+
+  @override
+  String get billCardTransferAccounts => '🔁 转账账户';
+
+  @override
+  String get billCardType => '↕️ 类型';
+
+  @override
+  String get billCardExpense => '支出';
+
+  @override
+  String get billCardIncome => '收入';
+
+  @override
+  String get billCardTransfer => '转账';
+
+  @override
+  String get billCardCurrency => '💱 币种';
+
+  @override
+  String get billCardTags => '🏷️ 标签';
 
   @override
   String get billCardUndo => '撤销';
@@ -5308,6 +6069,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tagSelectCreateNew => '新建标签';
+
+  @override
+  String get tagSelectOwnerManaged => '共享账本标签由所有者管理';
 
   @override
   String get tagSelectRecentlyUsed => '最近使用';
@@ -6271,9 +7035,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountGroupValuation => '资产/负债';
 
   @override
-  String get adjustmentTransaction => '估值调整';
-
-  @override
   String creditCardBillingInfo(int billingDay, int paymentDueDay) {
     return '每月$billingDay日出账 · $paymentDueDay日还款';
   }
@@ -6300,90 +7061,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get budgetSetupAction => '去设置';
-
-  @override
-  String get cloudCollabDevicesPageTitle => '设备会话';
-
-  @override
-  String get cloudCollabDevicesPageSubtitle => '管理当前账号活跃设备';
-
-  @override
-  String get cloudCollabDevicesViewAllSessions => '显示全部会话';
-
-  @override
-  String get cloudCollabDevicesViewModeHint => '默认展示近 30 天去重设备，可切换查看全部会话。';
-
-  @override
-  String get cloudCollabNoDevices => '当前没有活跃设备';
-
-  @override
-  String get cloudCollabUnknownDeviceName => '未知设备';
-
-  @override
-  String get cloudCollabDeviceCurrentTag => '当前设备';
-
-  @override
-  String get cloudCollabCurrentDeviceCannotRevoke => '当前设备不能远程下线。';
-
-  @override
-  String cloudCollabDeviceAppVersion(String version) {
-    return '应用：$version';
-  }
-
-  @override
-  String cloudCollabDeviceOsVersion(String version) {
-    return '系统：$version';
-  }
-
-  @override
-  String cloudCollabDeviceModel(String model) {
-    return '型号：$model';
-  }
-
-  @override
-  String cloudCollabDeviceLastIp(String ip) {
-    return 'IP：$ip';
-  }
-
-  @override
-  String cloudCollabDeviceSessionCount(String count) {
-    return '会话数：$count';
-  }
-
-  @override
-  String cloudCollabDeviceLastSeen(String time) {
-    return '最近活跃：$time';
-  }
-
-  @override
-  String cloudCollabDeviceCreatedAt(String time) {
-    return '创建时间：$time';
-  }
-
-  @override
-  String get cloudCollabDeviceRevokeTitle => '远程下线设备';
-
-  @override
-  String cloudCollabDeviceRevokeMessage(String name, String id) {
-    return '确认下线设备 $name（$id）吗？';
-  }
-
-  @override
-  String cloudCollabDeviceRevokeMultipleMessage(String name, String count) {
-    return '确认下线设备 $name 的 $count 个会话吗？';
-  }
-
-  @override
-  String get cloudCollabDeviceRevoked => '设备已下线';
-
-  @override
-  String get cloudCollabUnavailableMessage => '云同步功能暂不可用。';
-
-  @override
-  String get cloudCollabScopeDeniedHint => '服务端尚未开启 ALLOW_APP_RW_SCOPES，当前设备会话不可用。';
-
-  @override
-  String get cloudCollabScopeDeniedAction => '请在服务端 .env 或部署环境中设置 ALLOW_APP_RW_SCOPES=true，重启服务后重新登录 App。';
 
   @override
   String get syncHealthTitle => '同步状态';
@@ -6958,6 +7635,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get txRateLabel => '汇率';
 
   @override
+  String get transactionDoubleTapHint => '双击再记';
+
+  @override
+  String get transactionSavedNextCategory => '已保存，请选下一笔分类';
+
+  @override
   String txConvertedPreview(Object amount, Object currency) {
     return '≈ $amount $currency';
   }
@@ -7318,6 +8001,232 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get currencyMRU => '毛里塔尼亚乌吉亚';
+
+  @override
+  String get agentAssistantSettingsTitle => 'AI助手';
+
+  @override
+  String get agentAssistantSettingsSubtitle => '管理助手如何使用本地数据和工具。';
+
+  @override
+  String get agentAssistantPermissionsEntry => '权限';
+
+  @override
+  String get agentAssistantPermissionsEntryDescription => '设置修改数据的工具何时需要你的授权。';
+
+  @override
+  String get agentAssistantMemoryEntry => '本地记忆';
+
+  @override
+  String get agentAssistantMemoryEntryDescription => '查看和移除仅保存在本机的记忆。';
+
+  @override
+  String get agentAssistantActivityEntry => '最近活动';
+
+  @override
+  String get agentAssistantActivityEntryDescription => '查看本地工具调用及其结果。';
+
+  @override
+  String get agentExecutionDepthEntry => '执行深度';
+
+  @override
+  String get agentExecutionDepthEntryDescription => '更高的上限可处理更多步骤，但响应可能更慢。';
+
+  @override
+  String agentExecutionDepthSelected(int turns) {
+    return '最多 $turns 个模型回合';
+  }
+
+  @override
+  String get agentExecutionDepthChooseTitle => '执行深度';
+
+  @override
+  String get agentExecutionDepthQuick => '快速';
+
+  @override
+  String get agentExecutionDepthStandard => '标准';
+
+  @override
+  String get agentExecutionDepthDeep => '深入';
+
+  @override
+  String get agentExecutionDepthCustom => '自定义';
+
+  @override
+  String get agentMemoryTitle => '本地记忆';
+
+  @override
+  String get agentMemoryIntro => '这些记忆仅保存在本机，并且只会用于当前账本。';
+
+  @override
+  String get agentMemoryEmpty => '暂时没有本地记忆。';
+
+  @override
+  String get agentMemoryDeleteTitle => '删除这条记忆？';
+
+  @override
+  String get agentMemoryDeleteDescription => '删除后，AI助手将不再使用这条记忆。';
+
+  @override
+  String get agentMemoryClear => '清空当前账本记忆';
+
+  @override
+  String get agentMemoryClearTitle => '清空当前账本的全部记忆？';
+
+  @override
+  String get agentMemoryClearDescription => '这会移除当前账本的所有本地记忆，且无法撤销。';
+
+  @override
+  String get agentActivityTitle => '最近活动';
+
+  @override
+  String get agentActivityIntro => '活动记录仅保存在本机，不会参与同步。';
+
+  @override
+  String get agentActivityEmpty => '暂时没有助手活动。';
+
+  @override
+  String get agentActivityCompleted => '已完成';
+
+  @override
+  String get agentActivityFailed => '失败';
+
+  @override
+  String get agentActivityRunning => '进行中';
+
+  @override
+  String get agentActivityCancelled => '已取消';
+
+  @override
+  String get agentActivityTools => '工具';
+
+  @override
+  String get agentActivityToolCompleted => '已完成';
+
+  @override
+  String get agentActivityToolDenied => '已拒绝';
+
+  @override
+  String get agentActivityToolFailed => '失败';
+
+  @override
+  String get agentRunCancelled => '本次操作已停止。';
+
+  @override
+  String get agentRunStop => '停止';
+
+  @override
+  String get agentQueryValidationFailed => '查询参数未能纠正，暂时无法给出可靠结果。请重试。';
+
+  @override
+  String get annualReportInsightsTitle => '年度洞察';
+
+  @override
+  String get annualReportInsightsSubtitle => '从数据中发现你的消费习惯';
+
+  @override
+  String get annualReportAveragePerRecord => '平均每笔消费';
+
+  @override
+  String get annualReportAveragePerRecordDesc => '你每次记账的平均金额';
+
+  @override
+  String get annualReportDailyAverage => '日均支出';
+
+  @override
+  String get annualReportDailyAverageDesc => '平均每天花费金额';
+
+  @override
+  String get annualReportMonthlyAverage => '月均支出';
+
+  @override
+  String get annualReportMonthlyAverageDesc => '平均每月花费金额';
+
+  @override
+  String get annualReportBusiestMonth => '最活跃月份';
+
+  @override
+  String get annualReportBusiestMonthDesc => '记账活动最频繁的月份';
+
+  @override
+  String get annualReportCategoryCount => '消费分类数';
+
+  @override
+  String get annualReportCategoryCountDesc => '你使用过的消费分类数量';
+
+  @override
+  String annualReportCategoryCountValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count个',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get annualReportSavingsRate => '储蓄率';
+
+  @override
+  String get annualReportSavingsRatePositive => '今年你攒下了收入的这个比例';
+
+  @override
+  String get annualReportSavingsRateNegative => '今年支出超过了收入';
+
+  @override
+  String get annualReportComparisonTitle => '收支对比';
+
+  @override
+  String get annualReportComparisonSubtitle => '每月收入与支出的对比';
+
+  @override
+  String get annualReportHighestIncome => '收入最高';
+
+  @override
+  String get annualReportHighestExpense => '支出最高';
+
+  @override
+  String get annualReportConsistency => '记账坚持';
+
+  @override
+  String annualReportDaysValue(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days天',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get annualReportSavingsPositive => '恭喜你攒下了';
+
+  @override
+  String get annualReportSavingsNegative => '今年花超了';
+
+  @override
+  String get annualReportMonthlyExpenseTrend => '月度支出趋势';
+
+  @override
+  String get annualReportAchieved => '已达成';
+
+  @override
+  String get annualReportNotAchieved => '未达成';
+
+  @override
+  String get annualReportDownloadHint => '扫码下载蜜蜂记账，开启你的记账之旅';
+
+  @override
+  String get attachmentKeepOriginal => '附件保存原图';
+
+  @override
+  String get attachmentKeepOriginalDesc => '保留原图，增加存储和同步流量';
+
+  @override
+  String get transactionCopyAction => '复制为新交易';
+
+  @override
+  String get transactionCopyUnavailable => '无法复制这笔交易，请检查账本和访问权限。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -7335,6 +8244,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get aboutPrivacyPolicy => '隱私政策';
+
+  @override
+  String get aboutChangelog => '更新日誌';
 
   @override
   String get appTitle => '蜜蜂記帳';
@@ -7638,6 +8550,30 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get widgetMonthSuffix => '月';
+
+  @override
+  String get widgetToday => '今日';
+
+  @override
+  String get widgetQuickAddLabel => '記一筆';
+
+  @override
+  String get widgetBudgetTotal => '總額';
+
+  @override
+  String get widgetBudgetRemaining => '剩';
+
+  @override
+  String get widgetNoBudget => '未設預算';
+
+  @override
+  String get widgetNoTransactions => '暫無交易';
+
+  @override
+  String get widgetRecentTransactions => '最近交易';
+
+  @override
+  String get widgetNoAccounts => '暫無帳戶';
 
   @override
   String get searchTitle => '搜尋';
@@ -8025,6 +8961,29 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get categoryTitle => '分類管理';
 
   @override
+  String get categoryGenerateDefault => '產生預設分類';
+
+  @override
+  String get categoryGenerateDefaultFlat => '一級分類';
+
+  @override
+  String get categoryGenerateDefaultHierarchical => '二級分類';
+
+  @override
+  String get categoryGenerateDefaultHint => '現有分類會保留，同名的預設分類會略過。';
+
+  @override
+  String categoryGenerateDefaultSuccess(int count) {
+    return '已產生 $count 個預設分類';
+  }
+
+  @override
+  String get categoryGenerateDefaultNoChanges => '預設分類已存在，無需產生';
+
+  @override
+  String get categoryGenerateDefaultFailed => '產生預設分類失敗，請重試';
+
+  @override
   String get categoryNew => '新建分類';
 
   @override
@@ -8303,7 +9262,54 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get headerSkinSubtitle => '跟隨主題色,疊在頁首之上';
 
   @override
+  String get headerSkinGroupBasic => '基礎';
+
+  @override
+  String get headerSkinGroupAnniversary => '週年紀念';
+
+  @override
+  String get headerSkinGroupGradient => '漸層';
+
+  @override
+  String get headerSkinGroupScene => '場景';
+
+  @override
+  String get headerSkinGroupPattern => '圖案';
+
+  @override
+  String get headerSkinGroupGeometric => '幾何藝術';
+
+  @override
   String get headerSkinNone => '純色';
+
+  @override
+  String get headerSkinAnniversary => '一歲星座';
+
+  @override
+  String get headerSkinAnnivCake => '週年蛋糕';
+
+  @override
+  String get headerSkinTabAll => '全部';
+
+  @override
+  String get headerSkinTabAnimated => '動態';
+
+  @override
+  String get headerSkinTabStatic => '靜態';
+
+  @override
+  String get headerSkinAnimatedBadge => '動';
+
+  @override
+  String get headerSkinFixedPalette => '自帶配色';
+
+  @override
+  String personalizeLockedBySkin(String skin) {
+    return '目前皮膚「$skin」自帶配色,主題色已隨皮膚設定,暫不可更改。換回其它皮膚即可恢復你原來的顏色。';
+  }
+
+  @override
+  String get personalizeFixedSkinAction => '換皮膚';
 
   @override
   String get headerSkinAurora => '極光';
@@ -8707,7 +9713,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get mineTotalRecords => '總筆數';
 
   @override
-  String get mineCurrentBalance => '當前餘額';
+  String get mineCurrentBalance => '帳本結餘';
 
   @override
   String get mineCloudService => '雲服務';
@@ -9401,6 +10407,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get appearanceAmountFormatCompactDesc => '大金額縮寫，如 12.3萬（僅對帳戶餘額生效）';
+
+  @override
+  String get appearanceSkinAnimation => '面板動效';
+
+  @override
+  String get appearanceSkinAnimationDesc => '關閉後動態面板停在靜止畫面，更省電';
 
   @override
   String get appearanceShowTransactionTime => '顯示交易時間';
@@ -11142,6 +12154,46 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get accountsEnableFeature => '啟用帳戶功能';
 
   @override
+  String get accountHide => '隱藏帳戶';
+
+  @override
+  String get accountUnhide => '恢復帳戶';
+
+  @override
+  String get accountRestore => '恢復';
+
+  @override
+  String get accountHiddenTag => '已隱藏';
+
+  @override
+  String get accountHiddenSection => '已隱藏';
+
+  @override
+  String accountHiddenSectionSummary(int count, String total) {
+    return '已隱藏 $count · 合計 $total';
+  }
+
+  @override
+  String get accountHideConfirmTitle => '隱藏此帳戶？';
+
+  @override
+  String get accountHideConfirmBody => '隱藏後無法再記帳到它，新增記帳時也不再顯示；歷史交易與餘額保留，可隨時恢復。';
+
+  @override
+  String accountHideRecurringWarn(int count) {
+    return '有 $count 個週期帳單在用此帳戶，隱藏後這些帳單將跳過產生，建議先改到其他帳戶。';
+  }
+
+  @override
+  String get accountHideClearedDefault => '已取消其預設帳戶設定';
+
+  @override
+  String get accountHiddenToast => '已隱藏';
+
+  @override
+  String get accountRestoredToast => '已恢復';
+
+  @override
   String get privacyOpenSourceUrlError => '無法打開鏈接';
 
   @override
@@ -11203,6 +12255,87 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get widgetPreviewDesc => '小組件會自動顯示當前帳本的實際數據，主題色跟隨應用設置';
+
+  @override
+  String get widgetGalleryTitle => '組件庫';
+
+  @override
+  String get widgetGalleryDesc => '以下為示例效果，實際將顯示目前帳本的真實資料，主題色跟隨 App 設定';
+
+  @override
+  String get widgetGalleryGlanceTitle => '收支速覽';
+
+  @override
+  String get widgetGalleryGlanceDesc => '今日和本月收支一目了然';
+
+  @override
+  String get widgetGalleryNetWorthDesc => '總資產、總負債與淨值趨勢';
+
+  @override
+  String get widgetGalleryQuickAddTitle => '快速記帳';
+
+  @override
+  String get widgetGalleryQuickAddDesc => '常用分類一鍵速記';
+
+  @override
+  String get widgetGalleryBudgetDesc => '預算進度即時掌握';
+
+  @override
+  String get widgetGalleryRecentDesc => '快速查看最近幾筆帳單';
+
+  @override
+  String get widgetGalleryDashboardTitle => '綜合儀表盤';
+
+  @override
+  String get widgetDashboardTitle => '本月概覽';
+
+  @override
+  String get widgetGalleryDashboardDesc => '收支、趨勢與最近交易一屏看盡';
+
+  @override
+  String get widgetConsumptionRhythmTitle => '消費節奏';
+
+  @override
+  String get widgetConsumptionRhythmRange => '近 30 天';
+
+  @override
+  String get widgetConsumptionRhythmStable => '消費很均勻';
+
+  @override
+  String get widgetConsumptionRhythmIncrease => '比上週更快';
+
+  @override
+  String get widgetConsumptionRhythmDecrease => '比上週更穩';
+
+  @override
+  String get widgetConsumptionRhythmEmpty => '近 30 天還沒有支出';
+
+  @override
+  String get widgetBeeTrailTitle => '記帳連續蜂跡';
+
+  @override
+  String get widgetBeeTrailStreakSuffix => '天';
+
+  @override
+  String get widgetBeeTrailCompletion => '近 28 天完成率';
+
+  @override
+  String get widgetBeeTrailEmpty => '今天記一筆，點亮第一格';
+
+  @override
+  String get widgetGalleryConsumptionRhythmDesc => '近 30 天消費節奏一眼看清';
+
+  @override
+  String get widgetGalleryBeeTrailDesc => '用蜂巢格養成每日記帳習慣';
+
+  @override
+  String get widgetSizeSmall => '小號';
+
+  @override
+  String get widgetSizeMedium => '中號';
+
+  @override
+  String get widgetSizeLarge => '大號';
 
   @override
   String get howToAddWidget => '如何添加小組件';
@@ -11548,6 +12681,32 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get aiOcrNoLedger => '未找到帳本';
+
+  @override
+  String aiBillingRateMissingHint(String currency) {
+    return '⚠️ 未取得 $currency 匯率，已按 1:1 暫記，可在統計頁「補折算」修正';
+  }
+
+  @override
+  String get aiPromptVarCurrencies => '帳本主幣種 + 已在用的外幣帳戶';
+
+  @override
+  String get aiPromptVarBillGuard => '帳單過濾段（僅截圖 / 自動記帳時注入）';
+
+  @override
+  String aiPromptMissingVarsHint(String vars) {
+    return '你的自訂範本缺少這些變數，對應能力會失效：$vars';
+  }
+
+  @override
+  String aiPromptInsertVarSection(String name) {
+    return '插入 $name 段落';
+  }
+
+  @override
+  String aiPromptVarSectionInserted(String name) {
+    return '已追加 $name 段落，確認後儲存';
+  }
 
   @override
   String aiOcrSuccess(String type, String amount) {
@@ -12628,6 +13787,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get tagSelectCreateNew => '新建標籤';
 
   @override
+  String get tagSelectOwnerManaged => '共享帳本標籤由所有者管理';
+
+  @override
   String get tagSelectRecentlyUsed => '最近使用';
 
   @override
@@ -13589,9 +14751,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get accountGroupValuation => '資產/負債';
 
   @override
-  String get adjustmentTransaction => '估值調整';
-
-  @override
   String creditCardBillingInfo(int billingDay, int paymentDueDay) {
     return '每月$billingDay日出帳 · $paymentDueDay日還款';
   }
@@ -13618,90 +14777,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get budgetSetupAction => '去設置';
-
-  @override
-  String get cloudCollabDevicesPageTitle => '裝置工作階段';
-
-  @override
-  String get cloudCollabDevicesPageSubtitle => '管理目前帳號活躍裝置';
-
-  @override
-  String get cloudCollabDevicesViewAllSessions => '顯示全部工作階段';
-
-  @override
-  String get cloudCollabDevicesViewModeHint => '預設顯示近 30 天去重裝置，可切換檢視全部工作階段。';
-
-  @override
-  String get cloudCollabNoDevices => '目前沒有活躍裝置';
-
-  @override
-  String get cloudCollabUnknownDeviceName => '未知裝置';
-
-  @override
-  String get cloudCollabDeviceCurrentTag => '目前裝置';
-
-  @override
-  String get cloudCollabCurrentDeviceCannotRevoke => '目前裝置不能遠端下線。';
-
-  @override
-  String cloudCollabDeviceAppVersion(String version) {
-    return '應用：$version';
-  }
-
-  @override
-  String cloudCollabDeviceOsVersion(String version) {
-    return '系統：$version';
-  }
-
-  @override
-  String cloudCollabDeviceModel(String model) {
-    return '型號：$model';
-  }
-
-  @override
-  String cloudCollabDeviceLastIp(String ip) {
-    return 'IP：$ip';
-  }
-
-  @override
-  String cloudCollabDeviceSessionCount(String count) {
-    return '工作階段數：$count';
-  }
-
-  @override
-  String cloudCollabDeviceLastSeen(String time) {
-    return '最近活躍：$time';
-  }
-
-  @override
-  String cloudCollabDeviceCreatedAt(String time) {
-    return '建立時間：$time';
-  }
-
-  @override
-  String get cloudCollabDeviceRevokeTitle => '遠端下線裝置';
-
-  @override
-  String cloudCollabDeviceRevokeMessage(String name, String id) {
-    return '確認下線裝置 $name（$id）嗎？';
-  }
-
-  @override
-  String cloudCollabDeviceRevokeMultipleMessage(String name, String count) {
-    return '確認下線裝置 $name 的 $count 個工作階段嗎？';
-  }
-
-  @override
-  String get cloudCollabDeviceRevoked => '裝置已下線';
-
-  @override
-  String get cloudCollabUnavailableMessage => '雲端同步功能暫時不可用。';
-
-  @override
-  String get cloudCollabScopeDeniedHint => '伺服器尚未開啟 ALLOW_APP_RW_SCOPES，目前裝置工作階段不可用。';
-
-  @override
-  String get cloudCollabScopeDeniedAction => '請在伺服器 .env 或部署環境設定 ALLOW_APP_RW_SCOPES=true，重啟服務後重新登入 App。';
 
   @override
   String get syncHealthTitle => '同步狀態';
@@ -14636,4 +15711,102 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get currencyMRU => '毛里塔尼亞烏吉亞';
+
+  @override
+  String get annualReportInsightsTitle => '年度洞察';
+
+  @override
+  String get annualReportInsightsSubtitle => '從資料中發現你的消費習慣';
+
+  @override
+  String get annualReportAveragePerRecord => '平均每筆消費';
+
+  @override
+  String get annualReportAveragePerRecordDesc => '你每次記帳的平均金額';
+
+  @override
+  String get annualReportDailyAverage => '日均支出';
+
+  @override
+  String get annualReportDailyAverageDesc => '平均每天花費金額';
+
+  @override
+  String get annualReportMonthlyAverage => '月均支出';
+
+  @override
+  String get annualReportMonthlyAverageDesc => '平均每月花費金額';
+
+  @override
+  String get annualReportBusiestMonth => '最活躍月份';
+
+  @override
+  String get annualReportBusiestMonthDesc => '記帳活動最頻繁的月份';
+
+  @override
+  String get annualReportCategoryCount => '消費分類數';
+
+  @override
+  String get annualReportCategoryCountDesc => '你使用過的消費分類數量';
+
+  @override
+  String annualReportCategoryCountValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count個',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get annualReportSavingsRate => '儲蓄率';
+
+  @override
+  String get annualReportSavingsRatePositive => '今年你存下了收入的這個比例';
+
+  @override
+  String get annualReportSavingsRateNegative => '今年支出超過了收入';
+
+  @override
+  String get annualReportComparisonTitle => '收支對比';
+
+  @override
+  String get annualReportComparisonSubtitle => '每月收入與支出的對比';
+
+  @override
+  String get annualReportHighestIncome => '收入最高';
+
+  @override
+  String get annualReportHighestExpense => '支出最高';
+
+  @override
+  String get annualReportConsistency => '記帳堅持';
+
+  @override
+  String annualReportDaysValue(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days天',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get annualReportSavingsPositive => '恭喜你存下了';
+
+  @override
+  String get annualReportSavingsNegative => '今年花超了';
+
+  @override
+  String get annualReportMonthlyExpenseTrend => '月度支出趨勢';
+
+  @override
+  String get annualReportAchieved => '已達成';
+
+  @override
+  String get annualReportNotAchieved => '未達成';
+
+  @override
+  String get annualReportDownloadHint => '掃碼下載蜜蜂記帳，開啟你的記帳之旅';
 }

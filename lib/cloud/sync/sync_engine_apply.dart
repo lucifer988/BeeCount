@@ -328,6 +328,16 @@ extension SyncEngineApplyExt on SyncEngine {
         (payload['initialBalance'] as num?)?.toDouble() ?? 0.0;
     final sortOrder = (payload['sortOrder'] as num?)?.toInt() ?? 0;
 
+    // 账户隐藏(#240,D6 缺键保留):payload 不含该键 → null → update 走
+    // Value.absent() 不覆盖本地;含键(包括显式 false)→ 覆盖。insert 路径
+    // 缺键落默认 false。⚠️ 账户 apply 其它字段(name/type/currency 等)是
+    // 无条件覆盖,hidden **必须**走这条 containsKey 保护 —— 否则一条"只改
+    // 名字、payload 不带 hidden"的远端 partial 更新会把本地已隐藏抹成 false
+    // (照抄交易 flags 的 containsKey 范式,见 _applyTransactionChange)。
+    final hidden = payload.containsKey('hidden')
+        ? (payload['hidden'] as bool? ?? false)
+        : null;
+
     var existing = await (db.select(db.accounts)
           ..where((a) => a.syncId.equals(syncId)))
         .getSingleOrNull();
@@ -365,6 +375,7 @@ extension SyncEngineApplyExt on SyncEngine {
         bankName: d.Value(payload['bankName'] as String?),
         cardLastFour: d.Value(payload['cardLastFour'] as String?),
         note: d.Value(payload['note'] as String?),
+        hidden: hidden == null ? const d.Value.absent() : d.Value(hidden),
       ));
       logger.debug('SyncEngine', 'pull: 更新账户 $syncId');
     } else {
@@ -385,6 +396,7 @@ extension SyncEngineApplyExt on SyncEngine {
               cardLastFour: d.Value(payload['cardLastFour'] as String?),
               note: d.Value(payload['note'] as String?),
               syncId: d.Value(syncId),
+              hidden: d.Value(hidden ?? false),
             ),
           );
       activePullCache?.putAccount(syncId, localId);
@@ -425,28 +437,39 @@ extension SyncEngineApplyExt on SyncEngine {
 
     // upsert
     final payload = change.payload!;
-    final name = payload['name'] as String? ?? '';
-    final kind = payload['kind'] as String? ?? 'expense';
-    final level = (payload['level'] as num?)?.toInt() ?? 1;
+    var existing = await (db.select(db.categories)
+          ..where((c) => c.syncId.equals(syncId)))
+        .getSingleOrNull();
+    final name = payload['name'] as String? ?? existing?.name ?? '';
+    final kind = payload['kind'] as String? ?? existing?.kind ?? 'expense';
+    final level = (payload['level'] as num?)?.toInt() ?? existing?.level ?? 1;
     final sortOrder = (payload['sortOrder'] as num?)?.toInt() ?? 0;
     final icon = payload['icon'] as String?;
     final iconType = payload['iconType'] as String? ?? 'material';
     final parentName = payload['parentName'] as String?;
+    final parentSyncId = (payload['parentSyncId'] as String?)?.trim();
 
-    // 解析 parentId
+    // 名称是展示/旧协议兜底；有稳定 ID 时不按过期名字挂到另一个分类。
     int? parentId;
-    if (parentName != null && parentName.isNotEmpty) {
+    if (parentSyncId != null && parentSyncId.isNotEmpty) {
+      final parent = await (db.select(db.categories)
+            ..where((c) => c.syncId.equals(parentSyncId))
+            ..where((c) => c.kind.equals(kind))
+            ..where((c) => c.level.equals(1)))
+          .getSingleOrNull();
+      if (parent?.id != existing?.id) parentId = parent?.id;
+    } else if (parentName != null && parentName.isNotEmpty) {
       final parent = await (db.select(db.categories)
             ..where((c) => c.name.equals(parentName))
             ..where((c) => c.kind.equals(kind))
             ..where((c) => c.level.equals(1)))
           .getSingleOrNull();
       parentId = parent?.id;
+    } else if (level == 2 &&
+        !payload.containsKey('parentSyncId') &&
+        !payload.containsKey('parentName')) {
+      parentId = existing?.parentId;
     }
-
-    var existing = await (db.select(db.categories)
-          ..where((c) => c.syncId.equals(syncId)))
-        .getSingleOrNull();
 
     // Fallback：syncId 查不到 → 本地可能是 seed 默认分类（syncId 为 NULL）。
     // 按 name + kind 匹配 NULL syncId 行，把 syncId 补上。避免 device B 首次
@@ -1018,12 +1041,33 @@ extension SyncEngineApplyExt on SyncEngine {
 
       if (existingByFileName.containsKey(fileName)) {
         final ex = existingByFileName[fileName]!;
-        if (cloudFileId != null && ex.cloudFileId != cloudFileId) {
+        // Web 移除前面的图片或复用同一文件重新上传时，身份可以保持不变，
+        // 但顺序/原始名称/尺寸仍可能更新。缺失字段兼容旧端，不清空本地值。
+        final originalName = attMap.containsKey('originalName')
+            ? attMap['originalName'] as String? : ex.originalName;
+        final fileSize = attMap.containsKey('fileSize')
+            ? attMap['fileSize'] as int? : ex.fileSize;
+        final width = attMap.containsKey('width')
+            ? attMap['width'] as int? : ex.width;
+        final height = attMap.containsKey('height')
+            ? attMap['height'] as int? : ex.height;
+        final sortOrder = attMap['sortOrder'] as int? ?? ex.sortOrder;
+        final nextFileId = cloudFileId ?? ex.cloudFileId;
+        final nextSha = cloudFileId != null && cloudFileId != ex.cloudFileId
+            ? cloudSha256 : cloudSha256 ?? ex.cloudSha256;
+        if (ex.cloudFileId != nextFileId || ex.cloudSha256 != nextSha ||
+            ex.originalName != originalName || ex.fileSize != fileSize ||
+            ex.width != width || ex.height != height || ex.sortOrder != sortOrder) {
           updates.add((
             id: ex.id,
             data: TransactionAttachmentsCompanion(
-              cloudFileId: d.Value(cloudFileId),
-              cloudSha256: d.Value(cloudSha256),
+              cloudFileId: d.Value(nextFileId),
+              cloudSha256: d.Value(nextSha),
+              originalName: d.Value(originalName),
+              fileSize: d.Value(fileSize),
+              width: d.Value(width),
+              height: d.Value(height),
+              sortOrder: d.Value(sortOrder),
             ),
           ));
         }
